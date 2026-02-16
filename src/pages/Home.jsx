@@ -7,6 +7,9 @@ import ModalGame from '../components/ModalGame';
 import GameCard from '../components/GameCard'; // Komponen yang kita pisah
 import Hero from '../components/Hero'
 import Navigation from '../components/Navigation';
+import FloatingOnline from '../components/FloatingOnline'; // Pastikan jalurnya benar
+import ActivityCard from '../components/ActivityCard';
+import Feed from '../components/Feed';
 
 import {
   Home as HomeIcon,
@@ -48,14 +51,86 @@ export default function Home() {
     checkLogin()
 
     const fetchPosts = async () => {
-      const { data } = await supabase.from('posts').select('*').order('created_at', { ascending: false })
-      setPosts(data || [])
-    }
+      const savedUser = localStorage.getItem('user_siswa');
+      const currentUser = savedUser ? JSON.parse(savedUser) : null;
+
+      let query = supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // JIKA BUKAN ADMIN
+      if (!currentUser || currentUser.role !== 'admin') {
+        if (currentUser) {
+          // Siswa: Lihat yang 'approved' ATAU miliknya sendiri
+          query = query.or(`status.eq.approved,student_id.eq.${currentUser.id}`);
+        } else {
+          // Tamu (Tanpa Login): HANYA lihat yang sudah 'approved'
+          query = query.eq('status', 'approved');
+        }
+      }
+      // JIKA ADMIN: Query tidak difilter (bisa lihat semua)
+
+      const { data, error } = await query;
+      if (!error) setPosts(data || []);
+    };
     fetchPosts()
 
     window.addEventListener('storage', checkLogin)
     return () => window.removeEventListener('storage', checkLogin)
   }, [])
+
+  // --- PERBAIKAN: Realtime Posts (Agar deteksi Update & Delete) ---
+  useEffect(() => {
+    const postChannel = supabase
+      .channel('realtime-posts-secure')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'posts' },
+        (payload) => {
+          const savedUser = localStorage.getItem('user_siswa');
+          const currentUser = savedUser ? JSON.parse(savedUser) : null;
+
+          if (payload.eventType === 'INSERT') {
+            const newPost = payload.new;
+
+            // CEK: Siapa yang boleh melihat postingan baru ini?
+            const isAdmin = currentUser?.role === 'admin';
+            const isMyOwnPost = currentUser?.id === newPost.student_id;
+            const isApproved = newPost.status === 'approved';
+
+            if (isAdmin || isMyOwnPost || isApproved) {
+              setPosts((prev) => [newPost, ...prev]);
+            }
+          }
+          else if (payload.eventType === 'UPDATE') {
+            // Jika status berubah dari pending ke approved, postingan akan muncul di semua orang
+            const updatedPost = payload.new;
+
+            setPosts((prev) => {
+              const exists = prev.find(p => p.id === updatedPost.id);
+
+              if (exists) {
+                // Jika sudah ada (misal di layar admin/pemilik), update datanya
+                return prev.map(p => p.id === updatedPost.id ? updatedPost : p);
+              } else if (updatedPost.status === 'approved') {
+                // Jika belum ada di list (siswa lain) dan statusnya jadi approved, masukkan ke list
+                return [updatedPost, ...prev].sort((a, b) =>
+                  new Date(b.created_at) - new Date(a.created_at)
+                );
+              }
+              return prev;
+            });
+          }
+          else if (payload.eventType === 'DELETE') {
+            setPosts((prev) => prev.filter(p => p.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(postChannel); };
+  }, []);
 
   // --- 2. LOGIC: AMBIL DATA USER & POSTS ---
   // --- 3. LOGIC: REALTIME & FETCH STATUS GAME ---
@@ -139,16 +214,82 @@ export default function Home() {
     return isLocked ? `🔴 ${labelText}` : `🟢 ${labelText}`;
   };
 
+  const handleApprove = async (postId) => {
+    const { error } = await supabase
+      .from('posts')
+      .update({ status: 'approved' })
+      .eq('id', postId);
+
+    if (error) alert("Gagal menyetujui");
+    // Update state lokal agar langsung berubah tanpa reload
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, status: 'approved' } : p));
+  };
+
+  // --- PERBAIKAN: handlePost ---
   const handlePost = async (e) => {
-    e.preventDefault()
-    if (!newPost.trim() || !student) return
+    e.preventDefault();
+    if (!newPost.trim() || !student) return;
+
     const { error } = await supabase.from('posts').insert([
-      { nama: student.NAMA, kelas: student.Kelas, content: newPost, student_id: student.id }
-    ])
+      {
+        student_id: student.id,
+        NAMA: student.NAMA,
+        Kelas: student.Kelas,
+        content: newPost,
+        category: 'umum',
+        status: 'pending' // WAJIB: Agar masuk ke moderasi dulu
+      }
+    ]);
+
     if (!error) {
-      setNewPost(''); fetchPosts();
+      setNewPost('');
+      // fetchPosts(); // Hapus ini, biarkan Realtime yang bekerja
+    } else {
+      console.error("Gagal posting:", error.message);
     }
-  }
+  };
+
+  // Tambahkan di dalam export default function Home()
+  const handleAutoPostAchievement = async (message) => {
+    if (!student) return;
+
+    const { error } = await supabase.from('posts').insert([
+      {
+        student_id: student.id,
+        NAMA: student.NAMA,
+        // Cek tabel posts kamu, apakah kolomnya 'Kelas' atau 'kelas'?
+        // Jika di database kolomnya 'kelas' (kecil), ubah bagian kiri ini:
+        Kelas: student.Kelas, 
+        content: message,
+        category: 'pencapaian',
+        status: 'approved'
+      }
+    ]);
+
+    if (error) {
+      console.error("Gagal posting pencapaian:", error.message);
+    } else {
+      console.log("Pencapaian berhasil diposting!");
+    }
+  };
+
+  // --- FUNGSI BARU: DELETE ---
+  const handleDelete = async (postId) => {
+    const confirmDelete = window.confirm("Yakin ingin menghapus postingan ini?");
+    if (!confirmDelete) return;
+
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', postId);
+
+    if (error) {
+      alert("Gagal menghapus: " + error.message);
+    } else {
+      // Update state lokal
+      setPosts(prev => prev.filter(p => p.id !== postId));
+    }
+  };
 
   const toggleLockGame = async (gameId, currentStatus, targetClass) => {
     const { error } = await supabase
@@ -183,6 +324,13 @@ export default function Home() {
     return () => { document.body.style.overflow = 'unset'; };
   }, [showGameKetik]);
 
+  //untuk posisi
+  const getCurrentActivity = () => {
+    if (showGameKetik) return "🎮 Bermain Ketik Cepat";
+    if (showFlappy) return "🐦 Bermain Flappy Bird";
+    return activeTab; // Jika tidak main game, tampilkan nama tab (beranda/playground/dll)
+  };
+
   return (
     <div className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 font-sans">
       <div className="max-w-4xl mx-auto">
@@ -203,44 +351,17 @@ export default function Home() {
 
         {/* CONTENT AREA */}
         <div className="min-h-[300px]">
+          {/* Di dalam Home.jsx, bagian Content Area */}
           {activeTab === 'beranda' && (
-            <div className="space-y-6 animate-in fade-in duration-700">
-              {student && (
-                <form onSubmit={handlePost} className="bg-slate-800/40 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
-                  <textarea
-                    className="w-full bg-transparent border-none outline-none text-white placeholder-slate-500 resize-none h-20 text-sm"
-                    placeholder={`Apa yang kamu pikirkan, ${student.NAMA.split(' ')[0]}?`}
-                    value={newPost}
-                    onChange={(e) => setNewPost(e.target.value)}
-                  />
-                  <div className="flex justify-between items-center pt-4 border-t border-white/5">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Postingan Siswa</span>
-                    <button className="bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded-xl transition-all">
-                      <Send size={18} />
-                    </button>
-                  </div>
-                </form>
-              )}
-              <div className="grid gap-4">
-                {posts.map((post) => (
-                  <div key={post.id} className="bg-slate-900/40 border border-white/5 p-5 rounded-2xl">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold text-white">
-                          {post.nama ? post.nama[0] : '?'}
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-sm text-white">{post.nama}</h4>
-                          <p className="text-[10px] text-blue-400 font-bold uppercase">Kelas {post.kelas}</p>
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-slate-500">{new Date(post.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <p className="text-slate-300 text-sm leading-relaxed">{post.content}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Feed
+              posts={posts}
+              student={student}
+              onApprove={handleApprove}
+              onDelete={handleDelete} // Sekarang sudah aman karena fungsi sudah ada
+              newPost={newPost}
+              setNewPost={setNewPost}
+              handlePost={handlePost}
+            />
           )}
 
           {activeTab === 'playground' && (
@@ -297,7 +418,10 @@ export default function Home() {
           isAdmin={student?.role === 'admin'}
           onClose={() => setShowGameKetik(false)}
         >
-          <GameKetikCepat />
+          <GameKetikCepat
+            student={student}
+            onArchiveAchievement={handleAutoPostAchievement} // <-- Kirim fungsinya di sini
+          />
         </ModalGame>
       )}
 
@@ -313,6 +437,14 @@ export default function Home() {
           <FlappyBird student={student} onGameOver={() => { }} />
         </ModalGame>
       )}
+
+
+      {/* Kirim getCurrentActivity() ke prop activeTab */}
+      <FloatingOnline
+        user={student}
+        activeTab={getCurrentActivity()}
+      />
+
     </div>
   );
 }

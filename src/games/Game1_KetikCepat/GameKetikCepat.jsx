@@ -4,14 +4,14 @@ import { RotateCcw, Trophy, Zap, Keyboard, Timer, Target } from 'lucide-react';
 import ModalRiwayat from './ModalRiwayat'; // Gunakan './' karena satu folder
 import { supabase } from '../../lib/supabaseClient'; // Naik 2 level ke folder src
 
-const GameKetikCepat = () => {
+const GameKetikCepat = ({ onArchiveAchievement }) => {
   // ==========================================
   // 1. KONFIGURASI & DATA TEKS
   // ==========================================
   const SAMPLE_TEXTS = [
-    'saya berlatih mengetik dengan kecepatan penuh setiap hari untuk mengasah keterampilan jari jemari agar bisa lebih lincah dan akurat dalam menekan setiap tombol pada papan ketik ini adalah tantangan yang saya nikmati karena dapat menguji fokus dan daya tahan mental saya',
-    'komputer adalah mesin elektronik serbaguna yang digunakan untuk memproses data dan informasi perangkat keras seperti cpu monitor keyboard dan mouse bekerja sama dengan perangkat lunak seperti sistem operasi dan aplikasi komputer digunakan dalam berbagai bidang',
-    'scratch adalah bahasa pemrograman visual yang dirancang khusus untuk anak anak dan pemula dengan menggunakan antarmuka drag and drop pengguna dapat membuat cerita interaktif permainan dan animasi tanpa harus menulis kode yang rumit'
+    'saya berlatih mengetik dengan kecepatan penuh setiap hari untuk mengasah keterampilan jari jemari agar bisa lebih lincah dan akurat dalam menekan setiap tombol pada papan ketik ini adalah tantangan yang saya nikmati karena dapat menguji fokus dan daya tahan mental saya dalam menghadapi berbagai rintangan teknologi di masa depan yang semakin berkembang pesat setiap saat kita harus konsisten berlatih agar tidak tertinggal oleh kemajuan zaman yang menuntut efisiensi kerja tinggi kecepatan jemari dalam menari di atas papan ketik akan membantu kita menyelesaikan tugas sekolah maupun pekerjaan dengan jauh lebih mudah dan efektif tanpa perlu merasa lelah atau bosan karena sudah terbiasa melakukan gerakan yang sama berulang kali dengan presisi tinggi',
+    'komputer adalah mesin elektronik serbaguna yang digunakan untuk memproses data dan informasi perangkat keras seperti cpu monitor keyboard dan mouse bekerja sama dengan perangkat lunak seperti sistem operasi dan aplikasi komputer digunakan dalam berbagai bidang kehidupan manusia mulai dari pendidikan kesehatan bisnis hingga hiburan yang sangat menyenangkan bagi siapa saja yang menggunakannya teknologi ini terus mengalami perubahan besar yang membuat hidup kita menjadi lebih praktis dan efisien dalam melakukan komunikasi jarak jauh maupun dalam mengelola dokumen penting yang membutuhkan keamanan tingkat tinggi setiap siswa harus memahami cara kerja perangkat ini agar mampu menguasai dunia digital yang sangat luas dan penuh dengan peluang menarik untuk masa depan karir yang cerah bagi mereka yang tekun belajar',
+    'scratch adalah bahasa pemrograman visual yang dirancang khusus untuk anak anak dan pemula dengan menggunakan antarmuka drag and drop pengguna dapat membuat cerita interaktif permainan dan animasi tanpa harus menulis kode yang rumit dan membingungkan bagi orang awam yang baru mengenal dunia logika komputer melalui platform ini kita bisa belajar berpikir secara sistematis dan kreatif dalam memecahkan masalah yang ada di sekitar kita dengan cara yang sangat menyenangkan serta kolaboratif bersama teman teman di seluruh dunia setiap blok kode yang kita susun memiliki fungsi tersendiri yang akan membentuk sebuah program utuh jika dirangkai dengan benar sesuai dengan imajinasi dan logika yang kita miliki sehingga mampu menghasilkan karya digital yang luar biasa bermanfaat bagi orang lain'
   ];
   const TIME_LIMIT = 60;
   const MIN_ACCURACY = 90;
@@ -65,6 +65,19 @@ const GameKetikCepat = () => {
     setIsFinished(false);
     // Fokus otomatis ke input
     setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  // Tambahkan prop onArchiveAchievement saat memanggil komponen ini
+  const handleGameOver = async (finalWpm) => {
+    // Logika cek apakah masuk Top 10 (asumsi kamu punya data leaderboard)
+    if (isTop10) {
+      const message = `Baru saja mencetak rekor baru di Game Ketik Cepat dengan kecepatan ${finalWpm} WPM! 🚀`;
+
+      // Panggil fungsi yang dikirim dari Home.jsx
+      if (onArchiveAchievement) {
+        onArchiveAchievement(message);
+      }
+    }
   };
 
   // ==========================================
@@ -182,7 +195,7 @@ const GameKetikCepat = () => {
   // ==========================================
   const saveScore = async (finalWpm, finalAccuracy) => {
     try {
-      // 1. Ambil data siswa dari localStorage (Sesuai dengan yang di-set di Navbar)
+      // 1. Ambil data siswa dari localStorage
       const savedUser = localStorage.getItem('user_siswa');
 
       if (!savedUser) {
@@ -198,10 +211,10 @@ const GameKetikCepat = () => {
         .from('game1_scores_typing')
         .insert([
           {
-            user_id: userData.id, // ID dari tabel master_siswa
-            full_name: userData.NAMA, // Kolom NAMA dari tabel master_siswa
+            user_id: userData.id,
+            full_name: userData.NAMA,
             wpm: finalWpm,
-            class: userData.class, // Pastikan ini ikut terkirim
+            class: userData.class,
             accuracy: finalAccuracy,
             status: finalAccuracy >= 90 ? 'VALID' : 'GUGUR'
           }
@@ -209,10 +222,30 @@ const GameKetikCepat = () => {
 
       if (error) throw error;
       console.log("✅ Skor berhasil masuk database!");
+
       if (!error) {
         console.log("Skor Berhasil!");
-        fetchLeaderboard(); // Langsung update ranking saat itu juga
-        // Jika ada fungsi fetchHistory(), panggil juga di sini
+
+        // --- LOGIKA POSTING OTOMATIS KE BERANDA ---
+        // Ambil data terbaru untuk cek apakah masuk Top 10
+        const { data: latestRankings } = await supabase
+          .from('game1_scores_typing')
+          .select('full_name, wpm')
+          .eq('status', 'VALID')
+          .order('wpm', { ascending: false })
+          .limit(10);
+
+        // Jika nama user ada di dalam daftar 10 besar terbaru
+        const isTop10 = latestRankings?.some(r => r.full_name === userData.NAMA && r.wpm === finalWpm);
+
+        // UBAH MENJADI INI:
+        if (isTop10 && onArchiveAchievement) {
+          const achievementMsg = `Gila! 🔥 Baru saja mencetak skor ${finalWpm} WPM dengan akurasi ${finalAccuracy}% dan berhasil menembus peringkat TOP 10 di Game Ketik Cepat! 🚀🏎️`;
+          onArchiveAchievement(achievementMsg); // <-- Hapus "props."
+        }
+        // ------------------------------------------
+
+        fetchLeaderboard();
       }
 
     } catch (error) {
@@ -444,8 +477,8 @@ const GameKetikCepat = () => {
                     <div className="flex items-center gap-4">
                       {/* Lingkaran Nomor Urut */}
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shrink-0 ${index === 0 ? 'bg-yellow-500 text-black' :
-                          index === 1 ? 'bg-slate-300 text-black' :
-                            index === 2 ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-500'
+                        index === 1 ? 'bg-slate-300 text-black' :
+                          index === 2 ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-500'
                         }`}>
                         {index + 1}
                       </div>
