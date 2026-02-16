@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import GameKetikCepat from "../games/Game1_KetikCepat/GameKetikCepat";
 import FlappyBird from '../games/Game2_FlappyBird/FlappyBird';
-import Leaderboard from '../components/Leaderboard';
+// import Leaderboard from '../components/Leaderboard';
 import ModalGame from '../components/ModalGame';
 import GameCard from '../components/GameCard'; // Komponen yang kita pisah
 import Hero from '../components/Hero'
 import Navigation from '../components/Navigation';
 import FloatingOnline from '../components/FloatingOnline'; // Pastikan jalurnya benar
-import ActivityCard from '../components/ActivityCard';
+// import ActivityCard from '../components/ActivityCard';
 import Feed from '../components/Feed';
+import UpdateNotifier from "../components/UpdateNotifier";
 
 import {
   Home as HomeIcon,
@@ -259,7 +260,7 @@ export default function Home() {
         NAMA: student.NAMA,
         // Cek tabel posts kamu, apakah kolomnya 'Kelas' atau 'kelas'?
         // Jika di database kolomnya 'kelas' (kecil), ubah bagian kiri ini:
-        Kelas: student.Kelas, 
+        Kelas: student.Kelas,
         content: message,
         category: 'pencapaian',
         status: 'approved'
@@ -335,81 +336,88 @@ export default function Home() {
     <div className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 font-sans">
       <div className="max-w-4xl mx-auto">
 
-        {/* HERO */}
-        <Hero
-          student={student}
-          onStart={() => (student ? setActiveTab('tugas') : alert('Login dulu yuk!'))}
-        />
-
-        {/* TAB MENU */}
-        {/* --- 4. MENU TAB (SEKARANG SUDAH DIPISAH) --- */}
-        <Navigation
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          student={student}
-        />
-
-        {/* CONTENT AREA */}
-        <div className="min-h-[300px]">
-          {/* Di dalam Home.jsx, bagian Content Area */}
-          {activeTab === 'beranda' && (
-            <Feed
-              posts={posts}
+        {/* --- LOGIKA OPSI 1: SEMBUNYIKAN KONTEN UTAMA JIKA GAME AKTIF --- */}
+        {!showGameKetik && !showFlappy ? (
+          <>
+            {/* HERO */}
+            <Hero
               student={student}
-              onApprove={handleApprove}
-              onDelete={handleDelete} // Sekarang sudah aman karena fungsi sudah ada
-              newPost={newPost}
-              setNewPost={setNewPost}
-              handlePost={handlePost}
+              onStart={() => (student ? setActiveTab('tugas') : alert('Login dulu yuk!'))}
             />
-          )}
 
-          {activeTab === 'playground' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
-              {/* Kartu Game 1 - Ketik Cepat */}
-              <GameCard
-                title="Ketik Cepat"
-                gameId="game1" // Tambahkan ini
-                description="Ketiklah dengan tepat dan cepat!"
-                icon={Keyboard} // Pastikan icon dikirim jika GameCard memerlukannya
-                color="blue"
-                student={student}
-                allLockStatuses={allLockStatuses} // Pakai state utama
-                isGameLocked={isGame1Locked}
-                getOptionLabel={(cls, label) => getOptionLabel('game1', cls, label)} // Tambahkan 'game1'
-                onPlay={() => setShowGameKetik(true)}
-                onToggleLock={(selectedClass, mode) => {
-                  if (mode === 'check') setIsGame1Locked(allLockStatuses.game1?.[selectedClass] || false);
-                  else toggleLockGame('game1', isGame1Locked, selectedClass);
-                }}
-              />
+            {/* TAB MENU */}
+            <Navigation
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              student={student}
+            />
 
-              {/* Kartu Game 2 - Flappy Bird */}
-              <GameCard
-                title="Flappy Bird"
-                gameId="game2" // Tambahkan ini
-                description="Terbangkan burung melewati pipa!"
-                icon={Bird} // Sesuaikan ikonnya
-                color="green"
-                student={student}
-                allLockStatuses={allLockStatuses} // Pakai state utama
-                isGameLocked={isGame2Locked}
-                getOptionLabel={(cls, label) => getOptionLabel('game2', cls, label)} // Tambahkan 'game2'
-                onPlay={() => setShowFlappy(true)}
-                onToggleLock={(selectedClass, mode) => {
-                  // PERBAIKAN: tadinya setIsGame1Locked, harusnya setIsGame2Locked
-                  if (mode === 'check') setIsGame2Locked(allLockStatuses.game2?.[selectedClass] || false);
-                  else toggleLockGame('game2', isGame2Locked, selectedClass);
-                }}
-              />
+            {/* CONTENT AREA */}
+            <div className="min-h-[300px]">
+              {activeTab === 'beranda' && (
+                <Feed
+                  posts={posts}
+                  student={student}
+                  onApprove={handleApprove}
+                  onDelete={handleDelete}
+                  newPost={newPost}
+                  setNewPost={setNewPost}
+                  handlePost={handlePost}
+                />
+              )}
+
+              {activeTab === 'playground' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
+                  {/* Kartu Game 1 - Ketik Cepat */}
+                  <GameCard
+                    title="Ketik Cepat"
+                    gameId="game1"
+                    description="Ketiklah dengan tepat dan cepat!"
+                    icon={Keyboard}
+                    color="blue"
+                    student={student}
+                    allLockStatuses={allLockStatuses}
+                    isGameLocked={isGame1Locked}
+                    getOptionLabel={(cls, label) => getOptionLabel('game1', cls, label)}
+                    onPlay={() => setShowGameKetik(true)}
+                    onToggleLock={(selectedClass, mode) => {
+                      if (mode === 'check') setIsGame1Locked(allLockStatuses.game1?.[selectedClass] || false);
+                      else toggleLockGame('game1', isGame1Locked, selectedClass);
+                    }}
+                  />
+
+                  {/* Kartu Game 2 - Flappy Bird */}
+                  <GameCard
+                    title="Flappy Bird"
+                    gameId="game2"
+                    description="Terbangkan burung melewati pipa!"
+                    icon={Bird}
+                    color="green"
+                    student={student}
+                    allLockStatuses={allLockStatuses}
+                    isGameLocked={isGame2Locked}
+                    getOptionLabel={(cls, label) => getOptionLabel('game2', cls, label)}
+                    onPlay={() => setShowFlappy(true)}
+                    onToggleLock={(selectedClass, mode) => {
+                      if (mode === 'check') setIsGame2Locked(allLockStatuses.game2?.[selectedClass] || false);
+                      else toggleLockGame('game2', isGame2Locked, selectedClass);
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* ... Tab Lain Tetap Berfungsi di Sini ... */}
             </div>
-          )}
-
-          {/* ... Tab Lain (Info, Tugas, Ranking) ... */}
-        </div>
+          </>
+        ) : (
+          /* --- TAMPILAN SAAT GAME LAGI JALAN (Home Kosong) --- */
+          <div className="flex flex-col items-center justify-center py-20 text-slate-500 animate-pulse">
+            <p className="text-sm font-medium tracking-widest uppercase">Game sedang aktif...</p>
+          </div>
+        )}
       </div>
 
-      {/* MODAL GAME */}
+      {/* MODAL GAME 1 (Ketik Cepat) */}
       {showGameKetik && (
         <ModalGame
           title="Game Ketik Cepat"
@@ -420,30 +428,32 @@ export default function Home() {
         >
           <GameKetikCepat
             student={student}
-            onArchiveAchievement={handleAutoPostAchievement} // <-- Kirim fungsinya di sini
+            onArchiveAchievement={handleAutoPostAchievement}
           />
         </ModalGame>
       )}
 
-      {/* MODAL GAME 2 */}
+      {/* MODAL GAME 2 (Flappy Bird) */}
       {showFlappy && (
         <ModalGame
           title="Flappy Bird"
-          gameId="game2" // Tambahkan ini
-          userClass={student?.Kelas || "Tanpa Kelas"} // Tambahkan ini
-          isAdmin={student?.role === 'admin'} // Tambahkan ini
+          gameId="game2"
+          userClass={student?.Kelas || "Tanpa Kelas"}
+          isAdmin={student?.role === 'admin'}
           onClose={() => setShowFlappy(false)}
         >
           <FlappyBird student={student} onGameOver={() => { }} />
         </ModalGame>
       )}
 
-
-      {/* Kirim getCurrentActivity() ke prop activeTab */}
+      {/* Floating tetap muncul untuk status */}
       <FloatingOnline
         user={student}
         activeTab={getCurrentActivity()}
       />
+
+      {/* notif update */}
+      <UpdateNotifier /> {/* Letakkan di sini */}
 
     </div>
   );

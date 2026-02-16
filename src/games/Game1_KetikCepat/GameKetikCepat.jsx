@@ -3,6 +3,7 @@ import { RotateCcw, Trophy, Zap, Keyboard, Timer, Target } from 'lucide-react';
 // Di dalam GameKetikCepat.jsx
 import ModalRiwayat from './ModalRiwayat'; // Gunakan './' karena satu folder
 import { supabase } from '../../lib/supabaseClient'; // Naik 2 level ke folder src
+import Leaderboard from '../../components/Leaderboard';
 
 const GameKetikCepat = ({ onArchiveAchievement }) => {
   // ==========================================
@@ -44,6 +45,7 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
   const inputRef = useRef(null);
   const scrollRef = useRef(null);
   const activeWordRef = useRef(null);
+  const startTimeRef = useRef(null); // Tambahkan ini untuk mencatat waktu mulai asli
 
   // ==========================================
   // 3. LOGIKA CORE GAME
@@ -63,6 +65,9 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
     setAccuracy(100);
     setIsPlaying(true);
     setIsFinished(false);
+
+    // Reset waktu mulai setiap kali game baru
+    startTimeRef.current = null;
     // Fokus otomatis ke input
     setTimeout(() => inputRef.current?.focus(), 100);
   };
@@ -81,18 +86,35 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
   };
 
   // ==========================================
-  // LOGIKA TIMER (Hanya jalan jika isTimerStarted = true)
+  // LOGIKA TIMER (DIPERBAIKI DENGAN TIMESTAMP)
   // ==========================================
-  // Timer Effect
   useEffect(() => {
     let timer;
     if (isPlaying && isTimerStarted && timeLeft > 0) {
+      // Jika belum ada waktu mulai, set sekarang
+      if (!startTimeRef.current) {
+        startTimeRef.current = Date.now();
+      }
+
       timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && isPlaying) {
-      endGame();
+        // Hitung selisih waktu asli antara sekarang dan waktu mulai
+        const currentTime = Date.now();
+        const elapsedSeconds = Math.floor((currentTime - startTimeRef.current) / 1000);
+
+        // Sisa waktu sebenarnya
+        const remaining = Math.max(0, TIME_LIMIT - elapsedSeconds);
+
+        if (remaining <= 0) {
+          setTimeLeft(0);
+          endGame();
+          clearInterval(timer);
+        } else {
+          // Hanya update state jika nilainya berubah (efisiensi render)
+          setTimeLeft(remaining);
+        }
+      }, 100); // Interval diperkecil ke 100ms agar pengecekan lebih responsif
     }
+
     return () => clearInterval(timer);
   }, [isPlaying, isTimerStarted, timeLeft]);
 
@@ -205,6 +227,7 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
 
       const userData = JSON.parse(savedUser);
       console.log("Mencoba simpan skor untuk:", userData.NAMA);
+      // console.log("ISI DATA LOGIN SISWA:", userData);
 
       // 2. Kirim data ke tabel game1_scores_typing
       const { error } = await supabase
@@ -214,34 +237,34 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
             user_id: userData.id,
             full_name: userData.NAMA,
             wpm: finalWpm,
-            class: userData.class,
+            // --- PERBAIKAN DI SINI ---
+            // Mengambil kelas dari data login (mencoba .KELAS atau .class)
+            class: userData.Kelas,
+            attendance_number: userData["No Absen"],
             accuracy: finalAccuracy,
             status: finalAccuracy >= 90 ? 'VALID' : 'GUGUR'
           }
         ]);
 
       if (error) throw error;
-      console.log("✅ Skor berhasil masuk database!");
+      // console.log("✅ Skor berhasil masuk database!");
 
       if (!error) {
         console.log("Skor Berhasil!");
 
         // --- LOGIKA POSTING OTOMATIS KE BERANDA ---
-        // Ambil data terbaru untuk cek apakah masuk Top 10
         const { data: latestRankings } = await supabase
           .from('game1_scores_typing')
           .select('full_name, wpm')
           .eq('status', 'VALID')
           .order('wpm', { ascending: false })
-          .limit(10);
+          .limit(3);
 
-        // Jika nama user ada di dalam daftar 10 besar terbaru
-        const isTop10 = latestRankings?.some(r => r.full_name === userData.NAMA && r.wpm === finalWpm);
+        const isTop3 = latestRankings?.some(r => r.full_name === userData.NAMA && r.wpm === finalWpm);
 
-        // UBAH MENJADI INI:
         if (isTop10 && onArchiveAchievement) {
-          const achievementMsg = `Gila! 🔥 Baru saja mencetak skor ${finalWpm} WPM dengan akurasi ${finalAccuracy}% dan berhasil menembus peringkat TOP 10 di Game Ketik Cepat! 🚀🏎️`;
-          onArchiveAchievement(achievementMsg); // <-- Hapus "props."
+          const achievementMsg = `Wow.. Gak Nyangka! 🔥 Baru saja mencetak skor ${finalWpm} WPM dengan akurasi ${finalAccuracy}% dan berhasil menembus peringkat TOP 3 di Game Ketik Cepat! 🚀🏎️`;
+          onArchiveAchievement(achievementMsg);
         }
         // ------------------------------------------
 
@@ -263,29 +286,26 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
   };
 
   // ==========================================
-  // 4. HANDLER INPUT & PERHITUNGAN
+  // 4. HANDLER INPUT (DIPERBAIKI)
   // ==========================================
-
   const handleInput = (e) => {
     const val = e.target.value;
 
-    // --- CEK KETIKAN PERTAMA ---
-    // Jika game sedang main tapi timer belum nyala, nyalakan sekarang!
     if (isPlaying && !isTimerStarted && val.length > 0) {
+      // Catat waktu mulai tepat saat karakter pertama diketik
+      startTimeRef.current = Date.now();
       setIsTimerStarted(true);
     }
 
-    // --- LOGIKA SPASI (Pindah Kata) ---
     if (val.endsWith(' ')) {
       const typedWord = val.trim();
       const targetWord = words[currentIndex];
-      const isCorrect = typedWord === targetWord; // Cek kebenaran di sini
+      const isCorrect = typedWord === targetWord;
 
-      // --- SIMPAN KE HISTORI ---
       setWordHistory((prev) => [...prev, isCorrect]);
 
       let newCorrect = correctChars;
-      if (typedWord === targetWord) {
+      if (isCorrect) {
         newCorrect += targetWord.length;
         setCorrectChars(newCorrect);
       }
@@ -293,9 +313,12 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
       const newTotal = totalTypedChars + targetWord.length;
       setTotalTypedChars(newTotal);
 
-      // Update Statistik
-      const timeElapsed = (TIME_LIMIT - timeLeft) / 60;
-      if (timeElapsed > 0) setWpm(Math.round((newCorrect / 5) / timeElapsed));
+      // Hitung WPM menggunakan waktu asli (elapsed) agar lebih akurat
+      const elapsedMinutes = (Date.now() - startTimeRef.current) / 60000;
+      if (elapsedMinutes > 0) {
+        setWpm(Math.round((newCorrect / 5) / elapsedMinutes));
+      }
+
       if (newTotal > 0) setAccuracy(Math.round((newCorrect / newTotal) * 100));
 
       setCurrentIndex(currentIndex + 1);
@@ -306,40 +329,6 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
       setUserInput(val);
     }
   };
-
-  // ==========================================
-  // 5. SUB-KOMPONEN: VISUAL HURUF (HIJAU/MERAH)
-  // ==========================================
-  const renderChar = (word, wordIdx, char, charIdx) => {
-    let colorClass = "text-slate-500"; // Warna default (belum diketik)
-
-    // A. LOGIKA UNTUK KATA YANG SUDAH LEWAT (Sudah Tekan Spasi)
-    if (wordIdx < currentIndex) {
-      // Ambil status benar/salah dari histori berdasarkan index kata
-      const isCorrect = wordHistory[wordIdx];
-      colorClass = isCorrect ? "text-green-950" : "text-red-950";
-    }
-
-    // B. LOGIKA UNTUK KATA YANG SEDANG AKTIF DIKETIK
-    else if (wordIdx === currentIndex) {
-      if (charIdx < userInput.length) {
-        // Hijau terang jika benar, Merah terang jika salah (sedang fokus)
-        colorClass = char === userInput[charIdx]
-          ? "text-green-400"
-          : "text-red-500 underline underline-offset-4 decoration-2";
-      } else {
-        colorClass = "text-white"; // Huruf sisa dalam kata aktif
-      }
-    }
-
-    return (
-      <span key={charIdx} className={`${colorClass} transition-colors duration-75`}>
-        {char}
-      </span>
-    );
-  };
-
-  // ... (Bagian import dan state tetap sama di atas)
 
   // 1. LOGIKA REALTIME & FETCH AWAL
   useEffect(() => {
@@ -352,7 +341,7 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'game1_scores_typing' },
         () => {
-          console.log("Ada skor baru masuk, memperbarui peringkat...");
+          // console.log("Ada skor baru masuk, memperbarui peringkat...");
           fetchLeaderboard();
         }
       )
@@ -425,8 +414,15 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
             <div ref={scrollRef} className="bg-slate-950/80 border border-blue-500/20 rounded-2xl md:rounded-3xl p-4 md:p-8 mb-6 h-[100px] md:h-[150px] overflow-hidden select-none relative shadow-2xl">
               <div className="flex flex-wrap gap-x-3 gap-y-2 md:gap-x-6 md:gap-y-4">
                 {words.map((word, wIdx) => (
-                  <span key={wIdx} ref={wIdx === currentIndex ? activeWordRef : null} className={`transition-all duration-200 px-1 md:px-2 py-0.5 rounded-lg text-xl md:text-4xl font-medium leading-none whitespace-nowrap ${wIdx === currentIndex ? 'bg-blue-600/30 ring-1 ring-blue-500/50 scale-110' : 'scale-100'}`}>
-                    {word.split('').map((char, cIdx) => renderChar(word, wIdx, char, cIdx))}
+                  <span key={wIdx} ref={wIdx === currentIndex ? activeWordRef : null}>
+                    <WordItem
+                      word={word}
+                      wordIdx={wIdx}
+                      currentIndex={currentIndex}
+                      userInput={userInput}
+                      wordHistory={wordHistory}
+                      renderChar={renderChar}
+                    />
                   </span>
                 ))}
               </div>
@@ -439,87 +435,15 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
 
       {/* --- UI LEADERBOARD (MUNCUL DI START & FINISH) --- */}
       {!isPlaying && (
-        <div className="text-left border-t border-white/10 pt-8 mt-12 animate-in fade-in slide-in-from-bottom-4">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-xl font-black text-white flex items-center gap-2">
-                <span className="text-2xl">🏆</span> Papan Peringkat
-              </h3>
-              <p className="text-xs text-slate-500">
-                Siswa dengan ketikan tercepat (Akurasi &gt; 90%)
-              </p>
-            </div>
-
-            {/* --- Grouping Tombol di Sebelah Kanan --- */}
-            <div className="flex items-center gap-4">
-              <button
-                onClick={fetchUserHistory}
-                className="text-xs text-blue-400 hover:text-blue-300 font-bold uppercase tracking-wider transition-all"
-              >
-                Riwayat Saya
-              </button>
-
-              <button
-                onClick={() => setShowFullLeaderboard(!showFullLeaderboard)}
-                className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-white/5 transition-all font-bold"
-              >
-                {showFullLeaderboard ? "Top 3" : "Top 100"}
-              </button>
-            </div>
-          </div>
-
-          <div className={`space-y-2 transition-all duration-500 ${showFullLeaderboard ? 'max-h-[400px] overflow-y-auto pr-2 custom-scrollbar' : ''}`}>
-            {leaderboard.length > 0 ? (
-              leaderboard
-                .slice(0, showFullLeaderboard ? 100 : 3)
-                .map((entry, index) => (
-                  <div key={index} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${index === 0 ? 'bg-gradient-to-r from-yellow-500/20 to-transparent border-yellow-500/30' : index === 1 ? 'bg-gradient-to-r from-slate-300/10 to-transparent border-slate-300/30' : index === 2 ? 'bg-gradient-to-r from-orange-500/10 to-transparent border-orange-500/30' : 'bg-slate-900/40 border-white/5'}`}>
-                    <div className="flex items-center gap-4">
-                      {/* Lingkaran Nomor Urut */}
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shrink-0 ${index === 0 ? 'bg-yellow-500 text-black' :
-                        index === 1 ? 'bg-slate-300 text-black' :
-                          index === 2 ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-500'
-                        }`}>
-                        {index + 1}
-                      </div>
-
-                      {/* Info Siswa: Nama di atas, Badge di bawah */}
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-white font-bold capitalize truncate">
-                          {entry.full_name?.toLowerCase() || 'siswa spenda'}
-                        </span>
-
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {entry.class && (
-                            <span className="text-[9px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20 font-bold uppercase">
-                              {entry.class}
-                            </span>
-                          )}
-                          {entry.attendance_number && (
-                            <span className="text-[9px] bg-slate-800/80 text-slate-400 px-1.5 py-0.5 rounded border border-white/5 font-medium">
-                              Absen {entry.attendance_number}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-6">
-                      <div className="text-right">
-                        <span className="block text-[9px] text-slate-500 uppercase font-bold">WPM</span>
-                        <span className="text-blue-400 font-black text-lg">{entry.wpm}</span>
-                      </div>
-                      <div className="text-right w-12 border-l border-white/5 pl-4">
-                        <span className="block text-[9px] text-slate-500 uppercase font-bold">ACC</span>
-                        <span className="text-emerald-400 font-bold">{entry.accuracy}%</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-            ) : (
-              <p className="text-center text-slate-600 py-4 italic text-sm">Belum ada skor hari ini...</p>
-            )}
-          </div>
-        </div>
+        <Leaderboard
+          data={leaderboard}
+          isPlaying={isPlaying}
+          showFull={showFullLeaderboard}
+          onToggleShow={() => setShowFullLeaderboard(!showFullLeaderboard)}
+          onShowHistory={fetchUserHistory}
+          scoreLabel="WPM"
+          secondaryLabel="ACC"
+        />
       )}
       {/* Cukup panggil seperti ini */}
       <ModalRiwayat
@@ -532,3 +456,47 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
 };
 
 export default GameKetikCepat;
+
+// ==========================================
+  // 5. SUB-KOMPONEN: VISUAL HURUF (HIJAU/MERAH)
+  // ==========================================
+  const renderChar = (word, wordIdx, char, charIdx, userInput, currentIndex, wordHistory) => {
+    let colorClass = "text-slate-500";
+
+    if (wordIdx < currentIndex) {
+      const isCorrect = wordHistory[wordIdx];
+      colorClass = isCorrect ? "text-green-900" : "text-red-900"; // Pakai warna gelap untuk kata yang sudah lewat agar ringan
+    }
+    else if (wordIdx === currentIndex) {
+      if (charIdx < userInput.length) {
+        colorClass = char === userInput[charIdx]
+          ? "text-green-400"
+          : "text-red-500 underline underline-offset-4 decoration-2";
+      } else {
+        colorClass = "text-white";
+      }
+    }
+
+    return (
+      <span key={charIdx} className={`${colorClass} transition-colors duration-75`}>
+        {char}
+      </span>
+    );
+  };
+
+  const WordItem = React.memo(({ word, wordIdx, currentIndex, userInput, wordHistory, renderChar }) => {
+    const isActive = wordIdx === currentIndex;
+
+    return (
+      <span className={`transition-all duration-200 px-1 md:px-2 py-0.5 rounded-lg text-xl md:text-4xl font-medium leading-none whitespace-nowrap ${isActive ? 'bg-blue-600/30 ring-1 ring-blue-500/50 scale-110' : 'scale-100'}`}>
+        {word.split('').map((char, cIdx) =>
+          renderChar(word, wordIdx, char, cIdx, userInput, currentIndex, wordHistory)
+        )}
+      </span>
+    );
+  }, (prev, next) => {
+    // ATURAN EMAS: Jangan gambar ulang jika kata ini bukan kata yang sedang diketik
+    // dan bukan kata yang baru saja selesai diketik.
+    const isStillInactive = prev.wordIdx !== prev.currentIndex && next.wordIdx !== next.currentIndex;
+    return isStillInactive;
+  });
