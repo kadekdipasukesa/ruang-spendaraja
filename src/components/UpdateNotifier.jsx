@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, X, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 // Cukup ganti tanggal ini kalau mau notif muncul lagi di masa depan
-const CURRENT_UPDATE_ID = "2025-02-17-reset-data"; 
+const CURRENT_UPDATE_ID = "2025-02-17-reset-data & update kata"; 
 
 const UpdateNotifier = () => {
     const [isVisible, setIsVisible] = useState(false);

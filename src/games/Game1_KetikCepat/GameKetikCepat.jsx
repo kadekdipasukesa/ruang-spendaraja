@@ -9,10 +9,40 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
   // ==========================================
   // 1. KONFIGURASI & DATA TEKS
   // ==========================================
-  const SAMPLE_TEXTS = [
-    'saya berlatih mengetik dengan kecepatan penuh setiap hari untuk mengasah keterampilan jari jemari agar bisa lebih lincah dan akurat dalam menekan setiap tombol pada papan ketik ini adalah tantangan yang saya nikmati karena dapat menguji fokus dan daya tahan mental saya dalam menghadapi berbagai rintangan teknologi di masa depan yang semakin berkembang pesat setiap saat kita harus konsisten berlatih agar tidak tertinggal oleh kemajuan zaman yang menuntut efisiensi kerja tinggi kecepatan jemari dalam menari di atas papan ketik akan membantu kita menyelesaikan tugas sekolah maupun pekerjaan dengan jauh lebih mudah dan efektif tanpa perlu merasa lelah atau bosan karena sudah terbiasa melakukan gerakan yang sama berulang kali dengan presisi tinggi',
-    'komputer adalah mesin elektronik serbaguna yang digunakan untuk memproses data dan informasi perangkat keras seperti cpu monitor keyboard dan mouse bekerja sama dengan perangkat lunak seperti sistem operasi dan aplikasi komputer digunakan dalam berbagai bidang kehidupan manusia mulai dari pendidikan kesehatan bisnis hingga hiburan yang sangat menyenangkan bagi siapa saja yang menggunakannya teknologi ini terus mengalami perubahan besar yang membuat hidup kita menjadi lebih praktis dan efisien dalam melakukan komunikasi jarak jauh maupun dalam mengelola dokumen penting yang membutuhkan keamanan tingkat tinggi setiap siswa harus memahami cara kerja perangkat ini agar mampu menguasai dunia digital yang sangat luas dan penuh dengan peluang menarik untuk masa depan karir yang cerah bagi mereka yang tekun belajar',
-    'scratch adalah bahasa pemrograman visual yang dirancang khusus untuk anak anak dan pemula dengan menggunakan antarmuka drag and drop pengguna dapat membuat cerita interaktif permainan dan animasi tanpa harus menulis kode yang rumit dan membingungkan bagi orang awam yang baru mengenal dunia logika komputer melalui platform ini kita bisa belajar berpikir secara sistematis dan kreatif dalam memecahkan masalah yang ada di sekitar kita dengan cara yang sangat menyenangkan serta kolaboratif bersama teman teman di seluruh dunia setiap blok kode yang kita susun memiliki fungsi tersendiri yang akan membentuk sebuah program utuh jika dirangkai dengan benar sesuai dengan imajinasi dan logika yang kita miliki sehingga mampu menghasilkan karya digital yang luar biasa bermanfaat bagi orang lain'
+  // const SAMPLE_TEXTS = [
+  //   'saya berlatih mengetik dengan kecepatan penuh setiap hari untuk mengasah keterampilan jari jemari agar bisa lebih lincah dan akurat dalam menekan setiap tombol pada papan ketik ini adalah tantangan yang saya nikmati karena dapat menguji fokus dan daya tahan mental saya dalam menghadapi berbagai rintangan teknologi di masa depan yang semakin berkembang pesat setiap saat kita harus konsisten berlatih agar tidak tertinggal oleh kemajuan zaman yang menuntut efisiensi kerja tinggi kecepatan jemari dalam menari di atas papan ketik akan membantu kita menyelesaikan tugas sekolah maupun pekerjaan dengan jauh lebih mudah dan efektif tanpa perlu merasa lelah atau bosan karena sudah terbiasa melakukan gerakan yang sama berulang kali dengan presisi tinggi',
+  //   'komputer adalah mesin elektronik serbaguna yang digunakan untuk memproses data dan informasi perangkat keras seperti cpu monitor keyboard dan mouse bekerja sama dengan perangkat lunak seperti sistem operasi dan aplikasi komputer digunakan dalam berbagai bidang kehidupan manusia mulai dari pendidikan kesehatan bisnis hingga hiburan yang sangat menyenangkan bagi siapa saja yang menggunakannya teknologi ini terus mengalami perubahan besar yang membuat hidup kita menjadi lebih praktis dan efisien dalam melakukan komunikasi jarak jauh maupun dalam mengelola dokumen penting yang membutuhkan keamanan tingkat tinggi setiap siswa harus memahami cara kerja perangkat ini agar mampu menguasai dunia digital yang sangat luas dan penuh dengan peluang menarik untuk masa depan karir yang cerah bagi mereka yang tekun belajar',
+  //   'scratch adalah bahasa pemrograman visual yang dirancang khusus untuk anak anak dan pemula dengan menggunakan antarmuka drag and drop pengguna dapat membuat cerita interaktif permainan dan animasi tanpa harus menulis kode yang rumit dan membingungkan bagi orang awam yang baru mengenal dunia logika komputer melalui platform ini kita bisa belajar berpikir secara sistematis dan kreatif dalam memecahkan masalah yang ada di sekitar kita dengan cara yang sangat menyenangkan serta kolaboratif bersama teman teman di seluruh dunia setiap blok kode yang kita susun memiliki fungsi tersendiri yang akan membentuk sebuah program utuh jika dirangkai dengan benar sesuai dengan imajinasi dan logika yang kita miliki sehingga mampu menghasilkan karya digital yang luar biasa bermanfaat bagi orang lain'
+  // ];
+
+  const WORD_POOL = [
+    // Teknologi & Komputer
+    'komputer', 'laptop', 'keyboard', 'mouse', 'monitor', 'printer', 'software', 'hardware', 'jaringan', 'internet',
+    'website', 'aplikasi', 'database', 'server', 'coding', 'algoritma', 'logika', 'digital', 'cyber', 'robotik',
+    'sistem', 'prosesor', 'memori', 'storage', 'cloud', 'pixel', 'resolusi', 'kabel', 'sinyal', 'wifi',
+    'password', 'keamanan', 'update', 'instal', 'unduh', 'unggah', 'folder', 'berkas', 'dokumen', 'ikon',
+
+    // Sekolah & Pendidikan
+    'belajar', 'sekolah', 'siswa', 'guru', 'kelas', 'buku', 'pensil', 'tugas', 'ujian', 'ilmu',
+    'pintar', 'cerdas', 'kreatif', 'mandiri', 'disiplin', 'tekun', 'perpustakaan', 'kantin', 'upacara', 'bendera',
+    'kurikulum', 'materi', 'praktek', 'teori', 'metode', 'riset', 'kamus', 'jurnal', 'prestasi', 'beasiswa',
+    'pendidikan', 'akademik', 'skor', 'nilai', 'rangking', 'semester', 'ijazah', 'bangku', 'kapur', 'spidol',
+
+    // Karakter & Motivasi
+    'semangat', 'hebat', 'mampu', 'bisa', 'lancar', 'cepat', 'lincah', 'fokus', 'asah', 'latih',
+    'juara', 'berani', 'sukses', 'impian', 'cita-cita', 'usaha', 'doa', 'sabar', 'jujur', 'setia',
+    'bangga', 'ceria', 'aktif', 'positif', 'inovasi', 'imajinasi', 'potensi', 'bakat', 'minat', 'paham',
+    'gigih', 'tangguh', 'optimis', 'bijak', 'santun', 'ramah', 'peduli', 'berbagi', 'kerjasama', 'gotong',
+
+    // Kata Umum & Kata Kerja
+    'papan', 'tombol', 'jari', 'tangan', 'mata', 'layar', 'suara', 'gambar', 'video', 'musik',
+    'baca', 'tulis', 'hitung', 'gambar', 'simpan', 'hapus', 'salin', 'tempel', 'cari', 'temukan',
+    'buka', 'tutup', 'mulai', 'selesai', 'istirahat', 'makan', 'minum', 'duduk', 'berdiri', 'jalan',
+    'lompat', 'lari', 'main', 'kerja', 'bantu', 'lihat', 'dengar', 'rasa', 'pikir', 'paham',
+
+    // Tambahan istilah Scratch/Coding Pemula
+    'scratch', 'sprite', 'backdrop', 'motion', 'looks', 'sound', 'events', 'control', 'sensing', 'operators',
+    'variables', 'broadcast', 'clone', 'loop', 'forever', 'repeat', 'if', 'else', 'touching', 'direction'
   ];
   const TIME_LIMIT = 60;
   const MIN_ACCURACY = 90;
@@ -52,8 +82,15 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
   // ==========================================
 
   const initGame = () => {
-    const randomText = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
-    setWords(randomText.split(' '));
+    // const randomText = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
+    // setWords(randomText.split(' '));
+
+    // Ambil 100 kata acak agar siswa tidak kehabisan teks sebelum 60 detik
+    const shuffled = [...WORD_POOL]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 100);
+    setWords(shuffled);
+
     setCurrentIndex(0);
     setIsTimerStarted(false); // Timer mati sampai ada ketikan
     setWordHistory([]); // RESET HISTORI DI SINI
@@ -252,7 +289,13 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
       if (!error) {
         console.log("Skor Berhasil!");
 
-        // --- LOGIKA POSTING OTOMATIS KE BERANDA ---
+        // --- LOGIKA POSTING OTOMATIS KE BERANDA (DIPERKETAT) ---
+
+        // A. Cek apakah ini skor tertinggi (Personal Best) si siswa
+        // Kita bandingkan dengan personalBest yang sudah ada di state
+        const isNewRecord = finalWpm > personalBest;
+
+        // B. Cek apakah masuk peringkat TOP 3 Global
         const { data: latestRankings } = await supabase
           .from('game1_scores_typing')
           .select('full_name, wpm')
@@ -262,11 +305,16 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
 
         const isTop3 = latestRankings?.some(r => r.full_name === userData.NAMA && r.wpm === finalWpm);
 
-        if (isTop10 && onArchiveAchievement) {
-          const achievementMsg = `Wow.. Gak Nyangka! 🔥 Baru saja mencetak skor ${finalWpm} WPM dengan akurasi ${finalAccuracy}% dan berhasil menembus peringkat TOP 3 di Game Ketik Cepat! 🚀🏎️`;
+        // C. Syarat Post: Harus masuk Top 3 DAN harus pecah rekor pribadi
+        if (isTop3 && isNewRecord && onArchiveAchievement) {
+          const achievementMsg = `Wow.. Gak Nyangka! 🔥 Baru saja mencetak REKOR BARU ${finalWpm} WPM dengan akurasi ${finalAccuracy}% dan berhasil menembus peringkat TOP 3 di Game Ketik Cepat! 🚀🏎️`;
           onArchiveAchievement(achievementMsg);
+
+          // Update state personalBest agar sinkron
+          setPersonalBest(finalWpm);
         }
-        // ------------------------------------------
+        // -------------------------------------------------------
+
 
         fetchLeaderboard();
       }
@@ -279,6 +327,13 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
   const endGame = () => {
     setIsPlaying(false);
     setIsFinished(true);
+
+    // PENGAMAN: Jangan simpan jika currentIndex masih terlalu kecil (Bug proteksi)
+    if (currentIndex < 5) {
+      console.warn("Game berhenti terlalu cepat, skor tidak disimpan.");
+      return;
+    }
+
     // Panggil fungsi simpan skor
     // Kita kirimkan nilai WPM dan Akurasi terakhir
     saveScore(wpm, accuracy);
@@ -286,18 +341,18 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
   };
 
   // ==========================================
-  // 4. HANDLER INPUT (DIPERBAIKI)
+  // 4. HANDLER INPUT (DIPERBAIKI), fix bug panina 95wpm
   // ==========================================
   const handleInput = (e) => {
     const val = e.target.value;
 
     if (isPlaying && !isTimerStarted && val.length > 0) {
-      // Catat waktu mulai tepat saat karakter pertama diketik
       startTimeRef.current = Date.now();
       setIsTimerStarted(true);
     }
 
-    if (val.endsWith(' ')) {
+    // PERBAIKAN: Hanya proses spasi jika input tidak kosong
+    if (val.endsWith(' ') && val.trim().length > 0) {
       const typedWord = val.trim();
       const targetWord = words[currentIndex];
       const isCorrect = typedWord === targetWord;
@@ -313,7 +368,6 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
       const newTotal = totalTypedChars + targetWord.length;
       setTotalTypedChars(newTotal);
 
-      // Hitung WPM menggunakan waktu asli (elapsed) agar lebih akurat
       const elapsedMinutes = (Date.now() - startTimeRef.current) / 60000;
       if (elapsedMinutes > 0) {
         setWpm(Math.round((newCorrect / 5) / elapsedMinutes));
@@ -321,10 +375,18 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
 
       if (newTotal > 0) setAccuracy(Math.round((newCorrect / newTotal) * 100));
 
-      setCurrentIndex(currentIndex + 1);
+      // Pindah ke kata berikutnya
+      const nextIndex = currentIndex + 1;
+      setCurrentIndex(nextIndex);
       setUserInput('');
 
-      if (currentIndex + 1 >= words.length) endGame();
+      // PERBAIKAN: Cek apakah benar-benar sudah di akhir kata
+      if (nextIndex >= words.length) {
+        endGame();
+      }
+    } else if (val === ' ') {
+      // Jika user cuma tekan spasi di awal tanpa huruf, kosongkan saja
+      setUserInput('');
     } else {
       setUserInput(val);
     }
@@ -458,45 +520,45 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
 export default GameKetikCepat;
 
 // ==========================================
-  // 5. SUB-KOMPONEN: VISUAL HURUF (HIJAU/MERAH)
-  // ==========================================
-  const renderChar = (word, wordIdx, char, charIdx, userInput, currentIndex, wordHistory) => {
-    let colorClass = "text-slate-500";
+// 5. SUB-KOMPONEN: VISUAL HURUF (HIJAU/MERAH)
+// ==========================================
+const renderChar = (word, wordIdx, char, charIdx, userInput, currentIndex, wordHistory) => {
+  let colorClass = "text-slate-500";
 
-    if (wordIdx < currentIndex) {
-      const isCorrect = wordHistory[wordIdx];
-      colorClass = isCorrect ? "text-green-900" : "text-red-900"; // Pakai warna gelap untuk kata yang sudah lewat agar ringan
+  if (wordIdx < currentIndex) {
+    const isCorrect = wordHistory[wordIdx];
+    colorClass = isCorrect ? "text-green-900" : "text-red-900"; // Pakai warna gelap untuk kata yang sudah lewat agar ringan
+  }
+  else if (wordIdx === currentIndex) {
+    if (charIdx < userInput.length) {
+      colorClass = char === userInput[charIdx]
+        ? "text-green-400"
+        : "text-red-500 underline underline-offset-4 decoration-2";
+    } else {
+      colorClass = "text-white";
     }
-    else if (wordIdx === currentIndex) {
-      if (charIdx < userInput.length) {
-        colorClass = char === userInput[charIdx]
-          ? "text-green-400"
-          : "text-red-500 underline underline-offset-4 decoration-2";
-      } else {
-        colorClass = "text-white";
-      }
-    }
+  }
 
-    return (
-      <span key={charIdx} className={`${colorClass} transition-colors duration-75`}>
-        {char}
-      </span>
-    );
-  };
+  return (
+    <span key={charIdx} className={`${colorClass} transition-colors duration-75`}>
+      {char}
+    </span>
+  );
+};
 
-  const WordItem = React.memo(({ word, wordIdx, currentIndex, userInput, wordHistory, renderChar }) => {
-    const isActive = wordIdx === currentIndex;
+const WordItem = React.memo(({ word, wordIdx, currentIndex, userInput, wordHistory, renderChar }) => {
+  const isActive = wordIdx === currentIndex;
 
-    return (
-      <span className={`transition-all duration-200 px-1 md:px-2 py-0.5 rounded-lg text-xl md:text-4xl font-medium leading-none whitespace-nowrap ${isActive ? 'bg-blue-600/30 ring-1 ring-blue-500/50 scale-110' : 'scale-100'}`}>
-        {word.split('').map((char, cIdx) =>
-          renderChar(word, wordIdx, char, cIdx, userInput, currentIndex, wordHistory)
-        )}
-      </span>
-    );
-  }, (prev, next) => {
-    // ATURAN EMAS: Jangan gambar ulang jika kata ini bukan kata yang sedang diketik
-    // dan bukan kata yang baru saja selesai diketik.
-    const isStillInactive = prev.wordIdx !== prev.currentIndex && next.wordIdx !== next.currentIndex;
-    return isStillInactive;
-  });
+  return (
+    <span className={`transition-all duration-200 px-1 md:px-2 py-0.5 rounded-lg text-xl md:text-4xl font-medium leading-none whitespace-nowrap ${isActive ? 'bg-blue-600/30 ring-1 ring-blue-500/50 scale-110' : 'scale-100'}`}>
+      {word.split('').map((char, cIdx) =>
+        renderChar(word, wordIdx, char, cIdx, userInput, currentIndex, wordHistory)
+      )}
+    </span>
+  );
+}, (prev, next) => {
+  // ATURAN EMAS: Jangan gambar ulang jika kata ini bukan kata yang sedang diketik
+  // dan bukan kata yang baru saja selesai diketik.
+  const isStillInactive = prev.wordIdx !== prev.currentIndex && next.wordIdx !== next.currentIndex;
+  return isStillInactive;
+});
