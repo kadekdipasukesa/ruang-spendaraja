@@ -18,9 +18,9 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
   const WORD_POOL = [
     // Teknologi & Komputer
     'komputer', 'laptop', 'keyboard', 'mouse', 'monitor', 'printer', 'software', 'hardware', 'jaringan', 'internet',
-    'website', 'aplikasi', 'database', 'server', 'coding', 'algoritma', 'logika', 'digital', 'cyber', 'robotik',
-    'sistem', 'prosesor', 'memori', 'storage', 'cloud', 'pixel', 'resolusi', 'kabel', 'sinyal', 'wifi',
-    'password', 'keamanan', 'update', 'instal', 'unduh', 'unggah', 'folder', 'berkas', 'dokumen', 'ikon',
+    'web', 'aplikasi', 'data', 'server', 'coding', 'algoritma', 'logika', 'digital', 'robot',
+    'sistem', 'prosesor', 'memori', 'penyimpanan', 'awan', 'resolusi', 'kabel', 'sinyal', 'wifi',
+    'sandi', 'keamanan', 'update', 'instal', 'unduh', 'unggah', 'folder', 'berkas', 'dokumen', 'ikon',
 
     // Sekolah & Pendidikan
     'belajar', 'sekolah', 'siswa', 'guru', 'kelas', 'buku', 'pensil', 'tugas', 'ujian', 'ilmu',
@@ -30,7 +30,7 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
 
     // Karakter & Motivasi
     'semangat', 'hebat', 'mampu', 'bisa', 'lancar', 'cepat', 'lincah', 'fokus', 'asah', 'latih',
-    'juara', 'berani', 'sukses', 'impian', 'cita-cita', 'usaha', 'doa', 'sabar', 'jujur', 'setia',
+    'juara', 'berani', 'sukses', 'impian', 'cita', 'usaha', 'doa', 'sabar', 'jujur', 'setia',
     'bangga', 'ceria', 'aktif', 'positif', 'inovasi', 'imajinasi', 'potensi', 'bakat', 'minat', 'paham',
     'gigih', 'tangguh', 'optimis', 'bijak', 'santun', 'ramah', 'peduli', 'berbagi', 'kerjasama', 'gotong',
 
@@ -40,9 +40,14 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
     'buka', 'tutup', 'mulai', 'selesai', 'istirahat', 'makan', 'minum', 'duduk', 'berdiri', 'jalan',
     'lompat', 'lari', 'main', 'kerja', 'bantu', 'lihat', 'dengar', 'rasa', 'pikir', 'paham',
 
-    // Tambahan istilah Scratch/Coding Pemula
-    // 'scratch', 'sprite', 'backdrop', 'motion', 'looks', 'sound', 'events', 'control', 'sensing', 'operators',
-    // 'variables', 'broadcast', 'clone', 'loop', 'forever', 'repeat', 'if', 'else', 'touching', 'direction'
+    // Kata bantu pendek umum
+    'di', 'ke', 'dari', 'dan', 'atau', 'yang', 'untuk', 'pada', 'dengan', 'tanpa',
+    'dalam', 'oleh', 'agar', 'karena', 'sebagai', 'jika', 'maka', 'bahwa',
+    'ini', 'itu', 'ada', 'jadi', 'saja',
+
+    'di', 'ke', 'dari', 'dan', 'atau', 'yang', 'untuk', 'pada', 'dengan', 'tanpa',
+    'dalam', 'oleh', 'agar', 'karena', 'sebagai', 'jika', 'maka', 'bahwa',
+    'ini', 'itu', 'ada', 'jadi', 'saja'
   ];
   const TIME_LIMIT = 60;
   const MIN_ACCURACY = 90;

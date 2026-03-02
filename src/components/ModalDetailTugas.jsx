@@ -13,16 +13,18 @@ export default function ModalDetailTugas({ tugas, student, onClose }) {
     : null;
 
   const handleSubmit = async () => {
-    // BARIS TAMBAHAN UNTUK CEK DATA DI CONSOLE
+    // 1. Pastikan data terbaca
     console.log("Data Siswa saat ini:", student);
 
     setLoading(true);
+    
+    // 2. Gunakan pemetaan data yang sesuai dengan console kamu
     const { error } = await supabase.from('submissions').insert([{
-      tugas_id: tugas.id,
-      student_id: student.id || student.Nama, // Menyesuaikan data student kamu
-      nama: student.Nama,
-      no_absen: student.Absen,
-      kelas: student.Kelas,
+      tugas_id: String(tugas.id),
+      student_id: String(student.id || student.NAMA), 
+      nama: String(student.NAMA),           // Sesuai Console: "NAMA"
+      no_absen: String(student["No Absen"]), // Sesuai Console: "No Absen"
+      kelas: String(student.Kelas),         // Sesuai Console: "Kelas"
       jawaban: jawaban,
       status: 'Selesai'
     }]);
@@ -31,6 +33,7 @@ export default function ModalDetailTugas({ tugas, student, onClose }) {
       setIsDone(true);
       setTimeout(onClose, 2000);
     } else {
+      console.error("Detail Error Supabase:", error);
       alert("Gagal mengirim: " + error.message);
     }
     setLoading(false);
@@ -40,6 +43,14 @@ export default function ModalDetailTugas({ tugas, student, onClose }) {
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
       <div className="bg-[#1e293b] border border-slate-700 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95">
         
+        {/* Tombol Close Pojok Kanan */}
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 p-2 rounded-full z-[120]"
+        >
+          <X size={20} />
+        </button>
+
         {/* Header Gambar/Video */}
         {videoId ? (
           <div className="aspect-video w-full bg-black">
@@ -80,7 +91,7 @@ export default function ModalDetailTugas({ tugas, student, onClose }) {
               {tugas.tipe_konten === 'link' && (
                 <input 
                   type="url"
-                  className="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-blue-500"
+                  className="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-blue-500 text-white"
                   placeholder="Tempel link tugas (Google Drive/YouTube) di sini..."
                   value={jawaban} onChange={(e) => setJawaban(e.target.value)}
                 />
@@ -88,7 +99,7 @@ export default function ModalDetailTugas({ tugas, student, onClose }) {
 
               {tugas.tipe_konten === 'esai' && (
                 <textarea 
-                  className="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-blue-500 min-h-[120px]"
+                  className="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-blue-500 min-h-[120px] text-white"
                   placeholder="Ketik jawaban kamu di sini..."
                   value={jawaban} onChange={(e) => setJawaban(e.target.value)}
                 />
