@@ -25,10 +25,11 @@ export default function GameCard({
   const colors = {
     blue: "from-blue-600/20 border-blue-500/20 hover:border-blue-500/50 bg-blue-600",
     green: "from-green-600/20 border-green-500/20 hover:border-green-500/50 bg-green-600",
-    orange: "from-orange-600/20 border-orange-500/20 hover:border-orange-500/50 bg-orange-600"
+    orange: "from-orange-600/20 border-orange-500/20 hover:border-orange-500/50 bg-orange-600",
+    purple: "from-purple-600/20 border-purple-500/20 hover:border-purple-500/50 bg-purple-600" // TAMBAHKAN INI
   };
 
-  console.log(`Game: ${gameId}, Kelas: ${userClass}, Status: ${allLockStatuses?.[gameId]?.[userClass]}`);
+  // console.log(`Game: ${gameId}, Kelas: ${userClass}, Status: ${allLockStatuses?.[gameId]?.[userClass]}`);
 
   return (
     <div className="relative group">

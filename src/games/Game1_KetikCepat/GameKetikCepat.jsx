@@ -41,8 +41,8 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
     'lompat', 'lari', 'main', 'kerja', 'bantu', 'lihat', 'dengar', 'rasa', 'pikir', 'paham',
 
     // Tambahan istilah Scratch/Coding Pemula
-    'scratch', 'sprite', 'backdrop', 'motion', 'looks', 'sound', 'events', 'control', 'sensing', 'operators',
-    'variables', 'broadcast', 'clone', 'loop', 'forever', 'repeat', 'if', 'else', 'touching', 'direction'
+    // 'scratch', 'sprite', 'backdrop', 'motion', 'looks', 'sound', 'events', 'control', 'sensing', 'operators',
+    // 'variables', 'broadcast', 'clone', 'loop', 'forever', 'repeat', 'if', 'else', 'touching', 'direction'
   ];
   const TIME_LIMIT = 60;
   const MIN_ACCURACY = 90;

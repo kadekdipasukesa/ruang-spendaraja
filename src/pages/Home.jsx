@@ -11,6 +11,12 @@ import FloatingOnline from '../components/FloatingOnline'; // Pastikan jalurnya 
 // import ActivityCard from '../components/ActivityCard';
 import Feed from '../components/Feed';
 import UpdateNotifier from "../components/UpdateNotifier";
+import Game3Page from './Game3/Game3Page';
+
+import ModalInputTugas from '../components/ModalInputTugas';
+import AssignmentCard from "../components/AssignmentCard";
+import ModalDetailTugas from "../components/ModalDetailTugas";
+
 
 import {
   Home as HomeIcon,
@@ -21,7 +27,9 @@ import {
   Gamepad2,
   Send,
   Bird,
-  Keyboard
+  Keyboard,
+  Zap,
+  Plus
 } from 'lucide-react';
 
 export default function Home() {
@@ -30,18 +38,43 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('beranda')
   const [posts, setPosts] = useState([])
   const [newPost, setNewPost] = useState('')
-  const [showGameKetik, setShowGameKetik] = useState(false);
-  const [allLockStatuses, setAllLockStatuses] = useState({ game1: {}, game2: {} });
-  // Di bagian atas Home.jsx
 
-  const [lockStatusesGame1, setLockStatusesGame1] = useState({});
-  const [lockStatusesGame2, setLockStatusesGame2] = useState({});
+  const [showGameKetik, setShowGameKetik] = useState(false);
+  const [showFlappy, setShowFlappy] = useState(false);
+  const [showGameLCC, setShowGameLCC] = useState(false);
+
+  const [allLockStatuses, setAllLockStatuses] = useState({ game1: {}, game2: {}, game3: {} });
+  // Di bagian atas Home.jsx
 
   // Dan state untuk tombol admin (gembok menyala/mati saat dipilih)
   const [isGame1Locked, setIsGame1Locked] = useState(false);
   const [isGame2Locked, setIsGame2Locked] = useState(false);
+  const [isGame3Locked, setIsGame3Locked] = useState(false);
 
-  const [showFlappy, setShowFlappy] = useState(false);
+  const [lockStatusesGame1, setLockStatusesGame1] = useState({});
+  const [lockStatusesGame2, setLockStatusesGame2] = useState({});
+
+  const [assignments, setAssignments] = useState([]);
+  const [selectedTugas, setSelectedTugas] = useState(null); // Untuk modal detail
+
+  // Letakkan di deretan state lainnya
+  const [showInputTugas, setShowInputTugas] = useState(false);
+
+  // ---  LOGIC: AMBIL DATA TUGAS ---
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      if (!student) return;
+      const { data, error } = await supabase
+        .from('assignments')
+        .select('*')
+        .or(`target_kelas.eq.${student.Kelas},target_kelas.eq.Semua`)
+        .order('deadline', { ascending: true });
+
+      if (!error) setAssignments(data);
+    };
+
+    if (activeTab === 'tugas') fetchAssignments();
+  }, [activeTab, student]);
 
   // Tambahkan ini jika belum ada di dalam Home kamu
   useEffect(() => {
@@ -144,7 +177,7 @@ export default function Home() {
 
       if (data) {
         // Gabungkan inisialisasi agar bersih
-        const statusMap = { game1: {}, game2: {} };
+        const statusMap = { game1: {}, game2: {}, game3: {} };
 
         data.forEach(item => {
           if (statusMap[item.game_id]) {
@@ -168,6 +201,13 @@ export default function Home() {
         setIsGame2Locked(student?.role === 'admin'
           ? (statusMap.game2?.[selClass2] || false)
           : (statusMap.game2?.[userClass] || false)
+        );
+
+        // Sinkronkan gembok Admin/Siswa untuk Game 3
+        const selClass3 = document.getElementById('select-class-game3')?.value || 'Tanpa Kelas';
+        setIsGame3Locked(student?.role === 'admin'
+          ? (statusMap.game3?.[selClass3] || false)
+          : (statusMap.game3?.[userClass] || false)
         );
       }
     };
@@ -200,6 +240,11 @@ export default function Home() {
             if (game_id === 'game2') {
               const selClass2 = document.getElementById('select-class-game2')?.value;
               if (class_name === selClass2 || class_name === userClass) setIsGame2Locked(is_locked);
+            }
+
+            if (game_id === 'game3') {
+              const selClass3 = document.getElementById('select-class-game3')?.value;
+              if (class_name === selClass3 || class_name === userClass) setIsGame3Locked(is_locked);
             }
           }
         }
@@ -307,6 +352,7 @@ export default function Home() {
       // 1. Update status gembok admin sesuai gamenya
       if (gameId === 'game1') setIsGame1Locked(!currentStatus);
       else if (gameId === 'game2') setIsGame2Locked(!currentStatus);
+      else if (gameId === 'game3') setIsGame3Locked(!currentStatus); // TAMBAHKAN INI
 
       // 2. PERBAIKAN DISINI: Update allLockStatuses tanpa merusak struktur game_id
       setAllLockStatuses(prev => ({
@@ -328,94 +374,183 @@ export default function Home() {
   //untuk posisi
   const getCurrentActivity = () => {
     if (showGameKetik) return "🎮 Bermain Ketik Cepat";
+    if (showGameLCC) return "🎮 Bermain lomba cerdas cermat";
     if (showFlappy) return "🐦 Bermain Flappy Bird";
     return activeTab; // Jika tidak main game, tampilkan nama tab (beranda/playground/dll)
   };
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 font-sans">
-      <div className="max-w-4xl mx-auto">
+      {/* 1. LOGIKA FULLSCREEN GAME 3 (Tanpa Modal) */}
+      {showGameLCC ? (
+        <Game3Page
+          userSiswa={student}
+          onBack={() => setShowGameLCC(false)}
+        />
+      ) : (
+        <div className="max-w-4xl mx-auto">
 
-        {/* --- LOGIKA OPSI 1: SEMBUNYIKAN KONTEN UTAMA JIKA GAME AKTIF --- */}
-        {!showGameKetik && !showFlappy ? (
-          <>
-            {/* HERO */}
-            <Hero
-              student={student}
-              onStart={() => (student ? setActiveTab('tugas') : alert('Login dulu yuk!'))}
-            />
+          {/* --- LOGIKA OPSI 1: SEMBUNYIKAN KONTEN UTAMA JIKA GAME AKTIF --- */}
+          {!showGameKetik && !showFlappy ? (
+            <>
+              {/* HERO */}
+              <Hero
+                student={student}
+                onStart={() => (student ? setActiveTab('tugas') : alert('Login dulu yuk!'))}
+              />
 
-            {/* TAB MENU */}
-            <Navigation
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              student={student}
-            />
+              {/* TAB MENU */}
+              <Navigation
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                student={student}
+              />
 
-            {/* CONTENT AREA */}
-            <div className="min-h-[300px]">
-              {activeTab === 'beranda' && (
-                <Feed
-                  posts={posts}
-                  student={student}
-                  onApprove={handleApprove}
-                  onDelete={handleDelete}
-                  newPost={newPost}
-                  setNewPost={setNewPost}
-                  handlePost={handlePost}
-                />
-              )}
-
-              {activeTab === 'playground' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
-                  {/* Kartu Game 1 - Ketik Cepat */}
-                  <GameCard
-                    title="Ketik Cepat"
-                    gameId="game1"
-                    description="Ketiklah dengan tepat dan cepat!"
-                    icon={Keyboard}
-                    color="blue"
+              {/* CONTENT AREA */}
+              <div className="min-h-[300px]">
+                {activeTab === 'beranda' && (
+                  <Feed
+                    posts={posts}
                     student={student}
-                    allLockStatuses={allLockStatuses}
-                    isGameLocked={isGame1Locked}
-                    getOptionLabel={(cls, label) => getOptionLabel('game1', cls, label)}
-                    onPlay={() => setShowGameKetik(true)}
-                    onToggleLock={(selectedClass, mode) => {
-                      if (mode === 'check') setIsGame1Locked(allLockStatuses.game1?.[selectedClass] || false);
-                      else toggleLockGame('game1', isGame1Locked, selectedClass);
-                    }}
+                    onApprove={handleApprove}
+                    onDelete={handleDelete}
+                    newPost={newPost}
+                    setNewPost={setNewPost}
+                    handlePost={handlePost}
                   />
+                )}
 
-                  {/* Kartu Game 2 - Flappy Bird */}
-                  <GameCard
-                    title="Flappy Bird"
-                    gameId="game2"
-                    description="Terbangkan burung melewati pipa!"
-                    icon={Bird}
-                    color="green"
-                    student={student}
-                    allLockStatuses={allLockStatuses}
-                    isGameLocked={isGame2Locked}
-                    getOptionLabel={(cls, label) => getOptionLabel('game2', cls, label)}
-                    onPlay={() => setShowFlappy(true)}
-                    onToggleLock={(selectedClass, mode) => {
-                      if (mode === 'check') setIsGame2Locked(allLockStatuses.game2?.[selectedClass] || false);
-                      else toggleLockGame('game2', isGame2Locked, selectedClass);
-                    }}
-                  />
-                </div>
-              )}
+                {activeTab === 'playground' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
+                    {/* Kartu Game 1 - Ketik Cepat */}
+                    <GameCard
+                      title="Ketik Cepat"
+                      gameId="game1"
+                      description="Ketiklah dengan tepat dan cepat!"
+                      icon={Keyboard}
+                      color="blue"
+                      student={student}
+                      allLockStatuses={allLockStatuses}
+                      isGameLocked={isGame1Locked}
+                      getOptionLabel={(cls, label) => getOptionLabel('game1', cls, label)}
+                      onPlay={() => setShowGameKetik(true)}
+                      onToggleLock={(selectedClass, mode) => {
+                        if (mode === 'check') setIsGame1Locked(allLockStatuses.game1?.[selectedClass] || false);
+                        else toggleLockGame('game1', isGame1Locked, selectedClass);
+                      }}
+                    />
 
-              {/* ... Tab Lain Tetap Berfungsi di Sini ... */}
+                    {/* Kartu Game 2 - Flappy Bird */}
+                    <GameCard
+                      title="Flappy Bird"
+                      gameId="game2"
+                      description="Terbangkan burung melewati pipa!"
+                      icon={Bird}
+                      color="green"
+                      student={student}
+                      allLockStatuses={allLockStatuses}
+                      isGameLocked={isGame2Locked}
+                      getOptionLabel={(cls, label) => getOptionLabel('game2', cls, label)}
+                      onPlay={() => setShowFlappy(true)}
+                      onToggleLock={(selectedClass, mode) => {
+                        if (mode === 'check') setIsGame2Locked(allLockStatuses.game2?.[selectedClass] || false);
+                        else toggleLockGame('game2', isGame2Locked, selectedClass);
+                      }}
+                    />
+
+                    {/* Kartu Game 3 - Cerdas Cermat */}
+                    <GameCard
+                      title="Cerdas Cermat"
+                      gameId="game3"
+                      description="Adu cepat pencet bel dan jawab soal!"
+                      icon={Zap} // Menggunakan ikon Petir agar terasa nuansa rebutan cepat
+                      color="purple" // Warna ungu memberikan kesan eksklusif dan cerdas
+                      student={student} // Prop ini harus ada & tidak boleh null
+                      allLockStatuses={allLockStatuses}
+                      isGameLocked={isGame3Locked} // Pastikan Bapak sudah buat state [isGame3Locked, setIsGame3Locked]
+                      getOptionLabel={(cls, label) => getOptionLabel('game3', cls, label)}
+                      onPlay={() => setShowGameLCC(true)}
+                      onToggleLock={(selectedClass, mode) => {
+                        if (mode === 'check') {
+                          setIsGame3Locked(allLockStatuses.game3?.[selectedClass] || false);
+                        } else {
+                          toggleLockGame('game3', isGame3Locked, selectedClass);
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+
+                {activeTab === 'tugas' && (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl font-bold flex items-center gap-2 text-white">
+                          <FileText className="text-blue-400" /> Tugas {student?.Kelas}
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-1">{assignments.length} Tugas tersedia untukmu</p>
+                      </div>
+
+                      {/* TOMBOL ADMIN: Hanya muncul jika role admin */}
+                      {student?.role === 'admin' && (
+                        <button
+                          onClick={() => setShowInputTugas(true)} // Pastikan state ini sudah dibuat
+                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                        >
+                          <Plus size={18} />
+                          <span className="hidden md:inline">Tambah Tugas</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {assignments.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {assignments.map((t) => (
+                          <AssignmentCard
+                            key={t.id}
+                            data={t}
+                            onOpen={(val) => setSelectedTugas(val)}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-20 bg-[#1e293b]/50 rounded-3xl border border-dashed border-slate-700">
+                        <div className="bg-slate-800/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <FileText className="text-slate-600" size={30} />
+                        </div>
+                        <p className="text-slate-500 italic">Belum ada tugas untuk kelasmu. Santai dulu!</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ... Tab Lain Tetap Berfungsi di Sini ... */}
+              </div>
+            </>
+          ) : (
+            /* --- TAMPILAN SAAT GAME LAGI JALAN (Home Kosong) --- */
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500 animate-pulse">
+              <p className="text-sm font-medium tracking-widest uppercase">Game sedang aktif...</p>
             </div>
-          </>
-        ) : (
-          /* --- TAMPILAN SAAT GAME LAGI JALAN (Home Kosong) --- */
-          <div className="flex flex-col items-center justify-center py-20 text-slate-500 animate-pulse">
-            <p className="text-sm font-medium tracking-widest uppercase">Game sedang aktif...</p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
+
+      {showInputTugas && (
+        <ModalInputTugas
+          onClose={() => setShowInputTugas(false)}
+          onRefresh={() => fetchAssignments()} // Pastikan fungsi fetchAssignments tersedia
+        />
+      )}
+
+      {/* Modal Detail Tugas untuk Siswa */}
+      {selectedTugas && (
+        <ModalDetailTugas
+          tugas={selectedTugas}
+          student={student}
+          onClose={() => setSelectedTugas(null)}
+        />
+      )}
 
       {/* MODAL GAME 1 (Ketik Cepat) */}
       {showGameKetik && (
