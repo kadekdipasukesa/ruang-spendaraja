@@ -17,6 +17,8 @@ import ModalInputTugas from '../components/ModalInputTugas';
 import AssignmentCard from "../components/AssignmentCard";
 import ModalDetailTugas from "../components/ModalDetailTugas";
 
+import LiveChat from '../components/LiveChat';
+
 
 import {
   Home as HomeIcon,
@@ -59,6 +61,21 @@ export default function Home() {
 
   // Letakkan di deretan state lainnya
   const [showInputTugas, setShowInputTugas] = useState(false);
+
+  const CLASSES = ["Tanpa Kelas", "7.1", "7.2", "7.3", "7.4", "7.5", "7.6", "7.7", "7.8", "7.9", "7.10", "7.11"];
+
+// Fungsi untuk Admin mengubah status Lock/Unlocka
+const toggleClassChat = async (className, currentStatus) => {
+  const { error } = await supabase
+    .from('game_controls')
+    .upsert({ 
+      game_id: 'livechat_control', 
+      class_name: className, 
+      is_locked: !currentStatus 
+    }, { onConflict: 'game_id, class_name' });
+
+  if (error) alert("Gagal update kontrol: " + error.message);
+};
 
   // ---  LOGIC: AMBIL DATA TUGAS ---
   useEffect(() => {
@@ -589,6 +606,9 @@ export default function Home() {
 
       {/* notif update */}
       <UpdateNotifier /> {/* Letakkan di sini */}
+
+      {/* Tambahkan ini di paling bawah sebelum penutup div utama */}
+      <LiveChat student={student} />
 
     </div>
   );
