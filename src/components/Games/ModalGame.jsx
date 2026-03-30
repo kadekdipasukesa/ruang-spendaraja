@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Lock, Unlock, ShieldAlert } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient'; // Sesuaikan path
+import { supabase } from '../../lib/supabaseClient'; // Sesuaikan path
 
 const ModalGame = ({ children, onClose, title, subtitle, gameId, userClass, isAdmin }) => {
   const [isLocked, setIsLocked] = useState(false);

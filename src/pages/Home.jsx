@@ -3,21 +3,21 @@ import { supabase } from '../lib/supabaseClient'
 import GameKetikCepat from "../games/Game1_KetikCepat/GameKetikCepat";
 import FlappyBird from '../games/Game2_FlappyBird/FlappyBird';
 // import Leaderboard from '../components/Leaderboard';
-import ModalGame from '../components/ModalGame';
-import GameCard from '../components/GameCard'; // Komponen yang kita pisah
-import Hero from '../components/Hero'
-import Navigation from '../components/Navigation';
+import ModalGame from '../components/Games/ModalGame';
+import GameCard from '../components/Games/GameCard'; // Komponen yang kita pisah
+import Hero from '../components/Home/Hero'
+import Navigation from '../components/Home/Navigation';
 import FloatingOnline from '../components/FloatingOnline'; // Pastikan jalurnya benar
 // import ActivityCard from '../components/ActivityCard';
-import Feed from '../components/Feed';
+import Feed from '../components/Home/Feed';
 import UpdateNotifier from "../components/UpdateNotifier";
 import Game3Page from './Game3/Game3Page';
 
-import ModalInputTugas from '../components/ModalInputTugas';
-import AssignmentCard from "../components/AssignmentCard";
-import ModalDetailTugas from "../components/ModalDetailTugas";
+import MateriCard from "../components/Materi/MateriCard";
 
-import LiveChat from '../components/LiveChat';
+import ModalInputTugas from '../components/Tugas/ModalInputTugas';
+import AssignmentCard from "../components/Tugas/AssignmentCard";
+import ModalDetailTugas from "../components/Tugas/ModalDetailTugas";
 
 
 import {
@@ -542,6 +542,20 @@ const toggleClassChat = async (className, currentStatus) => {
                 )}
 
                 {/* ... Tab Lain Tetap Berfungsi di Sini ... */}
+                {activeTab === 'materi' && (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
+    {/* Kartu Materi Jaringan Komputer */}
+    <MateriCard 
+      title="Jaringan Komputer"
+      description="Pelajari konsep dasar jaringan, topologi, dan cara komputer saling berkomunikasi."
+      type="link" 
+      color="blue"
+      onOpen={() => window.open('https://mediapembelajarantekscerpenkelasixsmp.my.canva.site/c54xpr3xwymkfzrh', '_blank')}
+    />
+
+    {/* Kamu bisa menambahkan materi lain di sini nanti */}
+  </div>
+)}
               </div>
             </>
           ) : (
@@ -606,9 +620,6 @@ const toggleClassChat = async (className, currentStatus) => {
 
       {/* notif update */}
       <UpdateNotifier /> {/* Letakkan di sini */}
-
-      {/* Tambahkan ini di paling bawah sebelum penutup div utama */}
-      <LiveChat student={student} />
 
     </div>
   );

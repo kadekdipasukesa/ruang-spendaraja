@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Send, PlayCircle, FileText, CheckCircle2, Clock, User } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 
 export default function ModalDetailTugas({ tugas, student, onClose }) {
   const [jawaban, setJawaban] = useState('');

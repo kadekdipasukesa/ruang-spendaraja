@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Save, Plus, Trash2, Link, FileText, HelpCircle, Video } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 
 export default function ModalInputTugas({ onClose, onRefresh }) {
   const [loading, setLoading] = useState(false);
