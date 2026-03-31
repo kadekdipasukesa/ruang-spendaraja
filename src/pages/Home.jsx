@@ -14,10 +14,12 @@ import UpdateNotifier from "../components/UpdateNotifier";
 import Game3Page from './Game3/Game3Page';
 
 import MateriCard from "../components/Materi/MateriCard";
+import Absensi from '../components/Absen/AbsensiTemp';
 
 import ModalInputTugas from '../components/Tugas/ModalInputTugas';
 import AssignmentCard from "../components/Tugas/AssignmentCard";
 import ModalDetailTugas from "../components/Tugas/ModalDetailTugas";
+
 
 
 import {
@@ -36,10 +38,20 @@ import {
 
 export default function Home() {
   // --- 1. STATE ---
-  const [student, setStudent] = useState(null)
-  const [activeTab, setActiveTab] = useState('beranda')
-  const [posts, setPosts] = useState([])
-  const [newPost, setNewPost] = useState('')
+  const [student, setStudent] = useState(null);
+  // --- SYNC STUDENT DATA DARI LOCAL STORAGE ---
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user_siswa');
+    if (savedUser) {
+      const parsedUser = JSON.parse(savedUser);
+      setStudent(parsedUser);
+      // Log ini untuk memastikan No_Absen ada di console
+      console.log("Data Student Loaded:", parsedUser);
+    }
+  }, []);
+  const [activeTab, setActiveTab] = useState('beranda');
+  const [posts, setPosts] = useState([]);
+  const [newPost, setNewPost] = useState('');
 
   const [showGameKetik, setShowGameKetik] = useState(false);
   const [showFlappy, setShowFlappy] = useState(false);
@@ -64,18 +76,18 @@ export default function Home() {
 
   const CLASSES = ["Tanpa Kelas", "7.1", "7.2", "7.3", "7.4", "7.5", "7.6", "7.7", "7.8", "7.9", "7.10", "7.11"];
 
-// Fungsi untuk Admin mengubah status Lock/Unlocka
-const toggleClassChat = async (className, currentStatus) => {
-  const { error } = await supabase
-    .from('game_controls')
-    .upsert({ 
-      game_id: 'livechat_control', 
-      class_name: className, 
-      is_locked: !currentStatus 
-    }, { onConflict: 'game_id, class_name' });
+  // Fungsi untuk Admin mengubah status Lock/Unlocka
+  const toggleClassChat = async (className, currentStatus) => {
+    const { error } = await supabase
+      .from('game_controls')
+      .upsert({
+        game_id: 'livechat_control',
+        class_name: className,
+        is_locked: !currentStatus
+      }, { onConflict: 'game_id, class_name' });
 
-  if (error) alert("Gagal update kontrol: " + error.message);
-};
+    if (error) alert("Gagal update kontrol: " + error.message);
+  };
 
   // ---  LOGIC: AMBIL DATA TUGAS ---
   useEffect(() => {
@@ -94,42 +106,7 @@ const toggleClassChat = async (className, currentStatus) => {
   }, [activeTab, student]);
 
   // Tambahkan ini jika belum ada di dalam Home kamu
-  useEffect(() => {
-    const checkLogin = () => {
-      const savedUser = localStorage.getItem('user_siswa')
-      if (savedUser) setStudent(JSON.parse(savedUser))
-    }
-    checkLogin()
-
-    const fetchPosts = async () => {
-      const savedUser = localStorage.getItem('user_siswa');
-      const currentUser = savedUser ? JSON.parse(savedUser) : null;
-
-      let query = supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      // JIKA BUKAN ADMIN
-      if (!currentUser || currentUser.role !== 'admin') {
-        if (currentUser) {
-          // Siswa: Lihat yang 'approved' ATAU miliknya sendiri
-          query = query.or(`status.eq.approved,student_id.eq.${currentUser.id}`);
-        } else {
-          // Tamu (Tanpa Login): HANYA lihat yang sudah 'approved'
-          query = query.eq('status', 'approved');
-        }
-      }
-      // JIKA ADMIN: Query tidak difilter (bisa lihat semua)
-
-      const { data, error } = await query;
-      if (!error) setPosts(data || []);
-    };
-    fetchPosts()
-
-    window.addEventListener('storage', checkLogin)
-    return () => window.removeEventListener('storage', checkLogin)
-  }, [])
+  
 
   // --- PERBAIKAN: Realtime Posts (Agar deteksi Update & Delete) ---
   useEffect(() => {
@@ -183,8 +160,7 @@ const toggleClassChat = async (className, currentStatus) => {
     return () => { supabase.removeChannel(postChannel); };
   }, []);
 
-  // --- 2. LOGIC: AMBIL DATA USER & POSTS ---
-  // --- 3. LOGIC: REALTIME & FETCH STATUS GAME ---
+  
   // --- 3. LOGIC: REALTIME & FETCH STATUS GAME ---
   useEffect(() => {
     const fetchAllData = async () => {
@@ -343,7 +319,7 @@ const toggleClassChat = async (className, currentStatus) => {
 
     const { error } = await supabase
       .from('posts')
-      .delete()
+      .delete() 
       .eq('id', postId);
 
     if (error) {
@@ -541,21 +517,25 @@ const toggleClassChat = async (className, currentStatus) => {
                   </div>
                 )}
 
-                {/* ... Tab Lain Tetap Berfungsi di Sini ... */}
+                {/* ... menu materi ... */}
                 {activeTab === 'materi' && (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
-    {/* Kartu Materi Jaringan Komputer */}
-    <MateriCard 
-      title="Jaringan Komputer"
-      description="Pelajari konsep dasar jaringan, topologi, dan cara komputer saling berkomunikasi."
-      type="link" 
-      color="blue"
-      onOpen={() => window.open('https://mediapembelajarantekscerpenkelasixsmp.my.canva.site/c54xpr3xwymkfzrh', '_blank')}
-    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
+                    {/* Kartu Materi Jaringan Komputer */}
+                    <MateriCard
+                      title="Jaringan Komputer"
+                      description="Pelajari konsep dasar jaringan, topologi, dan cara komputer saling berkomunikasi."
+                      type="link"
+                      color="blue"
+                      onOpen={() => window.open('https://mediapembelajarantekscerpenkelasixsmp.my.canva.site/c54xpr3xwymkfzrh', '_blank')}
+                    />
 
-    {/* Kamu bisa menambahkan materi lain di sini nanti */}
-  </div>
-)}
+                    {/* Kamu bisa menambahkan materi lain di sini nanti */}
+                  </div>
+                )}
+                {/* ... menu absensi ... */}
+                {activeTab === 'absen' && <Absensi student={student} />}
+
+                {/* ... Tab Lain Tetap Berfungsi di Sini ... */}
               </div>
             </>
           ) : (
