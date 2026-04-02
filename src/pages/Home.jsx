@@ -444,7 +444,8 @@ export default function Home() {
                       allLockStatuses={allLockStatuses}
                       isGameLocked={isGame2Locked}
                       getOptionLabel={(cls, label) => getOptionLabel('game2', cls, label)}
-                      onPlay={() => setShowFlappy(true)}
+                      // onPlay={() => setShowFlappy(true)}
+                      onPlay={() => window.open('/flappy.html', '_blank')}
                       onToggleLock={(selectedClass, mode) => {
                         if (mode === 'check') setIsGame2Locked(allLockStatuses.game2?.[selectedClass] || false);
                         else toggleLockGame('game2', isGame2Locked, selectedClass);

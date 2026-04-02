@@ -1,252 +1,201 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
+import Phaser from "phaser";
 import { supabase } from "../../lib/supabaseClient";
-import { 
-  ChevronDown, ChevronRight, Calendar, Users, 
-  UserCheck, Lock, Unlock, PieChart 
-} from 'lucide-react';
+import Leaderboard from "../../components/Leaderboard";
 
-export default function Absensi({ student }) {
-  const [loading, setLoading] = useState(true);
-  const [dataAbsen, setDataAbsen] = useState([]);
-  const [absenSettings, setAbsenSettings] = useState([]);
-  const [expandedDates, setExpandedDates] = useState({});
-  const [expandedClasses, setExpandedClasses] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export default function FlappyBird({ student }) {
+    const [gameState, setGameState] = useState('playing'); 
+    const [currentScore, setCurrentScore] = useState(0);
+    const [showQuiz, setShowQuiz] = useState(false);
+    const [activeQuestion, setActiveQuestion] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-    fetchSettings();
+    // Data Soal Persis dari FLUFY.txt
+    const quizData = [
+        { cat: "💻 Perangkat Keras", q: "Perangkat keras komputer yang berfungsi sebagai 'otak' komputer adalah...", opts: ["RAM", "CPU/Prosesor", "Harddisk", "Monitor"], ans: 1 },
+        { cat: "🖥️ Perangkat Lunak", q: "Windows, macOS, dan Linux adalah contoh dari...", opts: ["Aplikasi game", "Sistem Operasi", "Browser internet", "Antivirus"], ans: 1 },
+        { cat: "🌐 Internet & Jaringan", q: "WWW singkatan dari...", opts: ["World Wide Web", "Wide World Web", "Web World Wide", "World Web Wide"], ans: 0 },
+        { cat: "📱 Teknologi Dasar", q: "Satuan terkecil dari data digital adalah...", opts: ["Byte", "Bit", "Kilobyte", "Pixel"], ans: 1 },
+        { cat: "💾 Memori", q: "Singkatan dari RAM adalah...", opts: ["Read Access Memory", "Random Anti Memory", "Random Access Memory", "Ready Access Memory"], ans: 2 }
+    ];
 
-    // --- FITUR REALTIME: Pantau perubahan data absen & gembok ---
-    const channel = supabase
-      .channel('realtime_absensi_all')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'data_absen' }, () => {
-        fetchData(); // Update tabel otomatis jika ada yang absen
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'absen_settings' }, () => {
-        fetchSettings(); // Update gembok otomatis jika admin merubah status
-      })
-      .subscribe();
+    useEffect(() => {
+        if (gameState !== 'playing' || showQuiz) return;
+    
+        const config = {
+            type: Phaser.AUTO,
+            parent: 'game-container',
+            width: 400,
+            height: 500,
+            backgroundColor: '#87CEEB', // --sky dari FLUFY.txt
+            physics: { 
+                default: 'arcade', 
+                arcade: { gravity: { y: 1100 }, debug: false } 
+            },
+            scene: {
+                preload: function() {
+                    let graphics = this.make.graphics({ x: 0, y: 0, add: false });
+                    
+                    // Bird Kuning (Sesuai gaya Fluffy)
+                    graphics.fillStyle(0xFFD700, 1);
+                    graphics.fillRoundedRect(0, 0, 34, 24, 8);
+                    graphics.fillStyle(0xffffff, 1);
+                    graphics.fillCircle(25, 8, 4);
+                    graphics.fillStyle(0x000000, 1);
+                    graphics.fillCircle(26, 8, 2);
+                    graphics.generateTexture('bird', 34, 24);
+                    
+                    // Pipe Hijau dengan border (Sesuai gaya Fluffy)
+                    graphics.clear();
+                    graphics.fillStyle(0x2ECC40, 1);
+                    graphics.fillRect(0, 0, 50, 50);
+                    graphics.lineStyle(4, 0x1a7a26, 1);
+                    graphics.strokeRect(0, 0, 50, 50);
+                    graphics.generateTexture('pipe', 50, 50);
+                },
+                create: function() {
+                    this.bird = this.physics.add.sprite(100, 245, 'bird');
+                    this.bird.setCollideWorldBounds(true);
+                    this.pipes = this.physics.add.group();
+                    this.gameActive = true;
+                    this.score = 0;
 
-    return () => {
-      supabase.removeChannel(channel);
+                    this.input.on('pointerdown', () => { 
+                        if (this.gameActive) this.bird.setVelocityY(-350); 
+                    });
+
+                    this.time.addEvent({ 
+                        delay: 1500, 
+                        callback: () => {
+                            if (!this.gameActive) return;
+                            const hole = Math.floor(Math.random() * 5) + 1;
+                            for (let i = 0; i < 10; i++) {
+                                if (i !== hole && i !== hole + 1) {
+                                    const pipe = this.pipes.create(400, i * 50 + 25, 'pipe');
+                                    pipe.body.allowGravity = false;
+                                    pipe.setVelocityX(-200);
+                                    pipe.setImmovable(true);
+                                }
+                            }
+                            this.score += 1;
+                            setCurrentScore(this.score);
+                        }, 
+                        callbackScope: this, 
+                        loop: true 
+                    });
+
+                    this.physics.add.collider(this.bird, this.pipes, () => {
+                        if (this.gameActive) {
+                            this.gameActive = false;
+                            this.physics.pause();
+                            this.bird.setTint(0xff4136);
+                            setActiveQuestion(quizData[Math.floor(Math.random() * quizData.length)]);
+                            setTimeout(() => { setShowQuiz(true); }, 500);
+                        }
+                    }, null, this);
+                },
+                update: function() {
+                    if (this.gameActive && (this.bird.y > 500 || this.bird.y < 0)) {
+                        this.gameActive = false;
+                        setActiveQuestion(quizData[Math.floor(Math.random() * quizData.length)]);
+                        setShowQuiz(true);
+                    }
+                }
+            }
+        };
+
+        const game = new Phaser.Game(config);
+        return () => game.destroy(true);
+    }, [gameState, showQuiz]);
+
+    const handleAnswer = async (index) => {
+        if (index === activeQuestion.ans) {
+            if (student) {
+                await supabase.from('game2_flappybird').insert([{
+                    nama: student.Nama || student.NAMA,
+                    kelas: student.Kelas,
+                    score: currentScore,
+                    student_id: Number(student.id)
+                }]);
+            }
+            setShowQuiz(false);
+            setGameState('gameOver');
+        } else {
+            alert("SALAHA! Kamu harus jawab benar untuk simpan skor.");
+            setShowQuiz(false);
+            setGameState('gameOver');
+            setCurrentScore(0);
+        }
     };
-  }, []);
 
-  const fetchData = async () => {
-    const { data, error } = await supabase
-      .from('data_absen')
-      .select('*')
-      .order('tanggal', { ascending: false })
-      .order('no_absen', { ascending: true });
-    if (!error) setDataAbsen(data);
-    setLoading(false);
-  };
-
-  const fetchSettings = async () => {
-    const { data, error } = await supabase.from('absen_settings').select('*');
-    if (!error) setAbsenSettings(data);
-  };
-
-  const groupedData = dataAbsen.reduce((acc, curr) => {
-    if (!acc[curr.tanggal]) acc[curr.tanggal] = {};
-    if (!acc[curr.tanggal][curr.kelas]) acc[curr.tanggal][curr.kelas] = [];
-    acc[curr.tanggal][curr.kelas].push(curr);
-    return acc;
-  }, {});
-
-  const handleAbsen = async () => {
-    if (!student) return alert("Data siswa tidak ditemukan.");
-    
-    const userKelas = student.Kelas || student.kelas;
-    const userNama = student.NAMA || student.nama;
-    const userNoAbsen = student['No Absen'] || student.No_Absen || student.no_absen;
-
-    if (!userNoAbsen) {
-      alert("Error: Nomor absen tidak ditemukan di data profil kamu!");
-      return;
-    }
-
-    const settings = absenSettings.find(s => s.kelas === userKelas);
-    if (!settings?.is_open && student.role !== 'admin') {
-      alert(`Maaf, absen Kelas ${userKelas} sedang ditutup.`);
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase.from('data_absen').insert([{
-        nama: userNama,
-        no_absen: parseInt(userNoAbsen),
-        kelas: userKelas,
-        status: 'Hadir',
-        tanggal: new Date().toISOString().split('T')[0]
-      }]);
-
-      if (error) {
-        if (error.code === '23505') alert("Kamu sudah absen hari ini!");
-        else throw error;
-      } else {
-        alert("Berhasil! Absensi otomatis tercatat.");
-        // fetchData() tidak perlu dipanggil manual karena sudah di-handle Realtime
-      }
-    } catch (err) {
-      alert("Terjadi kesalahan: " + err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const toggleAdminAbsen = async (kelas, currentStatus) => {
-    const { error } = await supabase
-      .from('absen_settings')
-      .update({ is_open: !currentStatus })
-      .eq('kelas', kelas);
-    
-    // fetchSettings() tidak perlu dipanggil manual karena sudah di-handle Realtime
-    if (error) alert("Gagal update gembok: " + error.message);
-  };
-
-  if (loading) return <div className="text-white text-center p-10">Memuat data absensi...</div>;
-
-  return (
-    <div className="max-w-4xl mx-auto p-4 space-y-6 animate-in fade-in duration-500">
-      
-      {/* --- TOMBOL ABSEN (USER) --- */}
-      {/* --- TOMBOL ABSEN (USER) --- */}
-      <div className="bg-slate-900 border border-blue-500/30 p-6 rounded-[2rem] shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <UserCheck className="text-blue-400" /> Absensi Hari Ini
-          </h2>
-          <p className="text-slate-400 text-sm">Halo {student?.NAMA || student?.nama}, jangan lupa absen ya!</p>
-        </div>
-        
-        {/* Logika Tombol Berubah Warna & Status */}
-        {(() => {
-          const userKelas = student.Kelas || student.kelas;
-          const settings = absenSettings.find(s => s.kelas === userKelas);
-          const isOpen = settings?.is_open || student.role === 'admin';
-
-          return (
-            <button
-              onClick={handleAbsen}
-              disabled={isSubmitting || !isOpen}
-              className={`px-8 py-3 rounded-2xl font-black text-sm transition-all active:scale-95 shadow-lg disabled:opacity-70 
-                ${isOpen 
-                  ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/40' 
-                  : 'bg-red-600 text-white shadow-red-900/40 cursor-not-allowed'
-                }`}
-            >
-              {isSubmitting ? 'MEMPROSES...' : isOpen ? 'ABSEN SEKARANG' : 'ABSEN DITUTUP'}
-            </button>
-          );
-        })()}
-      </div>
-
-      {/* --- PANEL ADMIN --- */}
-      {student.role === 'admin' && (
-        <div className="bg-slate-900/50 border border-emerald-500/20 p-4 rounded-2xl">
-          <h3 className="text-emerald-400 font-bold text-xs mb-3 uppercase tracking-widest">Kontrol Absen Per Kelas (Admin)</h3>
-          <div className="flex flex-wrap gap-2">
-            {absenSettings.sort((a,b) => a.kelas.localeCompare(b.kelas, undefined, {numeric: true})).map(s => (
-              <button 
-                key={s.id}
-                onClick={() => toggleAdminAbsen(s.kelas, s.is_open)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all flex items-center gap-1
-                ${s.is_open ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-slate-800 border-white/10 text-slate-500'}`}
-              >
-                {s.is_open ? <Unlock size={12}/> : <Lock size={12}/>} Kelas {s.kelas}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* --- LIST DATA ABSEN (Tabel tetap sama) --- */}
-      <div className="space-y-4">
-        {Object.keys(groupedData).map(tanggal => (
-          <div key={tanggal} className="bg-slate-900/80 border border-white/5 rounded-[2rem] overflow-hidden">
-            <div 
-              onClick={() => setExpandedDates(prev => ({...prev, [tanggal]: !prev[tanggal]}))}
-              className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <Calendar className="text-blue-400" size={20} />
-                <span className="text-white font-bold">{new Date(tanggal).toLocaleDateString('id-ID', { dateStyle: 'full' })}</span>
-              </div>
-              {expandedDates[tanggal] ? <ChevronDown className="text-slate-500"/> : <ChevronRight className="text-slate-500"/>}
-            </div>
-
-            {expandedDates[tanggal] && (
-              <div className="p-4 pt-0 space-y-2">
-                {Object.keys(groupedData[tanggal]).map(kelas => {
-                  const listSiswa = groupedData[tanggal][kelas];
-                  const totalHadir = listSiswa.length;
-                  const targetMaks = 40; 
-                  const percentage = Math.min(100, Math.round((totalHadir / targetMaks) * 100));
-
-                  return (
-                    <div key={kelas} className="border border-white/5 rounded-2xl bg-slate-800/30 overflow-hidden">
-                      <div 
-                        onClick={() => setExpandedClasses(prev => ({...prev, [`${tanggal}-${kelas}`]: !prev[`${tanggal}-${kelas}`]}))}
-                        className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Users className="text-emerald-400" size={18} />
-                          <span className="text-slate-200 font-semibold text-sm">Kelas {kelas}</span>
-                          <span className="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-400">{totalHadir} Siswa</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                          <div className="relative w-8 h-8">
-                            <svg className="w-full h-full" viewBox="0 0 36 36">
-                              <circle cx="18" cy="18" r="16" fill="none" className="stroke-slate-700" strokeWidth="4"></circle>
-                              <circle cx="18" cy="18" r="16" fill="none" className="stroke-emerald-500" strokeWidth="4" 
-                                strokeDasharray={`${percentage}, 100`} strokeLinecap="round"></circle>
-                            </svg>
-                            <span className="absolute inset-0 flex items-center justify-center text-[7px] text-white font-bold">{percentage}%</span>
-                          </div>
-                          {expandedClasses[`${tanggal}-${kelas}`] ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
-                        </div>
-                      </div>
-
-                      {expandedClasses[`${tanggal}-${kelas}`] && (
-                        <div className="px-4 pb-4 animate-in slide-in-from-top-2">
-                          <table className="w-full text-left text-[11px]">
-                            <thead>
-                              <tr className="text-slate-500 border-b border-white/5">
-                                <th className="py-2">No</th>
-                                <th className="py-2">Nama Siswa</th>
-                                <th className="py-2">Waktu</th>
-                                <th className="py-2 text-right">Status</th>
-                              </tr>
-                            </thead>
-                            <tbody className="text-slate-300">
-                              {listSiswa.map((item) => (
-                                <tr key={item.id} className="border-b border-white/5 last:border-0">
-                                  <td className="py-2 font-mono text-emerald-500">{item.no_absen}</td>
-                                  <td className="py-2 font-bold uppercase">{item.nama}</td>
-                                  <td className="py-2 text-[10px] text-slate-500">
-                                    {new Date(item.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                                  </td>
-                                  <td className="py-2 text-right">
-                                    <span className="bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-md font-black text-[9px]">HADIR</span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-[#1a1a2e] font-['Nunito']">
+            
+            {/* KONTINER UTAMA (Gaya Kartu Fluffy) */}
+            <div className="relative p-4 bg-[#FFFEF0] rounded-[3rem] border-8 border-[#5BA3CC] shadow-[0_20px_0_#ccc]">
+                
+                {/* HUD SKOR (Persis FLUFY.txt) */}
+                <div className="absolute -top-10 left-0 right-0 flex justify-center gap-4 px-4">
+                    <div className="bg-[#FF8C00] text-white px-6 py-2 rounded-full border-4 border-white shadow-lg font-black italic">
+                        SCORE: {currentScore}
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+                </div>
+
+                {gameState === 'playing' ? (
+                    <div className="flex flex-col items-center">
+                        <div 
+                            id="game-container" 
+                            className="rounded-[2rem] overflow-hidden border-4 border-[#8B6914] shadow-inner"
+                            style={{ width: '400px', height: '500px' }}
+                        ></div>
+                        
+                        {/* MODAL KUIS OVERLAY (Sangat Identik dengan HTML) */}
+                        {showQuiz && (
+                            <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm rounded-[2.5rem]">
+                                <div className="bg-[#FFFEF0] w-full max-w-sm rounded-[2rem] border-4 border-[#FF8C00] shadow-[0_10px_0_#ccc] overflow-hidden animate-in zoom-in">
+                                    <div className="bg-[#FF8C00] p-4 text-center">
+                                        <div className="bg-white/20 text-white text-[10px] px-2 py-1 rounded-md font-bold uppercase mb-1 inline-block">
+                                            {activeQuestion?.cat}
+                                        </div>
+                                        <h3 className="text-[#603813] font-black text-lg leading-tight">{activeQuestion?.q}</h3>
+                                    </div>
+                                    <div className="p-4 space-y-2">
+                                        {activeQuestion?.opts.map((opt, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => handleAnswer(i)}
+                                                className="w-full bg-[#F0F0F0] hover:bg-[#87CEEB] hover:text-white text-[#444] font-extrabold py-3 px-4 rounded-2xl border-b-4 border-black/10 transition-all active:border-0 active:translate-y-1 text-left flex items-center"
+                                            >
+                                                <span className="bg-white/50 w-6 h-6 rounded-lg flex items-center justify-center mr-3 text-xs">{String.fromCharCode(65 + i)}</span>
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    /* SCREEN RESULT (Gaya Fluffy) */
+                    <div className="w-[400px] h-[500px] flex flex-col items-center justify-center text-center p-6 bg-[#87CEEB] rounded-[2rem]">
+                        <h2 className="text-6xl font-black text-white italic drop-shadow-lg mb-4">SKOR!</h2>
+                        <div className="bg-[#FFFEF0] p-8 rounded-[2.5rem] border-8 border-[#FF8C00] mb-6 shadow-xl">
+                            <div className="text-8xl font-black text-[#FF8C00]">{currentScore}</div>
+                            <div className="text-[#5BA3CC] font-bold uppercase tracking-widest">Points</div>
+                        </div>
+
+                        <div className="w-full bg-white/20 p-2 rounded-2xl mb-4 max-h-32 overflow-y-auto">
+                           <Leaderboard table="game2_flappybird" limit={3} />
+                        </div>
+
+                        <button 
+                            onClick={() => { setGameState('playing'); setCurrentScore(0); setShowQuiz(false); }}
+                            className="bg-[#FF8C00] hover:bg-[#FFD700] text-white text-2xl font-black py-4 px-10 rounded-full border-b-8 border-[#c76d00] shadow-lg active:border-0 active:translate-y-2 transition-all uppercase italic"
+                        >
+                            LAGI! 🚀
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 }

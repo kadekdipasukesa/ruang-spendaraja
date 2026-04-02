@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐦 Fluffy Bird - Belajar Informatika!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+  :root {
+    --sky: #87CEEB;
+    --sky-dark: #5BA3CC;
+    --ground: #8B6914;
+    --grass: #5CB85C;
+    --pipe: #2ECC40;
+    --pipe-dark: #1a7a26;
+    --yellow: #FFD700;
+    --orange: #FF8C00;
+    --red: #FF4136;
+    --white: #FFFEF0;
+    --purple: #9B59B6;
+    --pink: #FF69B4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  #gameWrapper {
+    position: relative;
+    width: 400px;
+    height: 600px;
+  }
+
+  canvas {
+    display: block;
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(135,206,235,0.4), 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  /* OVERLAY SCREENS */
+  .screen {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    transition: opacity 0.3s;
+  }
+
+  .screen.hidden { display: none; }
+
+  /* START SCREEN */
+  #startScreen {
+    background: linear-gradient(180deg, #87CEEB 0%, #98D8F0 50%, #5CB85C 100%);
+  }
+
+  #startScreen h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 48px;
+    color: var(--white);
+    text-shadow: 3px 3px 0 #FF8C00, 6px 6px 0 rgba(0,0,0,0.2);
+    margin-bottom: 5px;
+    animation: bounce 1s infinite alternate;
+  }
+
+  #startScreen .subtitle {
+    font-size: 14px;
+    color: #2c5f2e;
+    font-weight: 700;
+    background: rgba(255,255,255,0.7);
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+
+  .bird-preview {
+    font-size: 80px;
+    animation: float 2s ease-in-out infinite;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+  }
+
+  .start-btn {
+    background: linear-gradient(135deg, var(--yellow), var(--orange));
+    border: none;
+    border-radius: 30px;
+    padding: 15px 40px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 24px;
+    color: white;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+    cursor: pointer;
+    box-shadow: 0 6px 0 #c47000, 0 8px 15px rgba(0,0,0,0.3);
+    transform: translateY(0);
+    transition: all 0.1s;
+    animation: pulse 1.5s infinite;
+  }
+
+  .start-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #c47000, 0 4px 8px rgba(0,0,0,0.2);
+  }
+
+  .instructions {
+    margin-top: 15px;
+    font-size: 13px;
+    color: #2c5f2e;
+    font-weight: 600;
+  }
+
+  /* QUIZ SCREEN */
+  #quizScreen {
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  }
+
+  .quiz-header {
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    color: var(--yellow);
+    text-shadow: 2px 2px 0 var(--orange);
+    margin-bottom: 5px;
+  }
+
+  .quiz-dead-bird {
+    font-size: 50px;
+    margin-bottom: 10px;
+    animation: shake 0.5s ease-in-out;
+  }
+
+  .quiz-score-info {
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 15px;
+    padding: 8px 20px;
+    color: #aaa;
+    font-size: 13px;
+    margin-bottom: 15px;
+  }
+
+  .quiz-score-info span {
+    color: var(--yellow);
+    font-weight: 800;
+  }
+
+  .question-box {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,215,0,0.3);
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 15px;
+    width: 100%;
+  }
+
+  .question-category {
+    font-size: 11px;
+    color: var(--pink);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .question-text {
+    font-size: 14px;
+    color: white;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .option-btn {
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 10px 8px;
+    color: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .option-btn:hover:not(:disabled) {
+    background: rgba(255,215,0,0.2);
+    border-color: var(--yellow);
+    transform: scale(1.03);
+  }
+
+  .option-btn.correct {
+    background: rgba(46,204,64,0.3);
+    border-color: #2ECC40;
+    color: #2ECC40;
+  }
+
+  .option-btn.wrong {
+    background: rgba(255,65,54,0.3);
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  .option-btn:disabled { cursor: not-allowed; }
+
+  .quiz-feedback {
+    min-height: 40px;
+    padding: 8px 15px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    width: 100%;
+    text-align: center;
+    transition: all 0.3s;
+  }
+
+  .quiz-feedback.correct {
+    background: rgba(46,204,64,0.2);
+    color: #2ECC40;
+    border: 2px solid #2ECC40;
+  }
+
+  .quiz-feedback.wrong {
+    background: rgba(255,65,54,0.2);
+    color: var(--red);
+    border: 2px solid var(--red);
+  }
+
+  #continueBtn {
+    margin-top: 10px;
+    background: linear-gradient(135deg, #2ECC40, #27ae60);
+    border: none;
+    border-radius: 25px;
+    padding: 12px 35px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 18px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #1a7a2c;
+    transform: translateY(0);
+    transition: all 0.1s;
+    display: none;
+  }
+
+  #continueBtn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #1a7a2c;
+  }
+
+  #restartBtn {
+    margin-top: 8px;
+    background: linear-gradient(135deg, var(--red), #c0392b);
+    border: none;
+    border-radius: 25px;
+    padding: 10px 30px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 16px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #8e1a10;
+    display: none;
+  }
+
+  /* HUD */
+  #hud {
+    position: absolute;
+    top: 15px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    pointer-events: none;
+  }
+
+  .hud-box {
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(5px);
+    border-radius: 15px;
+    padding: 5px 12px;
+    text-align: center;
+  }
+
+  .hud-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .hud-value {
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    color: white;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  }
+
+  /* ANIMATIONS */
+  @keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-10px); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-15px) rotate(5deg); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-10px) rotate(-5deg); }
+    40% { transform: translateX(10px) rotate(5deg); }
+    60% { transform: translateX(-7px) rotate(-3deg); }
+    80% { transform: translateX(7px) rotate(3deg); }
+  }
+
+  /* Stars decoration */
+  .stars {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: -1;
+  }
+
+  .star {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 2s infinite alternate;
+  }
+
+  @keyframes twinkle {
+    from { opacity: 0.2; transform: scale(1); }
+    to { opacity: 1; transform: scale(1.5); }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div id="gameWrapper">
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-box">
+      <div class="hud-label">Skor</div>
+      <div class="hud-value" id="hudScore">0</div>
+    </div>
+    <div class="hud-box">
+      <div class="hud-label">Terbaik</div>
+      <div class="hud-value" id="hudBest">0</div>
+    </div>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="screen" id="startScreen">
+    <div class="bird-preview">🐥</div>
+    <h1>Fluffy Bird</h1>
+    <div class="subtitle">📚 Belajar Informatika Kelas 7 SMP</div>
+    <button class="start-btn" id="startBtn">MULAI MAIN! 🚀</button>
+    <div class="instructions">
+      🖱️ Klik / Tap / Spasi untuk terbang<br>
+      ❓ Kalau mati → Jawab soal dulu!<br>
+      ✅ Jawab benar → Lanjut dari posisi sekarang!
+    </div>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div class="screen hidden" id="quizScreen">
+    <div class="quiz-dead-bird">😵</div>
+    <div class="quiz-header">Ups! Jawab Dulu Ya!</div>
+    <div class="quiz-score-info">Skor kamu: <span id="quizScore">0</span> | Best: <span id="quizBest">0</span></div>
+
+    <div class="question-box">
+      <div class="question-category" id="questionCategory">📱 Teknologi Informasi</div>
+      <div class="question-text" id="questionText">Loading...</div>
+    </div>
+
+    <div class="options-grid" id="optionsGrid"></div>
+
+    <div class="quiz-feedback" id="quizFeedback"></div>
+
+    <button id="continueBtn">✅ Lanjut Terbang!</button>
+    <button id="restartBtn">🔄 Mulai Dari Awal</button>
+  </div>
+</div>
+
+<script>
+// ======== STARS BACKGROUND ========
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 80; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  s.style.left = Math.random() * 100 + 'vw';
+  s.style.top = Math.random() * 100 + 'vh';
+  s.style.animationDelay = Math.random() * 2 + 's';
+  s.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+  starsEl.appendChild(s);
+}
+
+// ======== QUIZ DATA - INFORMATIKA KELAS 7 SMP ========
+const quizBank = [
+  // HARDWARE & PERANGKAT
+  { cat: "💻 Perangkat Keras", q: "Perangkat keras komputer yang berfungsi sebagai 'otak' komputer adalah...", opts: ["RAM", "CPU/Prosesor", "Harddisk", "Monitor"], ans: 1 },
+  { cat: "💻 Perangkat Keras", q: "RAM dalam komputer berfungsi untuk...", opts: ["Menyimpan data permanen", "Memproses data", "Menyimpan data sementara", "Menampilkan gambar"], ans: 2 },
+  { cat: "💻 Perangkat Keras", q: "Perangkat INPUT yang digunakan untuk memasukkan teks adalah...", opts: ["Monitor", "Printer", "Keyboard", "Speaker"], ans: 2 },
+  { cat: "💻 Perangkat Keras", q: "Perangkat OUTPUT yang menampilkan hasil pengolahan komputer secara visual adalah...", opts: ["Scanner", "Monitor", "Keyboard", "Microphone"], ans: 1 },
+  { cat: "💻 Perangkat Keras", q: "Hard disk digunakan untuk...", opts: ["Memproses data", "Menyimpan data secara permanen", "Menampilkan gambar", "Memasukkan data"], ans: 1 },
+  { cat: "💻 Perangkat Keras", q: "Mouse termasuk perangkat...", opts: ["Output", "Proses", "Input", "Storage"], ans: 2 },
+  { cat: "💻 Perangkat Keras", q: "Printer termasuk jenis perangkat...", opts: ["Input", "Output", "Proses", "Penyimpanan"], ans: 1 },
+  { cat: "💻 Perangkat Keras", q: "Satuan kecepatan prosesor diukur dalam...", opts: ["Byte", "Pixel", "GHz (Gigahertz)", "Watt"], ans: 2 },
+
+  // SOFTWARE & SISTEM OPERASI
+  { cat: "🖥️ Perangkat Lunak", q: "Windows, macOS, dan Linux adalah contoh dari...", opts: ["Aplikasi game", "Sistem Operasi", "Browser internet", "Antivirus"], ans: 1 },
+  { cat: "🖥️ Perangkat Lunak", q: "Microsoft Word adalah software yang digunakan untuk...", opts: ["Mengolah angka/spreadsheet", "Membuat presentasi", "Mengolah kata/dokumen", "Mengedit video"], ans: 2 },
+  { cat: "🖥️ Perangkat Lunak", q: "Software yang digunakan untuk menjelajah internet disebut...", opts: ["Antivirus", "Browser", "Sistem Operasi", "Database"], ans: 1 },
+  { cat: "🖥️ Perangkat Lunak", q: "Program jahat yang merusak komputer disebut...", opts: ["Browser", "Antivirus", "Virus/Malware", "Firewall"], ans: 2 },
+  { cat: "🖥️ Perangkat Lunak", q: "Freeware adalah software yang...", opts: ["Berbayar mahal", "Gratis digunakan", "Hanya untuk bisnis", "Buatan pemerintah"], ans: 1 },
+  { cat: "🖥️ Perangkat Lunak", q: "Microsoft Excel digunakan untuk...", opts: ["Membuat dokumen teks", "Mengolah data angka/tabel", "Edit foto", "Membuat video"], ans: 1 },
+
+  // JARINGAN & INTERNET
+  { cat: "🌐 Internet & Jaringan", q: "WWW singkatan dari...", opts: ["World Wide Web", "Wide World Web", "Web World Wide", "World Web Wide"], ans: 0 },
+  { cat: "🌐 Internet & Jaringan", q: "HTTP singkatan dari...", opts: ["HyperText Transfer Protocol", "High Transfer Text Protocol", "Hyper Text Transport Process", "HyperText Text Protocol"], ans: 0 },
+  { cat: "🌐 Internet & Jaringan", q: "Email adalah singkatan dari...", opts: ["Electrical Mail", "Electronic Mail", "External Mail", "Extra Mail"], ans: 1 },
+  { cat: "🌐 Internet & Jaringan", q: "WiFi digunakan untuk...", opts: ["Mencetak dokumen", "Menghubungkan ke internet secara nirkabel", "Menyimpan file", "Mengedit gambar"], ans: 1 },
+  { cat: "🌐 Internet & Jaringan", q: "URL adalah alamat sebuah...", opts: ["Program komputer", "Halaman web/situs", "File dokumen", "Hardware"], ans: 1 },
+  { cat: "🌐 Internet & Jaringan", q: "Google, Bing, Yahoo adalah contoh dari...", opts: ["Media sosial", "Search engine (mesin pencari)", "Email provider", "Browser"], ans: 1 },
+  { cat: "🌐 Internet & Jaringan", q: "LAN singkatan dari...", opts: ["Large Area Network", "Local Area Network", "Light Area Network", "Long Area Network"], ans: 1 },
+  { cat: "🌐 Internet & Jaringan", q: "Apa kepanjangan dari ISP?", opts: ["Internet Service Provider", "International Software Program", "Internal System Protocol", "Internet Security Program"], ans: 0 },
+
+  // KEAMANAN DIGITAL
+  { cat: "🔒 Keamanan Digital", q: "Password yang baik sebaiknya mengandung...", opts: ["Nama sendiri saja", "Tanggal lahir saja", "Huruf, angka, dan simbol", "Kata yang mudah diingat saja"], ans: 2 },
+  { cat: "🔒 Keamanan Digital", q: "Phishing adalah upaya penipuan untuk...", opts: ["Meretas komputer", "Mencuri informasi pribadi lewat tipuan", "Menyebarkan virus", "Memblokir jaringan"], ans: 1 },
+  { cat: "🔒 Keamanan Digital", q: "Apa yang harus dilakukan jika menerima email mencurigakan dari orang tidak dikenal?", opts: ["Klik semua link-nya", "Balas emailnya", "Hapus/abaikan emailnya", "Forward ke semua teman"], ans: 2 },
+  { cat: "🔒 Keamanan Digital", q: "Tindakan bijak saat bermedia sosial adalah...", opts: ["Bagikan alamat rumah", "Jaga privasi data pribadi", "Terima pertemanan semua orang", "Upload semua kegiatan"], ans: 1 },
+
+  // REPRESENTASI DATA
+  { cat: "📊 Representasi Data", q: "Satuan terkecil dalam komputer adalah...", opts: ["Byte", "Kilobyte", "Bit", "Megabyte"], ans: 2 },
+  { cat: "📊 Representasi Data", q: "1 Byte terdiri dari berapa bit?", opts: ["4 bit", "16 bit", "2 bit", "8 bit"], ans: 3 },
+  { cat: "📊 Representasi Data", q: "1 Kilobyte (KB) = ... Byte", opts: ["100 Byte", "1000 Byte", "1024 Byte", "512 Byte"], ans: 2 },
+  { cat: "📊 Representasi Data", q: "Sistem bilangan yang digunakan komputer adalah...", opts: ["Desimal (basis 10)", "Biner (basis 2)", "Oktal (basis 8)", "Heksadesimal (basis 16)"], ans: 1 },
+  { cat: "📊 Representasi Data", q: "Bilangan biner hanya menggunakan angka...", opts: ["1, 2, 3", "0 dan 1", "A dan B", "0 sampai 9"], ans: 1 },
+  { cat: "📊 Representasi Data", q: "1 Megabyte (MB) = ... Kilobyte (KB)", opts: ["100 KB", "512 KB", "1024 KB", "2048 KB"], ans: 2 },
+
+  // ALGORITMA & PEMROGRAMAN
+  { cat: "⚙️ Algoritma & Pemrograman", q: "Algoritma adalah...", opts: ["Bahasa komputer", "Langkah-langkah untuk menyelesaikan masalah", "Program komputer", "Perangkat keras"], ans: 1 },
+  { cat: "⚙️ Algoritma & Pemrograman", q: "Flowchart digunakan untuk...", opts: ["Menulis kode program", "Menggambarkan alur algoritma", "Menyimpan data", "Mengakses internet"], ans: 1 },
+  { cat: "⚙️ Algoritma & Pemrograman", q: "Simbol DIAMOND/belah ketupat dalam flowchart digunakan untuk...", opts: ["Proses/operasi", "Mulai/akhir", "Keputusan/percabangan", "Input/Output"], ans: 2 },
+  { cat: "⚙️ Algoritma & Pemrograman", q: "Scratch adalah aplikasi yang digunakan untuk...", opts: ["Edit foto", "Belajar pemrograman visual/blok", "Membuat tabel", "Browsing internet"], ans: 1 },
+  { cat: "⚙️ Algoritma & Pemrograman", q: "Pada algoritma, struktur PERCABANGAN digunakan ketika...", opts: ["Melakukan langkah berulang", "Terdapat kondisi benar/salah", "Menyimpan data", "Mengakhiri program"], ans: 1 },
+  { cat: "⚙️ Algoritma & Pemrograman", q: "Debugging dalam pemrograman artinya...", opts: ["Menulis program baru", "Mencari dan memperbaiki kesalahan program", "Menghapus program", "Menyimpan program"], ans: 1 },
+
+  // TEKNOLOGI INFORMASI & KOMUNIKASI
+  { cat: "📱 TIK Sehari-hari", q: "Kepanjangan TIK adalah...", opts: ["Teknologi Ilmu Komunikasi", "Teknologi Informasi dan Komunikasi", "Teknik Informasi Komputer", "Teknologi Intelijen Komputer"], ans: 1 },
+  { cat: "📱 TIK Sehari-hari", q: "Contoh dampak positif teknologi informasi adalah...", opts: ["Kecanduan gadget", "Kemudahan akses informasi", "Penyebaran hoaks", "Cyberbullying"], ans: 1 },
+  { cat: "📱 TIK Sehari-hari", q: "Hoaks adalah...", opts: ["Berita yang benar", "Informasi palsu/bohong", "Program antivirus", "Fitur keamanan"], ans: 1 },
+  { cat: "📱 TIK Sehari-hari", q: "Cloud storage digunakan untuk...", opts: ["Memproses data", "Menyimpan data di server internet", "Membuat jaringan lokal", "Mempercepat prosesor"], ans: 1 },
+  { cat: "📱 TIK Sehari-hari", q: "Tindakan bijak dalam menggunakan media sosial adalah...", opts: ["Bagikan data pribadi bebas", "Sebarkan semua berita tanpa cek", "Verifikasi kebenaran sebelum share", "Terima ajakan dari orang asing"], ans: 2 },
+];
+
+// ======== GAME ENGINE ========
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = 400, H = 600;
+
+let gameState = 'start'; // start, playing, quiz, dead
+let score = 0;
+let bestScore = parseInt(localStorage.getItem('fluffyBest') || '0');
+let currentQuestion = null;
+let questionAnswered = false;
+let usedQuestions = [];
+let savedBirdY = 0;
+let savedPipes = [];
+let savedScore = 0;
+
+// Bird
+const bird = {
+  x: 80, y: 250, vy: 0,
+  w: 40, h: 34,
+  gravity: 0.5, flapPower: -9,
+  rotation: 0,
+  flapAnim: 0,
+  reset() {
+    this.x = 80; this.y = 250; this.vy = 0; this.rotation = 0;
+  }
+};
+
+// Pipes
+const pipes = [];
+const PIPE_W = 70;
+const PIPE_GAP = 160;
+const PIPE_SPEED = 3;
+let pipeTimer = 0;
+const PIPE_INTERVAL = 90;
+
+// Clouds
+const clouds = [
+  { x: 100, y: 80, s: 1.0 },
+  { x: 250, y: 50, s: 0.7 },
+  { x: 350, y: 120, s: 0.9 },
+];
+
+// Ground
+const GROUND_Y = 540;
+const GROUND_H = 60;
+
+// ======== DRAWING FUNCTIONS ========
+function drawBackground() {
+  // Sky gradient
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  skyGrad.addColorStop(0, '#87CEEB');
+  skyGrad.addColorStop(0.6, '#B0E0FF');
+  skyGrad.addColorStop(1, '#C8F0C8');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, GROUND_Y);
+}
+
+function drawCloud(x, y, scale) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.beginPath();
+  ctx.arc(0, 0, 25, 0, Math.PI * 2);
+  ctx.arc(28, -5, 30, 0, Math.PI * 2);
+  ctx.arc(55, 0, 22, 0, Math.PI * 2);
+  ctx.arc(15, 10, 22, 0, Math.PI * 2);
+  ctx.arc(42, 10, 22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawClouds() {
+  clouds.forEach(c => {
+    c.x -= 0.5;
+    if (c.x < -100) c.x = W + 100;
+    drawCloud(c.x, c.y, c.s);
+  });
+}
+
+function drawGround() {
+  // Ground base
+  const gGrad = ctx.createLinearGradient(0, GROUND_Y, 0, H);
+  gGrad.addColorStop(0, '#8B6914');
+  gGrad.addColorStop(1, '#6B4F10');
+  ctx.fillStyle = gGrad;
+  ctx.fillRect(0, GROUND_Y + 18, W, GROUND_H);
+
+  // Grass
+  ctx.fillStyle = '#5CB85C';
+  ctx.fillRect(0, GROUND_Y, W, 22);
+
+  // Grass detail
+  ctx.fillStyle = '#4CAF50';
+  for (let i = 0; i < W; i += 15) {
+    ctx.beginPath();
+    ctx.moveTo(i, GROUND_Y + 22);
+    ctx.lineTo(i + 7, GROUND_Y);
+    ctx.lineTo(i + 14, GROUND_Y + 22);
+    ctx.fill();
+  }
+}
+
+function drawPipe(x, topH, botY) {
+  const capH = 25, capW = PIPE_W + 12;
+
+  // Top pipe body
+  const topGrad = ctx.createLinearGradient(x, 0, x + PIPE_W, 0);
+  topGrad.addColorStop(0, '#2ECC40');
+  topGrad.addColorStop(0.4, '#5EE86A');
+  topGrad.addColorStop(1, '#1a7a26');
+  ctx.fillStyle = topGrad;
+  roundRect(ctx, x, 0, PIPE_W, topH, [0, 0, 8, 8]);
+  ctx.fill();
+
+  // Top pipe cap
+  ctx.fillStyle = '#27AE34';
+  roundRect(ctx, x - 6, topH - capH, capW, capH, [8, 8, 8, 8]);
+  ctx.fill();
+  ctx.fillStyle = '#4EDE5A';
+  ctx.fillRect(x - 4, topH - capH + 4, 12, capH - 8);
+
+  // Bottom pipe body
+  ctx.fillStyle = topGrad;
+  roundRect(ctx, x, botY, PIPE_W, H - botY, [8, 8, 0, 0]);
+  ctx.fill();
+
+  // Bottom pipe cap
+  ctx.fillStyle = '#27AE34';
+  roundRect(ctx, x - 6, botY, capW, capH, [8, 8, 8, 8]);
+  ctx.fill();
+  ctx.fillStyle = '#4EDE5A';
+  ctx.fillRect(x - 4, botY + 4, 12, capH - 8);
+}
+
+function roundRect(ctx, x, y, w, h, radii) {
+  const [tl, tr, br, bl] = radii;
+  ctx.beginPath();
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + tr);
+  ctx.lineTo(x + w, y + h - br);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+  ctx.lineTo(x + bl, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - bl);
+  ctx.lineTo(x, y + tl);
+  ctx.quadraticCurveTo(x, y, x + tl, y);
+  ctx.closePath();
+}
+
+function drawBird() {
+  ctx.save();
+  ctx.translate(bird.x + bird.w / 2, bird.y + bird.h / 2);
+  ctx.rotate(bird.rotation * Math.PI / 180);
+
+  // Body
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 18, 15, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Wing (animated)
+  bird.flapAnim += 0.3;
+  const wingY = Math.sin(bird.flapAnim) * 6;
+  ctx.fillStyle = '#FFA500';
+  ctx.beginPath();
+  ctx.ellipse(-8, -2 + wingY, 10, 6, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Belly
+  ctx.fillStyle = '#FFF3B0';
+  ctx.beginPath();
+  ctx.ellipse(3, 3, 10, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eye white
+  ctx.fillStyle = 'white';
+  ctx.beginPath();
+  ctx.arc(8, -4, 7, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eye pupil
+  ctx.fillStyle = '#1a1a1a';
+  ctx.beginPath();
+  ctx.arc(10, -4, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eye shine
+  ctx.fillStyle = 'white';
+  ctx.beginPath();
+  ctx.arc(11, -5, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Beak
+  ctx.fillStyle = '#FF6B00';
+  ctx.beginPath();
+  ctx.moveTo(15, -2);
+  ctx.lineTo(24, 0);
+  ctx.lineTo(15, 4);
+  ctx.closePath();
+  ctx.fill();
+
+  // Cheek blush
+  ctx.fillStyle = 'rgba(255,150,150,0.5)';
+  ctx.beginPath();
+  ctx.ellipse(4, 2, 5, 3.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawScore() {
+  ctx.save();
+  ctx.font = 'bold 36px "Fredoka One", cursive';
+  ctx.fillStyle = 'white';
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  ctx.lineWidth = 4;
+  ctx.textAlign = 'center';
+  ctx.strokeText(score, W / 2, 70);
+  ctx.fillText(score, W / 2, 70);
+  ctx.restore();
+}
+
+// ======== GAME LOGIC ========
+function flap() {
+  if (gameState !== 'playing') return;
+  bird.vy = bird.flapPower;
+}
+
+function spawnPipe() {
+  const minTop = 80, maxTop = GROUND_Y - PIPE_GAP - 80;
+  const topH = Math.random() * (maxTop - minTop) + minTop;
+  pipes.push({ x: W, topH, botY: topH + PIPE_GAP, scored: false });
+}
+
+function checkCollision() {
+  const bx = bird.x + 5, by = bird.y + 5, bw = bird.w - 10, bh = bird.h - 10;
+
+  if (bird.y + bird.h >= GROUND_Y || bird.y <= 0) return true;
+
+  for (const p of pipes) {
+    const capW = PIPE_W + 12;
+    const capX = p.x - 6;
+    if (bx + bw > capX && bx < capX + capW) {
+      if (by < p.topH || by + bh > p.botY) return true;
+    }
+  }
+  return false;
+}
+
+function saveGameState() {
+  savedBirdY = bird.y;
+  savedScore = score;
+  savedPipes = pipes.map(p => ({ ...p }));
+}
+
+function restoreGameState() {
+  bird.y = savedBirdY;
+  bird.vy = -3;
+  score = savedScore;
+  pipes.length = 0;
+  savedPipes.forEach(p => pipes.push({ ...p }));
+}
+
+function getRandomQuestion() {
+  if (usedQuestions.length >= quizBank.length) usedQuestions = [];
+  let pool = quizBank.filter((_, i) => !usedQuestions.includes(i));
+  const idx = Math.floor(Math.random() * pool.length);
+  const origIdx = quizBank.indexOf(pool[idx]);
+  usedQuestions.push(origIdx);
+  currentQuestion = { ...pool[idx] };
+}
+
+function showQuiz() {
+  gameState = 'quiz';
+  questionAnswered = false;
+
+  getRandomQuestion();
+
+  document.getElementById('quizScore').textContent = score;
+  document.getElementById('quizBest').textContent = bestScore;
+  document.getElementById('questionCategory').textContent = currentQuestion.cat;
+  document.getElementById('questionText').textContent = currentQuestion.q;
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+
+  const labels = ['A', 'B', 'C', 'D'];
+  currentQuestion.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = `${labels[i]}. ${opt}`;
+    btn.onclick = () => answerQuestion(i, btn);
+    grid.appendChild(btn);
+  });
+
+  document.getElementById('quizFeedback').textContent = '';
+  document.getElementById('quizFeedback').className = 'quiz-feedback';
+  document.getElementById('continueBtn').style.display = 'none';
+  document.getElementById('restartBtn').style.display = 'none';
+
+  document.getElementById('quizScreen').classList.remove('hidden');
+}
+
+function answerQuestion(idx, btn) {
+  if (questionAnswered) return;
+  questionAnswered = true;
+
+  const buttons = document.querySelectorAll('.option-btn');
+  buttons.forEach(b => b.disabled = true);
+
+  const feedback = document.getElementById('quizFeedback');
+  const continueBtn = document.getElementById('continueBtn');
+  const restartBtn = document.getElementById('restartBtn');
+
+  buttons[currentQuestion.ans].classList.add('correct');
+
+  if (idx === currentQuestion.ans) {
+    btn.classList.add('correct');
+    feedback.className = 'quiz-feedback correct';
+    feedback.textContent = '🎉 Benar! Mantap! Lanjut terbang!';
+    continueBtn.style.display = 'block';
+    restartBtn.style.display = 'block';
+    restartBtn.textContent = '🔄 Mulai Dari Awal';
+  } else {
+    btn.classList.add('wrong');
+    feedback.className = 'quiz-feedback wrong';
+    feedback.textContent = `❌ Salah! Jawaban: ${currentQuestion.opts[currentQuestion.ans]}. Coba mulai dari awal ya!`;
+    restartBtn.style.display = 'block';
+    restartBtn.textContent = '🔄 Mulai Dari Awal';
+  }
+}
+
+function continueGame() {
+  document.getElementById('quizScreen').classList.add('hidden');
+  restoreGameState();
+  bird.flapAnim = 0;
+  gameState = 'playing';
+}
+
+function restartGame() {
+  document.getElementById('quizScreen').classList.add('hidden');
+  bird.reset();
+  pipes.length = 0;
+  score = 0;
+  pipeTimer = 0;
+  savedBirdY = bird.y;
+  savedPipes = [];
+  savedScore = 0;
+  gameState = 'playing';
+}
+
+// ======== MAIN GAME LOOP ========
+let lastTime = 0;
+function gameLoop(ts) {
+  requestAnimationFrame(gameLoop);
+
+  ctx.clearRect(0, 0, W, H);
+
+  drawBackground();
+  drawClouds();
+
+  if (gameState === 'playing') {
+    // Update bird
+    bird.vy += bird.gravity;
+    bird.y += bird.vy;
+    bird.rotation = Math.min(Math.max(bird.vy * 3, -25), 70);
+
+    // Update pipes
+    pipeTimer++;
+    if (pipeTimer >= PIPE_INTERVAL) {
+      spawnPipe();
+      pipeTimer = 0;
+    }
+
+    for (let i = pipes.length - 1; i >= 0; i--) {
+      pipes[i].x -= PIPE_SPEED;
+      if (!pipes[i].scored && pipes[i].x + PIPE_W < bird.x) {
+        pipes[i].scored = true;
+        score++;
+        document.getElementById('hudScore').textContent = score;
+        if (score > bestScore) {
+          bestScore = score;
+          localStorage.setItem('fluffyBest', bestScore);
+          document.getElementById('hudBest').textContent = bestScore;
+        }
+        // Save state every time we pass a pipe
+        saveGameState();
+      }
+      if (pipes[i].x + PIPE_W + 12 < 0) pipes.splice(i, 1);
+    }
+
+    // Check collision
+    if (checkCollision()) {
+      gameState = 'dead';
+      setTimeout(showQuiz, 300);
+    }
+  }
+
+  // Draw pipes
+  pipes.forEach(p => drawPipe(p.x, p.topH, p.botY));
+
+  drawGround();
+  drawBird();
+
+  if (gameState === 'playing') drawScore();
+
+  // Animate bird on start screen too
+  if (gameState === 'start') {
+    bird.y = 250 + Math.sin(Date.now() / 600) * 15;
+    bird.rotation = Math.sin(Date.now() / 600) * 10;
+    drawBird();
+  }
+}
+
+// ======== EVENT LISTENERS ========
+document.getElementById('startBtn').onclick = () => {
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('hud').style.display = 'flex';
+  bird.reset();
+  pipes.length = 0;
+  score = 0;
+  pipeTimer = 0;
+  savedBirdY = bird.y;
+  document.getElementById('hudScore').textContent = '0';
+  document.getElementById('hudBest').textContent = bestScore;
+  gameState = 'playing';
+};
+
+document.getElementById('continueBtn').onclick = continueGame;
+document.getElementById('restartBtn').onclick = restartGame;
+
+canvas.onclick = flap;
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); flap(); }
+});
+document.addEventListener('touchstart', e => {
+  e.preventDefault();
+  flap();
+}, { passive: false });
+
+// Initial setup
+document.getElementById('hud').style.display = 'none';
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
