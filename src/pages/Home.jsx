@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import GameKetikCepat from "../games/Game1_KetikCepat/GameKetikCepat";
-import FlappyBird from '../games/Game2_FlappyBird/FlappyBird';
+// import FlappyBird from '../games/Game2_FlappyBird/FlappyBird';
 // import Leaderboard from '../components/Leaderboard';
 import ModalGame from '../components/Games/ModalGame';
 import GameCard from '../components/Games/GameCard'; // Komponen yang kita pisah
@@ -445,7 +445,7 @@ export default function Home() {
                       isGameLocked={isGame2Locked}
                       getOptionLabel={(cls, label) => getOptionLabel('game2', cls, label)}
                       // onPlay={() => setShowFlappy(true)}
-                      onPlay={() => window.open('/flappy.html', '_blank')}
+                      onPlay={() => window.open('/chess.html', '_blank')}
                       onToggleLock={(selectedClass, mode) => {
                         if (mode === 'check') setIsGame2Locked(allLockStatuses.game2?.[selectedClass] || false);
                         else toggleLockGame('game2', isGame2Locked, selectedClass);
