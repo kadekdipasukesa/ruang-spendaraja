@@ -89,6 +89,40 @@ export default function Home() {
     if (error) alert("Gagal update kontrol: " + error.message);
   };
 
+  // Logic ambil adata total poin
+  useEffect(() => {
+    if (!student?.id) return;
+  
+    // Membuat saluran (channel) untuk memantau perubahan data
+    const channel = supabase
+      .channel('update-poin-siswa')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE', // Hanya dengerin kalau ada data yang di-update
+          schema: 'public',
+          table: 'master_siswa',
+          filter: `id=eq.${student.id}`, // Spesifik hanya untuk siswa yang lagi login
+        },
+        (payload) => {
+          // Ambil data terbaru dari database (payload.new)
+          const dataTerbaru = payload.new;
+          
+          // Update state student di React secara instan
+          setStudent(prev => ({
+            ...prev,
+            total_points: dataTerbaru.total_points
+          }));
+        }
+      )
+      .subscribe();
+  
+    // Bersihkan koneksi saat pindah halaman/logout
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [student?.id]); // Jalankan ulang jika ID siswa berubah
+
   // ---  LOGIC: AMBIL DATA TUGAS ---
   useEffect(() => {
     const fetchAssignments = async () => {

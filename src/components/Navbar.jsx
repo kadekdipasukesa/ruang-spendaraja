@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { School, LogIn, X, User, Key, UserPlus, LogOut, Eye, EyeOff } from 'lucide-react';
+// Tambahkan Sparkles ke dalam daftar import
+import { School, LogIn, X, User, Key, UserPlus, LogOut, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Navbar() {
@@ -15,6 +16,31 @@ export default function Navbar() {
   const [errorMsg, setErrorMsg] = useState('');
   const [showPassword, setShowPassword] = useState(false); // State untuk tombol mata
 
+  // Listener Realtime khusus untuk Navbar
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('navbar-points')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'master_siswa',
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          const updatedUser = { ...user, total_points: payload.new.total_points };
+          setUser(updatedUser);
+          localStorage.setItem('user_siswa', JSON.stringify(updatedUser)); // Update storage agar sinkron
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id]);
+  
   useEffect(() => {
     const savedUser = localStorage.getItem('user_siswa');
     if (savedUser) setUser(JSON.parse(savedUser));
@@ -117,19 +143,34 @@ export default function Navbar() {
       </Link>
 
       {user ? (
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden md:block">
+        <div className="flex items-center gap-4">
+          {/* BADGE POIN NAVBAR */}
+          <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 px-3 py-1.5 rounded-xl shadow-lg shadow-yellow-900/10">
+            <div className="bg-yellow-500/20 p-1 rounded-lg">
+              <Sparkles size={14} className="text-yellow-400" />
+            </div>
+            <div className="flex flex-col leading-none">
+              <span className="text-[8px] font-black text-yellow-500/70 uppercase">Poin</span>
+              <span className="text-sm font-black text-yellow-400">
+                {user.total_points ?? 0}
+              </span>
+            </div>
+          </div>
+
+          <div className="text-right hidden md:block border-l border-white/10 pl-4">
             <p className="text-sm font-bold text-white capitalize">{formatShortName(user.NAMA)}</p>
             <p className="text-[10px] text-blue-400 uppercase font-black tracking-widest">Kelas {user.Kelas}</p>
           </div>
+          
           <button
             onClick={handleLogout}
-            className="group flex items-center gap-2 bg-red-500/10 hover:bg-red-600 p-2 rounded-xl transition-all border border-red-500/20 shadow-lg shadow-red-900/20"
+            className="group flex items-center gap-2 bg-red-500/10 hover:bg-red-600 p-2.5 rounded-xl transition-all border border-red-500/20 shadow-lg shadow-red-900/20"
           >
             <LogOut size={18} className="text-red-500 group-hover:text-white" />
           </button>
         </div>
       ) : (
+        /* ... tombol masuk tetap sama ... */
         <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-500 shadow-lg shadow-blue-900/40 transition-all font-bold text-sm">
           <LogIn size={18} /> <span>Masuk</span>
         </button>
