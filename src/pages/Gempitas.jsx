@@ -224,6 +224,22 @@ const GempitasPage = () => {
           ))}
         </div>
 
+        {/* --- TOMBOL JUKNIS BARU --- */}
+<motion.div 
+  initial={{ y: 20, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  className="mb-10"
+>
+  <a 
+    href="https://drive.google.com/file/d/1hrz6-PO3kD7_yU0fBk_HAe-kJZRE1NkE/view?usp=sharing" 
+    target="_blank" 
+    rel="noreferrer"
+    className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20 border border-white/10 uppercase tracking-widest text-sm"
+  >
+    <Download size={20} /> Download Juknis Lomba (PDF)
+  </a>
+</motion.div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-[#1e293b] rounded-[2rem] p-8 border border-white/5 shadow-xl">
