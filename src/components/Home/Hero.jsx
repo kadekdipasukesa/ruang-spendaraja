@@ -33,19 +33,21 @@ export default function Hero({ student, onStart }) {
                     {fullName.toLowerCase()}
                   </span>
                   
-                  {/* BADGE POIN - Tetap seperti desainmu, hanya optimasi spacing */}
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.1)] transition-all duration-500 hover:scale-105">
-                    <div className="p-1 rounded-full bg-yellow-500/20">
-                      <PartyPopper size={14} className="text-yellow-400" />
-                    </div>
-                    <div className="flex flex-col leading-none">
-                      <span className="text-[9px] text-yellow-500/70 font-black uppercase tracking-wider">Skor</span>
-                      <span className="text-lg font-black text-yellow-400">
-                        {/* Fallback ke 0 jika data belum sync */}
-                        {student.total_points ?? 0}
-                      </span>
-                    </div>
-                  </div>
+                  {/* Logika: Hanya muncul jika Admin ATAU Siswa Kelas 7.1 - 7.11 */}
+{(student?.role === 'admin' || (student?.Kelas && /^7\.(1[0-1]|[1-9])$/.test(student.Kelas))) && (
+  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.1)] transition-all duration-500 hover:scale-105">
+    <div className="p-1 rounded-full bg-yellow-500/20">
+      <PartyPopper size={14} className="text-yellow-400" />
+    </div>
+    <div className="flex flex-col leading-none">
+      <span className="text-[9px] text-yellow-500/70 font-black uppercase tracking-wider">POIN</span>
+      <span className="text-lg font-black text-yellow-400">
+        {/* Fallback ke 0 jika data belum sync */}
+        {student.total_points ?? 0}
+      </span>
+    </div>
+  </div>
+)}
                 </>
               ) : (
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">
