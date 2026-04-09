@@ -567,6 +567,15 @@ export default function Home() {
                       onOpen={() => window.open('https://mediapembelajarantekscerpenkelasixsmp.my.canva.site/c54xpr3xwymkfzrh', '_blank')}
                     />
 
+                    {/* Kartu Materi Konektivitas Jaringan */}
+                    <MateriCard
+                      title="Konektivitas Jaringan"
+                      description="Memahami cara perangkat terhubung ke internet, teknologi nirkabel, dan protokol komunikasi."
+                      type="link"
+                      color="emerald"
+                      onOpen={() => window.open('https://mediapembelajarantekscerpenkelasixsmp.my.canva.site/c5ynsts7fr4sb7sw', '_blank')}
+                    />
+
                     {/* Kamu bisa menambahkan materi lain di sini nanti */}
                   </div>
                 )}
