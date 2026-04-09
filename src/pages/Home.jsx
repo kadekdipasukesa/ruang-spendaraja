@@ -22,6 +22,8 @@ import ModalDetailTugas from "../components/Tugas/ModalDetailTugas";
 
 import AppsCard from '../components/Apps/AppsCard';
 
+import RankList from '../components/Ranking/RankList';
+
 
 
 import {
@@ -40,18 +42,7 @@ import {
 } from 'lucide-react';
 
 export default function Home() {
-  // --- 1. STATE ---
-  const [student, setStudent] = useState(null);
-  // --- SYNC STUDENT DATA DARI LOCAL STORAGE ---
-  useEffect(() => {
-    const savedUser = localStorage.getItem('user_siswa');
-    if (savedUser) {
-      const parsedUser = JSON.parse(savedUser);
-      setStudent(parsedUser);
-      // Log ini untuk memastikan No_Absen ada di console
-      console.log("Data Student Loaded:", parsedUser);
-    }
-  }, []);
+
   const [activeTab, setActiveTab] = useState('beranda');
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState('');
@@ -78,6 +69,22 @@ export default function Home() {
   const [showInputTugas, setShowInputTugas] = useState(false);
 
   const CLASSES = ["Tanpa Kelas", "7.1", "7.2", "7.3", "7.4", "7.5", "7.6", "7.7", "7.8", "7.9", "7.10", "7.11"];
+
+  // --- 1. STATE ---
+  const [student, setStudent] = useState(null);
+  // TAMBAHKAN BARIS INI DI SINI (PENTING!)
+  const [allStudentsData, setAllStudentsData] = useState([]);
+  
+  // --- SYNC STUDENT DATA DARI LOCAL STORAGE ---
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user_siswa');
+    if (savedUser) {
+      const parsedUser = JSON.parse(savedUser);
+      setStudent(parsedUser);
+      // Log ini untuk memastikan No_Absen ada di console
+      console.log("Data Student Loaded:", parsedUser);
+    }
+  }, []);
 
   // Fungsi untuk Admin mengubah status Lock/Unlocka
   const toggleClassChat = async (className, currentStatus) => {
@@ -282,6 +289,52 @@ export default function Home() {
 
     return () => { supabase.removeChannel(channel); };
   }, [activeTab, student]);
+
+  // --- 4. LOGIC: RANKING (REALTIME SYNC) ---
+  useEffect(() => {
+    // Hanya aktifkan subscription jika user sedang melihat tab ranking
+    if (activeTab !== 'ranking') return;
+
+    // A. Ambil data awal
+    const fetchInitialRanking = async () => {
+      const { data } = await supabase
+        .from('master_siswa')
+        .select('id, NAMA, Kelas, total_points')
+        .order('total_points', { ascending: false });
+      if (data) setAllStudentsData(data);
+    };
+
+    fetchInitialRanking();
+
+    // B. Dengerin perubahan poin siapa saja di tabel master_siswa
+    const rankingChannel = supabase
+      .channel('ranking-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'master_siswa' },
+        (payload) => {
+          const updatedStudent = payload.new;
+
+          setAllStudentsData((prevData) => {
+            // 1. Update data siswa yang berubah poinnya di dalam list
+            const newData = prevData.map(s =>
+              s.id === updatedStudent.id
+                ? { ...s, total_points: updatedStudent.total_points }
+                : s
+            );
+
+            // 2. Sortir ulang secara instan agar rankingnya bergeser naik/turun
+            return newData.sort((a, b) => (b.total_points || 0) - (a.total_points || 0));
+          });
+        }
+      )
+      .subscribe();
+
+    // C. Cleanup: Putuskan koneksi saat pindah tab
+    return () => {
+      supabase.removeChannel(rankingChannel);
+    };
+  }, [activeTab]); // Efek ini hidup/mati tergantung tab yang aktif
 
   // --- 4. FUNCTIONS ---
   const getOptionLabel = (gameId, className, labelText) => {
@@ -658,7 +711,22 @@ export default function Home() {
 
                   </div>
                 )}
-
+                {activeTab === 'ranking' && (
+                  <div className="animate-in fade-in slide-in-from-bottom-4">
+                    {allStudentsData.length > 0 ? (
+                      <RankList
+                        students={allStudentsData}
+                        currentUser={student}
+                      />
+                    ) : (
+                      /* Tampilan Loading saat data diambil */
+                      <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                        <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+                        <p className="text-xs font-black uppercase tracking-widest">Menyusun Peringkat...</p>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {/* ... Tab Lain Tetap Berfungsi di Sini ... */}
 
               </div>
