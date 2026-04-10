@@ -14,6 +14,7 @@ import {
   Microscope
 } from 'lucide-react';
 import "../App.css"; // Gunakan titik dua (..) untuk keluar dari folder pages ke folder src
+import PosterGempitas from '../assets/Gempitas/foster_gempitas.jpeg'; // Tambahkan ini
 
 const GempitasPage = () => {
   const [loading, setLoading] = useState(true);
@@ -327,29 +328,56 @@ const GempitasPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-[#1e293b] rounded-[2rem] p-8 border border-white/5 shadow-xl">
-              <h3 className="text-2xl font-black mb-8 flex items-center gap-3 text-blue-400">
-                <Calendar className="text-blue-500" /> JADWAL PELAKSANAAN
-              </h3>
-              <div className="space-y-6">
-                {[
-                  { event: 'Masa Pendaftaran', date: '6 - 27 April 2026', desc: 'Pendaftaran dilakukan secara mandiri melalui link Google Form di atas.' },
-                  { event: 'Technical Meeting', date: 'Rabu, 29 April 2026 (13.00)', desc: 'Dilaksanakan via Zoom Meeting (Dinas Pendidikan Buleleng).' },
-                  { event: 'Hari Pelaksanaan Lomba', date: 'Sabtu, 2 Mei 2026', desc: 'Bertempat di SMP Negeri 2 Singaraja (Membawa HP Berkuota).' },
-                ].map((item, i) => (
-                  <div key={i} className="flex gap-6 items-start">
-                    <div className="bg-blue-500/10 text-blue-400 w-12 h-12 rounded-2xl flex items-center justify-center font-black shrink-0 border border-blue-500/20">
-                      {i + 1}
-                    </div>
-                    <div>
-                      <div className="text-white font-bold text-lg leading-none mb-1">{item.event}</div>
-                      <div className="text-blue-400 font-mono text-sm mb-2">{item.date}</div>
-                      <div className="text-slate-400 text-sm leading-relaxed">{item.desc}</div>
-                    </div>
-                  </div>
-                ))}
+            {/* BOX JADWAL & POSTER WRAPPER */}
+    <div className="bg-[#1e293b] rounded-[2rem] p-6 md:p-8 border border-white/5 shadow-xl">
+      <div className="flex flex-col md:flex-row gap-8">
+        
+        {/* KOLOM KIRI: JADWAL */}
+        <div className="flex-1">
+          <h3 className="text-2xl font-black mb-8 flex items-center gap-3 text-blue-400">
+            <Calendar className="text-blue-500" /> JADWAL PELAKSANAAN
+          </h3>
+          <div className="space-y-6">
+            {[
+              { event: 'Masa Pendaftaran', date: '6 - 27 April 2026', desc: 'Pendaftaran dilakukan secara mandiri melalui link Google Form di atas.' },
+              { event: 'Technical Meeting', date: 'Rabu, 29 April 2026 (13.00)', desc: 'Dilaksanakan via Zoom Meeting.' },
+              { event: 'Hari Pelaksanaan Lomba', date: 'Sabtu, 2 Mei 2026', desc: 'Bertempat di SMP Negeri 2 Singaraja (Membawa HP Berkuota).' },
+            ].map((item, i) => (
+              <div key={i} className="flex gap-4 items-start">
+                <div className="bg-blue-500/10 text-blue-400 w-10 h-10 rounded-xl flex items-center justify-center font-black shrink-0 border border-blue-500/20 text-sm">
+                  {i + 1}
+                </div>
+                <div>
+                  <div className="text-white font-bold text-base leading-none mb-1">{item.event}</div>
+                  <div className="text-blue-400 font-mono text-xs mb-1">{item.date}</div>
+                  <div className="text-slate-400 text-xs leading-relaxed">{item.desc}</div>
+                </div>
               </div>
+            ))}
+          </div>
+        </div>
+
+        {/* KOLOM KANAN: FOTO POSTER (Rasio 2x3) */}
+        <div className="w-full md:w-64 shrink-0">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            className="relative group shadow-2xl rounded-2xl overflow-hidden border-4 border-white/10"
+          >
+            <img 
+              src={PosterGempitas} 
+              alt="Poster Gempitas 2026" 
+              className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+              style={{ aspectRatio: '2/3' }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-blue-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
+              <span className="text-[10px] font-black text-white bg-blue-600 px-3 py-1 rounded-full uppercase">Lihat Full Poster</span>
             </div>
+          </motion.div>
+        </div>
+
+      </div>
+    </div>
 
             <div className="bg-green-600/10 rounded-[2rem] p-8 border border-green-500/20 flex flex-col md:flex-row items-center gap-6">
               <div className="text-center md:text-left flex-1">
