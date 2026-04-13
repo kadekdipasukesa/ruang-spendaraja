@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Download,
   Smartphone,
@@ -11,7 +11,9 @@ import {
   MessageCircle,
   Globe,
   ChevronRight,
-  Microscope
+  ChevronDown, // TAMBAHKAN INI
+  Microscope,
+  X
 } from 'lucide-react';
 import "../App.css"; // Gunakan titik dua (..) untuk keluar dari folder pages ke folder src
 import PosterGempitas from '../assets/Gempitas/foster_gempitas.jpeg'; // Tambahkan ini
@@ -19,6 +21,8 @@ import PosterGempitas from '../assets/Gempitas/foster_gempitas.jpeg'; // Tambahk
 const GempitasPage = () => {
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [isPosterOpen, setIsPosterOpen] = useState(false);
+  const [showKisiKisi, setShowKisiKisi] = useState(false);
 
   // 1. Hook untuk Loading
   useEffect(() => {
@@ -65,29 +69,33 @@ const GempitasPage = () => {
   return (
 
     <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans relative overflow-x-hidden pb-20">
-      {/* --- EFEK KUNANG-KUNANG VERSI MULUS (FIXED POINTS) --- */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 100 }}>
-        {[
-          { t: '80%', l: '10%', d: '12s', del: '0s' },
-          { t: '60%', l: '80%', d: '15s', del: '2s' },
-          { t: '90%', l: '40%', d: '18s', del: '4s' },
-          { t: '40%', l: '20%', d: '14s', del: '1s' },
-          { t: '70%', l: '60%', d: '20s', del: '3s' },
-          { t: '85%', l: '30%', d: '16s', del: '5s' },
-          { t: '50%', l: '90%', d: '13s', del: '1.5s' },
-          { t: '95%', l: '75%', d: '19s', del: '2.5s' },
-        ].map((item, i) => (
-          <div
-            key={i}
-            className="firefly-legacy"
-            style={{
-              top: item.t,
-              left: item.l,
-              animation: `fly-simple ${item.d} infinite ease-in-out ${item.del}`,
-            }}
-          />
-        ))}
-      </div>
+      {/* --- EFEK KUNANG-KUNANG (PREMIUM, DI LATAR BELAKANG) --- */}
+<div 
+  className="fixed inset-0 pointer-events-none overflow-hidden" 
+  style={{ zIndex: 1 }} // Gunakan z-1 agar di atas background dasar tetapi di bawah konten z-10
+>
+  {[
+    { t: '80%', l: '10%', d: '12s', del: '0s' },
+    { t: '60%', l: '80%', d: '15s', del: '2s' },
+    { t: '90%', l: '40%', d: '18s', del: '4s' },
+    { t: '40%', l: '20%', d: '14s', del: '1s' },
+    { t: '70%', l: '60%', d: '20s', del: '3s' },
+    { t: '85%', l: '30%', d: '16s', del: '5s' },
+    { t: '50%', l: '90%', d: '13s', del: '1.5s' },
+    { t: '95%', l: '75%', d: '19s', del: '2.5s' },
+  ].map((item, i) => (
+    <div
+      key={i}
+      className="firefly-legacy"
+      style={{
+        top: item.t,
+        left: item.l,
+        willChange: 'transform', 
+        animation: `fly-simple ${item.d} infinite ease-in-out ${item.del}`,
+      }}
+    />
+  ))}
+</div>
 
       {/* --- HERO SECTION --- */}
       <section className="relative pt-16 pb-32 text-center px-4 overflow-hidden"
@@ -167,51 +175,6 @@ const GempitasPage = () => {
         </div>
       </section>
       <div className="container mx-auto px-4 -mt-12 relative z-20">
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="bg-gradient-to-br from-blue-700 to-indigo-900 rounded-[2rem] p-8 mb-10 shadow-2xl border border-white/10 relative overflow-hidden"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-center">
-            <div className="lg:col-span-2">
-              <h2 className="text-3xl font-black text-white mb-2 flex items-center gap-3">
-                <Smartphone size={32} className="text-blue-300" /> WAJIB INSTAL APLIKASI
-              </h2>
-              <p className="text-blue-100 mb-6 leading-relaxed text-sm opacity-90">
-                Babak penyisihan dilakukan secara daring di lokasi lomba. Seluruh peserta <b>wajib</b> mengunduh salah satu Exambrowser di bawah ini untuk perangkat HP Android masing-masing.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <a href="https://play.google.com/store/apps/details?id=com.exambrowser.client" target="_blank" rel="noreferrer" className="bg-black/40 hover:bg-black/60 text-white p-4 rounded-2xl flex items-center gap-3 transition-all border border-white/10 group">
-                  <Download size={20} className="text-blue-400 group-hover:bounce" />
-                  <div className="text-left leading-none">
-                    <span className="text-[10px] block opacity-50 mb-1">GOOGLE PLAY</span>
-                    <span className="font-bold text-xs uppercase">Exambro Client</span>
-                  </div>
-                </a>
-                <a href="https://play.google.com/store/apps/details?id=com.cbt.exam.browser" target="_blank" rel="noreferrer" className="bg-black/40 hover:bg-black/60 text-white p-4 rounded-2xl flex items-center gap-3 transition-all border border-white/10 group">
-                  <Download size={20} className="text-blue-400 group-hover:bounce" />
-                  <div className="text-left leading-none">
-                    <span className="text-[10px] block opacity-50 mb-1">GOOGLE PLAY</span>
-                    <span className="font-bold text-xs uppercase">CBT Browser</span>
-                  </div>
-                </a>
-              </div>
-            </div>
-
-            <div className="hidden lg:flex bg-white p-4 rounded-3xl flex-col items-center justify-center shadow-2xl transition-transform hover:rotate-2">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://play.google.com/store/apps/details?id=com.exambrowser.client" alt="QR Exambro" className="w-28 h-28 mb-3" />
-              <p className="text-[10px] text-slate-800 font-black uppercase text-center">Scan QR<br />Exambro Client</p>
-            </div>
-
-            <div className="hidden lg:flex bg-white p-4 rounded-3xl flex-col items-center justify-center shadow-2xl transition-transform hover:-rotate-2">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://play.google.com/store/apps/details?id=com.cbt.exam.browser" alt="QR CBT" className="w-28 h-28 mb-3" />
-              <p className="text-[10px] text-slate-800 font-black uppercase text-center">Scan QR<br />CBT Browser</p>
-            </div>
-          </div>
-        </motion.div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
           {[
             {
@@ -310,6 +273,124 @@ const GempitasPage = () => {
   }
 `}} />
 
+{/* --- TOMBOL UTAMA KISI-KISI (PREMIUM VERSION) --- */}
+<div className="flex justify-center mb-10">
+  <button 
+    onClick={() => setShowKisiKisi(!showKisiKisi)}
+    className={`
+      group relative flex items-center gap-4 px-10 py-5 rounded-[2rem] 
+      transition-all duration-500 overflow-hidden
+      ${showKisiKisi 
+        ? 'bg-blue-600 shadow-[0_0_30px_rgba(37,99,235,0.4)] border-blue-400' 
+        : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-blue-500/50'}
+      border backdrop-blur-md
+    `}
+  >
+    {/* Efek Sorot Cahaya (Shine Effect) saat Hover */}
+    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]" />
+
+    {/* Lingkaran Icon */}
+    <div className={`
+      w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500
+      ${showKisiKisi ? 'bg-white/20 rotate-12' : 'bg-blue-500/20 text-blue-400'}
+    `}>
+      <BookOpen size={20} className={showKisiKisi ? 'text-white' : ''} />
+    </div>
+
+    {/* Label Teks */}
+    <div className="flex flex-col items-start">
+      <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50 text-white">
+        Materi Lomba
+      </span>
+      <span className="text-white font-black tracking-wider uppercase text-base -mt-1">
+        {showKisiKisi ? 'Tutup Materi' : 'Lihat Kisi-kisi'}
+      </span>
+    </div>
+
+    {/* Icon Panah dengan Animasi Bounce Pelan */}
+    <div className={`
+      ml-4 transition-all duration-500 transform
+      ${showKisiKisi ? 'rotate-180 text-white' : 'text-blue-400 group-hover:translate-y-1'}
+    `}>
+      <ChevronDown size={22} strokeWidth={3} />
+    </div>
+  </button>
+</div>
+
+{/* --- PANEL LABEL MATERI (SHOW/HIDE) --- */}
+<AnimatePresence>
+  {showKisiKisi && (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="bg-slate-900/40 border border-white/10 rounded-[2.5rem] p-8 md:p-12 mb-12 backdrop-blur-2xl shadow-2xl"
+    >
+      {/* JUDUL HEADER DALAM PANEL */}
+      <div className="text-center mb-10">
+        <h2 className="text-white font-black tracking-[0.3em] text-sm uppercase mb-2">Materi</h2>
+        <div className="h-1 w-20 bg-blue-500 mx-auto rounded-full shadow-[0_0_10px_#3b82f6]"></div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-4">
+        
+        {/* MAP MATERI */}
+        {[
+          {
+            label: 'Matematika',
+            icon: <div className="italic font-black text-xs">∑</div>,
+            color: 'rose',
+            materi: ['Bilangan', 'Aritmatika', 'Geometri', 'Statistika Data', 'Pengukuran']
+          },
+          {
+            label: 'IPA',
+            icon: <Microscope size={14} />,
+            color: 'emerald',
+            materi: ['Metode Ilmiah', 'Hayati', 'Mekanisme', 'Ekologi', 'Kesehatan', 'Mekanika', 'Listrik', 'Optik', 'Suhu', 'Antariksa']
+          },
+          {
+            label: 'IPS',
+            icon: <Globe size={14} />,
+            color: 'amber',
+            materi: ['Budaya', 'Alam', 'Kerajaan', 'Perjuangan', 'Geografi', 'Ekonomi', 'ASEAN']
+          }
+        ].map((item, idx) => (
+          <div key={idx} className="relative px-4 border-r last:border-r-0 border-white/5">
+            {/* Header Per Subjek */}
+            <div className={`flex items-center gap-3 mb-6 justify-center md:justify-start text-${item.color}-400`}>
+              <div className={`w-8 h-8 rounded-full bg-${item.color}-500/10 border border-${item.color}-500/20 flex items-center justify-center`}>
+                {item.icon}
+              </div>
+              <span className="font-black text-sm uppercase tracking-widest text-white">{item.label}</span>
+            </div>
+
+            {/* List Materi (Pills Style) */}
+            <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+              {item.materi.map((m, i) => (
+                <div 
+                  key={i} 
+                  className={`px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all duration-300
+                    bg-white/5 border-white/10 text-slate-400 hover:border-${item.color}-500/50 hover:text-white hover:bg-${item.color}-500/10`}
+                >
+                  {m}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* FOOTER PANEL */}
+      <div className="mt-10 pt-6 border-t border-white/5 text-center">
+        <p className="text-slate-500 text-[10px] font-medium tracking-widest uppercase flex items-center justify-center gap-2">
+          <BookOpen size={12} /> Materi standar olimpiade sains tingkat kabupaten
+        </p>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+        
+
         {/* --- TOMBOL JUKNIS BARU --- */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
@@ -317,7 +398,7 @@ const GempitasPage = () => {
           className="mb-10"
         >
           <a
-            href="https://drive.google.com/file/d/1hrz6-PO3kD7_yU0fBk_HAe-kJZRE1NkE/view?usp=sharing"
+            href="https://drive.google.com/file/d/1pxXJt_ZqgKzftsqumFQZOWDuuESt2W5K/view?usp=sharing"
             target="_blank"
             rel="noreferrer"
             className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20 border border-white/10 uppercase tracking-widest text-sm"
@@ -329,55 +410,80 @@ const GempitasPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {/* BOX JADWAL & POSTER WRAPPER */}
-    <div className="bg-[#1e293b] rounded-[2rem] p-6 md:p-8 border border-white/5 shadow-xl">
-      <div className="flex flex-col md:flex-row gap-8">
-        
-        {/* KOLOM KIRI: JADWAL */}
-        <div className="flex-1">
-          <h3 className="text-2xl font-black mb-8 flex items-center gap-3 text-blue-400">
-            <Calendar className="text-blue-500" /> JADWAL PELAKSANAAN
-          </h3>
-          <div className="space-y-6">
-            {[
-              { event: 'Masa Pendaftaran', date: '6 - 27 April 2026', desc: 'Pendaftaran dilakukan secara mandiri melalui link Google Form di atas.' },
-              { event: 'Technical Meeting', date: 'Rabu, 29 April 2026 (13.00)', desc: 'Dilaksanakan via Zoom Meeting.' },
-              { event: 'Hari Pelaksanaan Lomba', date: 'Sabtu, 2 Mei 2026', desc: 'Bertempat di SMP Negeri 2 Singaraja (Membawa HP Berkuota).' },
-            ].map((item, i) => (
-              <div key={i} className="flex gap-4 items-start">
-                <div className="bg-blue-500/10 text-blue-400 w-10 h-10 rounded-xl flex items-center justify-center font-black shrink-0 border border-blue-500/20 text-sm">
-                  {i + 1}
-                </div>
-                <div>
-                  <div className="text-white font-bold text-base leading-none mb-1">{item.event}</div>
-                  <div className="text-blue-400 font-mono text-xs mb-1">{item.date}</div>
-                  <div className="text-slate-400 text-xs leading-relaxed">{item.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+            <div className="bg-[#1e293b] rounded-[2rem] p-6 md:p-8 border border-white/5 shadow-xl">
+              <div className="flex flex-col md:flex-row gap-8">
 
-        {/* KOLOM KANAN: FOTO POSTER (Rasio 2x3) */}
-        <div className="w-full md:w-64 shrink-0">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            className="relative group shadow-2xl rounded-2xl overflow-hidden border-4 border-white/10"
-          >
-            <img 
-              src={PosterGempitas} 
-              alt="Poster Gempitas 2026" 
-              className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
-              style={{ aspectRatio: '2/3' }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-blue-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
-              <span className="text-[10px] font-black text-white bg-blue-600 px-3 py-1 rounded-full uppercase">Lihat Full Poster</span>
+                {/* --- KOLOM KIRI: JADWAL DENGAN GARIS TIMELINE --- */}
+<div className="flex-1">
+  <h3 className="text-2xl font-black mb-10 flex items-center gap-3 text-blue-400">
+    <Calendar className="text-blue-500" /> JADWAL PELAKSANAAN
+  </h3>
+  
+  <div className="relative">
+    {/* GARIS VERTIKAL TENGAH (TIMELINE) */}
+    <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-gradient-to-b from-blue-500/50 via-blue-500/20 to-transparent"></div>
+
+    <div className="space-y-10">
+      {[
+        { event: 'Masa Pendaftaran', date: '6 - 27 April 2026', desc: 'Pendaftaran dilakukan secara mandiri melalui link Google Form di atas.' },
+        { event: 'Technical Meeting', date: 'Rabu, 29 April 2026 (13.00)', desc: 'Dilaksanakan via Zoom Meeting (Dinas Pendidikan Buleleng).' },
+        { event: 'Hari Pelaksanaan Lomba', date: 'Sabtu, 2 Mei 2026', desc: 'Bertempat di SMP Negeri 2 Singaraja (Membawa HP Berkuota).' },
+      ].map((item, i) => (
+        <div key={i} className="relative flex gap-6 items-start group">
+          
+          {/* NOMOR URUT DENGAN EFEK GLOW */}
+          <div className="relative z-10">
+            <div className="bg-[#0f172a] text-blue-400 w-10 h-10 rounded-xl flex items-center justify-center font-black shrink-0 border-2 border-blue-500/30 group-hover:border-blue-400 transition-colors duration-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+              {i + 1}
             </div>
-          </motion.div>
-        </div>
+            {/* Titik Cahaya Kecil di Tengah Garis (Opsional) */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-blue-500/10 rounded-full blur-xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          </div>
 
-      </div>
+          {/* KONTEN JADWAL */}
+          <div className="flex-1 pt-1">
+            <div className="text-white font-bold text-lg leading-none mb-1 group-hover:text-blue-300 transition-colors">
+              {item.event}
+            </div>
+            <div className="inline-block bg-blue-500/10 text-blue-400 font-mono text-[10px] px-2 py-0.5 rounded border border-blue-500/20 mb-2 uppercase tracking-tighter">
+              {item.date}
+            </div>
+            <div className="text-slate-400 text-sm leading-relaxed max-w-md">
+              {item.desc}
+            </div>
+          </div>
+
+        </div>
+      ))}
     </div>
+  </div>
+</div>
+
+                {/* KOLOM KANAN: FOTO POSTER (BISA DIKLIK) */}
+                <div className="w-full md:w-64 shrink-0">
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    onClick={() => setIsPosterOpen(true)} // AKTIFKAN MODAL SAAT DIKLIK
+                    className="relative group shadow-2xl rounded-2xl overflow-hidden border-4 border-white/10 cursor-pointer hover:border-blue-500 transition-colors"
+                  >
+                    <img
+                      src={PosterGempitas}
+                      alt="Poster Gempitas 2026"
+                      className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+                      style={{ aspectRatio: '2/3' }}
+                    />
+
+                    {/* Overlay Info */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 to-transparent flex items-end justify-center pb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <span className="text-[10px] font-black text-white bg-blue-600 px-4 py-1.5 rounded-full uppercase shadow-lg backdrop-blur-sm flex items-center gap-1.5">
+                        <Globe size={12} /> KLIK UNTUK MEMPERBESAR
+                      </span>
+                    </div>
+                  </motion.div>
+                </div>
+
+              </div>
+            </div>
 
             <div className="bg-green-600/10 rounded-[2rem] p-8 border border-green-500/20 flex flex-col md:flex-row items-center gap-6">
               <div className="text-center md:text-left flex-1">
@@ -393,23 +499,51 @@ const GempitasPage = () => {
           </div>
 
           <div className="space-y-6">
+            {/* Hadiah Juara */}
             <div className="bg-[#1e293b] rounded-[2rem] p-8 border border-white/5 shadow-xl">
-              <h3 className="text-xl font-black mb-6 text-amber-400 flex items-center gap-3"><Award /> BENEFIT JUARA</h3>
-              <ul className="space-y-4">
-                {[
-                  'Piala & Piagam Penghargaan',
-                  'Uang Pembinaan (Juara 1, 2, 3)',
-                  'Piagam Finalis (Juara Harapan 1-3)',
-                ].map((text, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-slate-300">
-                    <span className="text-amber-500">★</span> {text}
-                  </li>
-                ))}
-                <li className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20">
-                  <p className="text-amber-400 font-black text-sm mb-1 uppercase tracking-tighter">Golden Tiket (Prioritas)</p>
-                  <p className="text-[11px] text-amber-200/70 leading-relaxed">10 Peserta finalis tiap bidang akan langsung diterima sebagai siswa baru di SMPN 2 Singaraja 2026/2027.</p>
-                </li>
-              </ul>
+              <h3 className="text-xl font-black mb-6 text-amber-400 flex items-center gap-3">
+                <Award /> BENEFIT JUARA
+              </h3>
+
+              <div className="space-y-4">
+                {/* Kelompok Juara Utama */}
+                <div className="grid grid-cols-1 gap-3">
+                  {[
+                    { title: 'Juara I', items: 'Piala, Piagam, & Uang Pembinaan', color: 'text-amber-400' },
+                    { title: 'Juara II', items: 'Piala, Piagam, & Uang Pembinaan', color: 'text-slate-300' },
+                    { title: 'Juara III', items: 'Piala, Piagam, & Uang Pembinaan', color: 'text-orange-400' },
+                  ].map((j, i) => (
+                    <div key={i} className="flex flex-col p-4 rounded-2xl bg-white/5 border border-white/5">
+                      <div className={`text-xs font-black uppercase tracking-widest ${j.color} mb-1`}>{j.title}</div>
+                      <div className="text-sm text-slate-200 font-bold">{j.items}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Kelompok Juara Harapan */}
+                <div className="bg-slate-900/40 rounded-2xl p-4 border border-white/5">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Juara Harapan I, II, & III</p>
+                  <div className="flex items-center gap-3 text-sm text-slate-300">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20">
+                      <Award size={16} className="text-blue-400" />
+                    </div>
+                    <span className="font-medium leading-tight">Mendapatkan Piagam Penghargaan Resmi</span>
+                  </div>
+                </div>
+
+                {/* Golden Tiket Section */}
+                <div className="bg-gradient-to-br from-amber-500/20 to-orange-600/10 p-5 rounded-2xl border border-amber-500/30 relative overflow-hidden group">
+                  {/* Efek Cahaya Belakang */}
+                  <div className="absolute -right-4 -top-4 w-16 h-16 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all" />
+
+                  <p className="text-amber-400 font-black text-sm mb-1 uppercase tracking-tighter flex items-center gap-2">
+                    <span className="animate-pulse">✨</span> Golden Tiket (Prioritas)
+                  </p>
+                  <p className="text-[11px] text-amber-100/80 leading-relaxed italic">
+                    "10 Peserta finalis tiap bidang akan langsung diterima sebagai siswa baru di <b>SMPN 2 Singaraja 2026/2027</b> melalui jalur prestasi."
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="bg-[#1e293b] rounded-[2rem] p-8 border border-white/5 shadow-xl">
@@ -439,7 +573,42 @@ const GempitasPage = () => {
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Taruh ini di paling bawah, tepat sebelum tag penutup </div> terakhir */}
+      <AnimatePresence>
+        {isPosterOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsPosterOpen(false)}
+            className="fixed inset-0 bg-black/90 z-[9999] backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-4xl w-full flex justify-center"
+            >
+              {/* Tombol Close X */}
+              <button
+                onClick={() => setIsPosterOpen(false)}
+                className="absolute -top-12 right-0 text-white hover:text-red-400 transition-colors flex items-center gap-2 font-bold"
+              >
+                TUTUP <X size={24} />
+              </button>
+
+              <img
+                src={PosterGempitas}
+                alt="Full Poster"
+                className="max-h-[85vh] w-auto rounded-lg shadow-2xl border border-white/10"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div> // Ini adalah penutup div min-h-screen
   );
 };
 
