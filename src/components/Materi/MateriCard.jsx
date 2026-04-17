@@ -18,6 +18,9 @@ export default function MateriCard({
     blue: "from-blue-600/20 border-blue-500/20 hover:border-blue-500/50 bg-blue-600",
     purple: "from-purple-600/20 border-purple-500/20 hover:border-purple-500/50 bg-purple-600",
     emerald: "from-emerald-600/20 border-emerald-500/20 hover:border-emerald-500/50 bg-emerald-600",
+    // Tambahkan ini supaya tidak crash saat dipanggil
+    amber: "from-amber-600/20 border-amber-500/20 hover:border-amber-500/50 bg-amber-600",
+    rose: "from-rose-600/20 border-rose-500/20 hover:border-rose-500/50 bg-rose-600",
   };
 
   return (

@@ -74,7 +74,7 @@ export default function Home() {
   const [student, setStudent] = useState(null);
   // TAMBAHKAN BARIS INI DI SINI (PENTING!)
   const [allStudentsData, setAllStudentsData] = useState([]);
-  
+
   // --- SYNC STUDENT DATA DARI LOCAL STORAGE ---
   useEffect(() => {
     const savedUser = localStorage.getItem('user_siswa');
@@ -612,6 +612,7 @@ export default function Home() {
                 {activeTab === 'materi' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
                     {/* Kartu Materi Jaringan Komputer */}
+                    {/* Kartu Materi Jaringan Komputer */}
                     <MateriCard
                       title="Jaringan Komputer"
                       description="Pelajari konsep dasar jaringan, topologi, dan cara komputer saling berkomunikasi."
@@ -629,6 +630,14 @@ export default function Home() {
                       onOpen={() => window.open('https://mediapembelajarantekscerpenkelasixsmp.my.canva.site/c5ynsts7fr4sb7sw', '_blank')}
                     />
 
+                    {/* Kartu Materi Proteksi Data dan File */}
+                    <MateriCard
+                      title="Proteksi Data dan File"
+                      description="Pelajari cara mengamankan data pribadi, enkripsi file, dan praktik terbaik menjaga keamanan informasi di ruang digital."
+                      type="link"
+                      color="purple"
+                      onOpen={() => window.open('https://mediapembelajarantekscerpenkelasixsmp.my.canva.site/c6k759qg5av7m746', '_blank')}
+                    />
                     {/* Kamu bisa menambahkan materi lain di sini nanti */}
                   </div>
                 )}
