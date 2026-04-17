@@ -17,10 +17,10 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
 
   const WORD_POOL = [
     // Teknologi & Komputer
-    'komputer', 'laptop', 'keyboard', 'mouse', 'monitor', 'printer', 'software', 'hardware', 'jaringan', 'internet',
-    'web', 'aplikasi', 'data', 'server', 'coding', 'algoritma', 'logika', 'digital', 'robot',
-    'sistem', 'prosesor', 'memori', 'penyimpanan', 'awan', 'resolusi', 'kabel', 'sinyal', 'wifi',
-    'sandi', 'keamanan', 'update', 'instal', 'unduh', 'unggah', 'folder', 'berkas', 'dokumen', 'ikon',
+    // 'komputer', 'laptop', 'keyboard', 'mouse', 'monitor', 'printer', 'software', 'hardware', 'jaringan', 'internet',
+    // 'web', 'aplikasi', 'data', 'server', 'coding', 'algoritma', 'logika', 'digital', 'robot',
+    // 'sistem', 'prosesor', 'memori', 'penyimpanan', 'awan', 'resolusi', 'kabel', 'sinyal', 'wifi',
+    // 'sandi', 'keamanan', 'update', 'instal', 'unduh', 'unggah', 'folder', 'berkas', 'dokumen', 'ikon',
 
     // Sekolah & Pendidikan
     'belajar', 'sekolah', 'siswa', 'guru', 'kelas', 'buku', 'pensil', 'tugas', 'ujian', 'ilmu',
