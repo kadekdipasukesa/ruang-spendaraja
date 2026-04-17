@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import {
-    History, Trophy, FilePlus, HeartHandshake,
+    History, AlertOctagon, FilePlus, HeartHandshake,
     ChevronRight, LayoutDashboard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -57,7 +57,7 @@ const DAFTAR_PELANGGARAN = [
     { id: 42, jenis: "Membawa rokok (elektrik maupun konvensional)", kategori: "BERAT", skor: 3 },
     { id: 43, jenis: "Membully", kategori: "BERAT", skor: 3 },
     { id: 44, jenis: "Melakukan pelecehan seksual", kategori: "BERAT", skor: 4 }
-  ];
+];
 
 export default function PelanggaranPage() {
     const [activeMenu, setActiveMenu] = useState(1); // Default ke Menu 1
@@ -84,7 +84,7 @@ export default function PelanggaranPage() {
                     pelapor:master_siswa!log_pelanggaran_siswa_pelapor_id_fkey (NAMA)
                 `)
                 .order('tanggal', { ascending: false });
-    
+
             // 2. Ambil Rekap Siswa (Pastikan kolom total_pelanggaran sesuai)
             // Kita coba hilangkan dulu .gt(0) untuk memastikan data masuk atau tidak
             const { data: rekap, error: rekapError } = await supabase
@@ -92,20 +92,20 @@ export default function PelanggaranPage() {
                 .select('id, NAMA, Kelas, total_pelanggaran') // Sebutkan kolom secara spesifik
                 .order('total_pelanggaran', { ascending: false })
                 .limit(10); // Ambil 10 besar saja
-    
+
             if (logError) console.error("Error Log:", logError.message);
             if (rekapError) console.error("Error Rekap:", rekapError.message);
-    
+
             // Filter manual di sini supaya lebih aman didebug
             const siswaMelanggar = rekap ? rekap.filter(s => s.total_pelanggaran > 0) : [];
-    
+
             setLogData(logs || []);
             setRekapSiswa(siswaMelanggar);
-    
+
             // DEBUG: Cek di console browser (F12)
             console.log("Data Rekap Ter-load:", rekap);
             console.log("Data Rekap Melanggar:", siswaMelanggar);
-    
+
         } catch (err) {
             console.error("Sistem Error:", err);
         } finally {
@@ -119,61 +119,61 @@ export default function PelanggaranPage() {
             // 1. Ambil Session Pelapor (Siswa/Admin yang sedang login)
             const session = JSON.parse(localStorage.getItem('user_siswa'));
             const pelaporId = session?.id;
-    
-            // 2. Tentukan Poin (Pelanggaran positif, Pengabdian negatif)
-let poinAksi = 0;
-let jenisFinal = pelanggaran;
 
-if (type === 'pelanggaran') {
-    const p = DAFTAR_PELANGGARAN.find(item => item.jenis === pelanggaran);
-    poinAksi = p ? p.skor : 0;
-} else {
-    // UBAH BARIS INI: 
-    // Ambil total poin siswa saat ini dan jadikan MINUS agar hasil akhirnya 0
-    // Kita gunakan data dari selectedSiswa yang dikirim oleh Form
-    poinAksi = -(selectedSiswa.total_pelanggaran || 0); 
-    
-    // jenisFinal otomatis mengikuti teks "PENGABDIAN SEMINGGU" dll dari Form
-    jenisFinal = pelanggaran; 
-}
-    
+            // 2. Tentukan Poin (Pelanggaran positif, Pengabdian negatif)
+            let poinAksi = 0;
+            let jenisFinal = pelanggaran;
+
+            if (type === 'pelanggaran') {
+                const p = DAFTAR_PELANGGARAN.find(item => item.jenis === pelanggaran);
+                poinAksi = p ? p.skor : 0;
+            } else {
+                // UBAH BARIS INI: 
+                // Ambil total poin siswa saat ini dan jadikan MINUS agar hasil akhirnya 0
+                // Kita gunakan data dari selectedSiswa yang dikirim oleh Form
+                poinAksi = -(selectedSiswa.total_pelanggaran || 0);
+
+                // jenisFinal otomatis mengikuti teks "PENGABDIAN SEMINGGU" dll dari Form
+                jenisFinal = pelanggaran;
+            }
+
             // 3. INSERT KE LOG (Wajib pakai AWAIT dan tangkap ERROR)
             const { error: insertError } = await supabase
                 .from('log_pelanggaran_siswa')
-                .insert([{ 
-                    siswa_id: selectedSiswa.id, 
-                    jenis_pelanggaran: jenisFinal, 
-                    poin_pelanggaran: poinAksi, 
+                .insert([{
+                    siswa_id: selectedSiswa.id,
+                    jenis_pelanggaran: jenisFinal,
+                    poin_pelanggaran: poinAksi,
                     catatan: catatan || "",
                     pelapor_id: pelaporId || null,
                     tanggal: new Date().toISOString()
                 }]);
-    
+
             if (insertError) {
                 // Jika masuk sini, berarti Supabase menolak (RLS atau Kolom Salah)
                 throw new Error(`Gagal Simpan Log: ${insertError.message}`);
             }
-    
+
             // 4. UPDATE TOTAL POIN SISWA
             const poinLama = selectedSiswa.total_pelanggaran || 0;
             const poinBaru = Math.max(0, poinLama + poinAksi);
-    
+
             const { error: updateError } = await supabase
                 .from('master_siswa')
                 .update({ total_pelanggaran: poinBaru })
                 .eq('id', selectedSiswa.id);
-    
+
             if (updateError) {
                 throw new Error(`Gagal Update Poin Siswa: ${updateError.message}`);
             }
-    
+
             // 5. JIKA SEMUA LOLOS, BARU MUNCUL ALERT
             alert("✅ DATA BERHASIL DICATAT KE DATABASE!");
-            
+
             // Sinkronkan ulang data di layar
-            await fetchInitialData(); 
+            await fetchInitialData();
             setActiveMenu(1); // Balik ke tab riwayat
-    
+
         } catch (err) {
             // Jika ada masalah di tengah jalan, alert akan memberitahu alasannya
             console.error("ERROR SISTEM:", err);
@@ -187,55 +187,86 @@ if (type === 'pelanggaran') {
 
     // Definisi Menu & Hak Akses
     const menus = [
-        { id: 1, label: "Catatan Pelanggaran", icon: <History size={18} />, roles: ['tamu', 'osis', 'admin', 'guru_osis'] },
-        { id: 2, label: "Daftar Siswa", icon: <Trophy size={18} />, roles: ['tamu', 'osis', 'admin', 'guru_osis'] },
-        { id: 3, label: "Input Catatan", icon: <FilePlus size={18} />, roles: ['osis', 'admin', 'guru_osis'] },
-        { id: 4, label: "Input Pengabdian", icon: <HeartHandshake size={18} />, roles: ['admin', 'guru_osis'] },
+        { id: 1, label: "Catatan Pelanggaran", icon: <History size={18} />, roles: ['tamu', 'siswa', 'osis', 'admin', 'guru'] },
+        { id: 2, label: "Daftar Siswa", icon: <AlertOctagon size={18} />, roles: ['tamu', 'siswa', 'osis', 'admin', 'guru'] },
+        { id: 3, label: "Input Catatan", icon: <FilePlus size={18} />, roles: ['osis', 'admin', 'guru'] },
+        { id: 4, label: "Input Pengabdian", icon: <HeartHandshake size={18} />, roles: ['admin', 'guru'] },
     ];
 
     return (
         <div className="min-h-screen bg-[#0f172a] pb-24 text-slate-200">
             <HeroPelanggaran role={role} />
-
+    
             <div className="container mx-auto px-4 -mt-16 relative z-30 max-w-6xl">
+    
+                {/* --- NAVIGATION (MOBILE: BOTTOM FILL | PC: TOP WITH SPACING) --- */}
+<div className="
+    fixed bottom-0 left-0 right-0 z-[100]           /* Style HP: Tempel di bawah layar (IG Style) */
+    md:relative md:mt-4 md:mb-10 md:px-0             /* Style PC: Tetap di atas konten dengan jarak */
+">
+    <div className="flex justify-center w-full">
+        {/* Container Menu - w-full di HP, rounded-none di HP agar nempel pinggir */}
+        <div className="
+            flex items-center w-full bg-slate-900/95 backdrop-blur-2xl border-t border-white/10 
+            md:w-auto md:rounded-full md:border md:px-2 md:py-1.5 md:shadow-[0_20px_50px_rgba(0,0,0,0.5)]
+        ">
+            {menus.map((m) => (
+                m.roles.includes(role) && (
+                    <button
+                        key={m.id}
+                        onClick={() => setActiveMenu(m.id)}
+                        className={`
+                            relative flex flex-1 flex-col md:flex-none md:flex-row items-center justify-center 
+                            gap-1 md:gap-3 py-3 md:px-8 md:py-3.5 transition-all duration-300
+                            ${activeMenu === m.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}
+                        `}
+                    >
+                        {/* Indikator Aktif - Di HP berupa garis atas (IG style) atau blok, di PC blok rounded */}
+                        {activeMenu === m.id && (
+                            <motion.div
+                                layoutId="activeTab"
+                                className="absolute inset-x-0 bottom-0 h-1 bg-blue-500 md:inset-0 md:h-full md:bg-gradient-to-r md:from-blue-600 md:to-indigo-600 md:rounded-full -z-10"
+                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                            />
+                        )}
 
-                {/* --- NAVIGATION TABS (SCROLLABLE & CENTERED) --- */}
-                <div className="flex justify-center w-full mb-10 px-2">
-                    <div className="flex overflow-x-auto no-scrollbar gap-3 p-2 bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] border border-white/5 max-w-full sm:max-w-max shadow-2xl">
-                        {menus.map((m) => (
-                            m.roles.includes(role) && (
-                                <button
-                                    key={m.id}
-                                    onClick={() => setActiveMenu(m.id)}
-                                    className={`
-            flex items-center gap-2 px-5 py-3 rounded-full text-[11px] font-black uppercase tracking-tighter transition-all duration-300 whitespace-nowrap shrink-0
-            ${activeMenu === m.id
-                                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-900/50 scale-105'
-                                            : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'
-                                        }
-          `}
-                                >
-                                    <span className={`${activeMenu === m.id ? 'animate-bounce' : ''}`}>
-                                        {m.icon}
-                                    </span>
-                                    {m.label}
-                                </button>
-                            )
-                        ))}
-                    </div>
-                </div>
+                        {/* Icon */}
+                        <div className={`transition-transform ${activeMenu === m.id ? 'scale-110' : 'scale-100'}`}>
+                            {m.icon}
+                        </div>
 
-                {/* --- CSS KHUSUS UNTUK SEMBUNYIKAN SCROLLBAR (Opsional di index.css) --- */}
+                        {/* Label - Dibuat proporsional */}
+                        {/* Label - Custom Mobile: RIWAYAT, DAFTAR, CATAT, PENGABDIAN */}
+<span className={`
+    font-black uppercase tracking-widest leading-none
+    text-[8px] md:text-[10px]
+    ${activeMenu === m.id ? 'opacity-100' : 'opacity-60'}
+`}>
+    {/* Tampilan HP: Menggunakan label custom berdasarkan ID menu */}
+    <span className="md:hidden">
+        {m.id === 1 && "RIWAYAT"}
+        {m.id === 2 && "DAFTAR"}
+        {m.id === 3 && "CATAT"}
+        {m.id === 4 && "PENGABDIAN"}
+    </span>
+    
+    {/* Tampilan PC: Tetap menggunakan label asli dari array menus */}
+    <span className="hidden md:inline">
+        {m.label}
+    </span>
+</span>
+                    </button>
+                )
+            ))}
+        </div>
+    </div>
+</div>
+    
                 <style>{`
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-`}</style>
-
+                    .no-scrollbar::-webkit-scrollbar { display: none; }
+                    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                `}</style>
+    
                 {/* --- KONTEN DINAMIS --- */}
                 <div className="grid grid-cols-1 gap-6">
                     <AnimatePresence mode="wait">
@@ -247,9 +278,7 @@ if (type === 'pelanggaran') {
                             transition={{ duration: 0.2 }}
                         >
                             {activeMenu === 1 && <LogPelanggaran data={logData} />}
-
                             {activeMenu === 2 && <RekapSiswa data={rekapSiswa} />}
-
                             {activeMenu === 3 && (
                                 <FormPelanggaran
                                     type="pelanggaran"
@@ -259,7 +288,6 @@ if (type === 'pelanggaran') {
                                     daftarPelanggaran={DAFTAR_PELANGGARAN}
                                 />
                             )}
-
                             {activeMenu === 4 && (
                                 <FormPelanggaran
                                     type="pengabdian"
@@ -270,20 +298,6 @@ if (type === 'pelanggaran') {
                             )}
                         </motion.div>
                     </AnimatePresence>
-                </div>
-
-            </div>
-
-            {/* --- FOOTER INFO (Dinamis sesuai Menu) --- */}
-            <div className="fixed bottom-0 left-0 w-full p-4 bg-[#0f172a]/80 backdrop-blur-md border-t border-white/5 z-50">
-                <div className="max-w-6xl mx-auto flex justify-between items-center px-4">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase">
-                        <LayoutDashboard size={14} />
-                        Status: <span className="text-blue-400">{role}</span>
-                    </div>
-                    <p className="text-[10px] italic text-slate-500 hidden md:block">
-                        Klik menu di atas untuk berpindah halaman
-                    </p>
                 </div>
             </div>
         </div>

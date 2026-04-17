@@ -128,19 +128,25 @@ export default function Navbar() {
   return (
     <nav className="bg-[#0f172a]/90 border-b border-blue-500/20 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
       {/* LOGO DENGAN VERSI */}
-      <Link to="/" className="flex items-center gap-2 group">
-        <div className="bg-blue-600 p-1.5 rounded-lg text-white shadow-lg shadow-blue-900/40 group-hover:scale-110 transition-transform">
-          <School size={22} />
-        </div>
-        <div className="flex flex-col leading-none">
-          <span className="text-white font-black text-xl tracking-tighter">
-            Ruang <span className="text-blue-400">Spendaraja</span>
-          </span>
-          <span className="text-[7px] font-bold text-slate-500 tracking-[0.2em] ml-0.5 mt-0.5">
-            VERSI 1.0
-          </span>
-        </div>
-      </Link>
+      <Link to="/" className="flex items-center gap-3 group">
+  <div className="bg-blue-600 p-1.5 rounded-lg text-white shadow-lg shadow-blue-900/40 group-hover:scale-110 transition-transform">
+    <School size={22} />
+  </div>
+  
+  <div className="flex flex-col justify-center">
+    {/* Teks Utama: Gunakan leading-tight agar tidak terlalu renggang tapi tidak mepet */}
+    <span className="text-white font-black text-xl tracking-tighter leading-tight">
+      Ruang <span className="text-blue-400">Spendaraja</span>
+    </span>
+    
+    {/* Teks Versi: Beri pt-1 (padding top) untuk memisahkan diri dari teks atas */}
+    <div className="flex items-center pt-1">
+      <span className="text-[7px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-none">
+        v.{__APP_VERSION__}
+      </span>
+    </div>
+  </div>
+</Link>
 
       {user ? (
         <div className="flex items-center gap-4">
@@ -161,7 +167,7 @@ export default function Navbar() {
 
           <div className="text-right hidden md:block border-l border-white/10 pl-4">
             <p className="text-sm font-bold text-white capitalize">{formatShortName(user.NAMA)}</p>
-            <p className="text-[10px] text-blue-400 uppercase font-black tracking-widest">Kelas {user.Kelas}</p>
+            <p className="text-[10px] text-blue-400 uppercase font-black tracking-widest">{user.Kelas}</p>
           </div>
           
           <button

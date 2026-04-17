@@ -427,7 +427,7 @@ const GempitasPage = () => {
       {[
         { event: 'Masa Pendaftaran', date: '6 - 27 April 2026', desc: 'Pendaftaran dilakukan secara mandiri melalui link Google Form di atas.' },
         { event: 'Technical Meeting', date: 'Rabu, 29 April 2026 (13.00)', desc: 'Dilaksanakan via Zoom Meeting (Dinas Pendidikan Buleleng).' },
-        { event: 'Hari Pelaksanaan Lomba', date: 'Sabtu, 2 Mei 2026', desc: 'Bertempat di SMP Negeri 2 Singaraja (Membawa HP Berkuota).' },
+        { event: 'Hari Pelaksanaan Lomba', date: 'Sabtu, 2 Mei 2026', desc: 'Bertempat di SMP Negeri 2 Singaraja.' },
       ].map((item, i) => (
         <div key={i} className="relative flex gap-6 items-start group">
           
