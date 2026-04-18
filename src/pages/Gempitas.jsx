@@ -393,19 +393,30 @@ const GempitasPage = () => {
 
         {/* --- TOMBOL JUKNIS BARU --- */}
         <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="mb-10"
-        >
-          <a
-            href="https://drive.google.com/file/d/1pxXJt_ZqgKzftsqumFQZOWDuuESt2W5K/view?usp=sharing"
-            target="_blank"
-            rel="noreferrer"
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20 border border-white/10 uppercase tracking-widest text-sm"
-          >
-            <Download size={20} /> Download Juknis Lomba (PDF)
-          </a>
-        </motion.div>
+  initial={{ y: 20, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  className="mb-10 flex flex-col gap-4" // Tambahkan gap-4 jika ingin ditumpuk vertikal
+>
+  {/* Tombol Juknis Lomba */}
+  <a
+    href="https://drive.google.com/file/d/1pxXJt_ZqgKzftsqumFQZOWDuuESt2W5K/view?usp=sharing"
+    target="_blank"
+    rel="noreferrer"
+    className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20 border border-white/10 uppercase tracking-widest text-sm"
+  >
+    <Download size={20} /> Download Juknis Lomba (PDF)
+  </a>
+
+  {/* Tombol Surat Rekomendasi */}
+  <a
+    href="https://drive.google.com/file/d/1r7ZSOz-ABuRlHEnBDl36KpFj0noO3kLy/view?usp=sharing"
+    target="_blank"
+    rel="noreferrer"
+    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl shadow-indigo-900/20 border border-white/10 uppercase tracking-widest text-sm"
+  >
+    <Download size={20} /> Surat Rekomendasi Lomba GEMPITAS
+  </a>
+</motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
