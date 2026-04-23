@@ -271,7 +271,7 @@ const GempitasPage = () => {
         {/* LINK MONITORING DALAM BENTUK LABEL KECIL DI POJOK KANAN BAWAH */}
         <div className="flex justify-end -mt-6 mb-10 px-2">
           <a
-            href="https://script.google.com/macros/s/AKfycbxv0JC4PzEsD3fFfcuzBXuJakaJO0sUvelGt0xjgkRrBjUh6rn2bkU-FGPWD-zqu1yRZw/exec"
+            href="https://script.google.com/a/macros/guru.smp.belajar.id/s/AKfycbxv0JC4PzEsD3fFfcuzBXuJakaJO0sUvelGt0xjgkRrBjUh6rn2bkU-FGPWD-zqu1yRZw/exec"
             target="_blank"
             rel="noreferrer"
             className="group flex items-center gap-2 text-[10px] md:text-xs font-bold text-white/40 hover:text-amber-400 transition-all duration-300 bg-white/5 hover:bg-amber-400/10 px-4 py-2 rounded-full border border-white/5 hover:border-amber-400/20"
