@@ -20,9 +20,18 @@ import ModalInputTugas from '../components/Tugas/ModalInputTugas';
 import AssignmentCard from "../components/Tugas/AssignmentCard";
 import ModalDetailTugas from "../components/Tugas/ModalDetailTugas";
 
+
 import AppsCard from '../components/Apps/AppsCard';
 
 import RankList from '../components/Ranking/RankList';
+
+// Import semua tab baru
+// import BerandaTab from './tabs/BerandaTab';
+import MateriTab from '../components/Materi/MateriTab';
+import TugasTab from '../components/Tugas/TugasTab';
+import RankingTab from "../components/Ranking/RankingTab"
+import PlaygroundTab from "../components/Games/PlaygroundTab";
+import AppsTab from "../components/Apps/AppsTab";
 
 
 
@@ -504,237 +513,40 @@ export default function Home() {
                 )}
 
                 {activeTab === 'playground' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
-                    {/* Kartu Game 1 - Ketik Cepat */}
-                    <GameCard
-                      title="Ketik Cepat"
-                      gameId="game1"
-                      description="Ketiklah dengan tepat dan cepat!"
-                      icon={Keyboard}
-                      color="blue"
-                      student={student}
-                      allLockStatuses={allLockStatuses}
-                      isGameLocked={isGame1Locked}
-                      getOptionLabel={(cls, label) => getOptionLabel('game1', cls, label)}
-                      onPlay={() => setShowGameKetik(true)}
-                      onToggleLock={(selectedClass, mode) => {
-                        if (mode === 'check') setIsGame1Locked(allLockStatuses.game1?.[selectedClass] || false);
-                        else toggleLockGame('game1', isGame1Locked, selectedClass);
-                      }}
-                    />
-
-                    {/* Kartu Game 2 - Flappy Bird */}
-                    <GameCard
-                      title="Flappy Bird"
-                      gameId="game2"
-                      description="Terbangkan burung melewati pipa!"
-                      icon={Bird}
-                      color="green"
-                      student={student}
-                      allLockStatuses={allLockStatuses}
-                      isGameLocked={isGame2Locked}
-                      getOptionLabel={(cls, label) => getOptionLabel('game2', cls, label)}
-                      // onPlay={() => setShowFlappy(true)}
-                      onPlay={() => window.open('/flappy.html', '_blank')}
-                      onToggleLock={(selectedClass, mode) => {
-                        if (mode === 'check') setIsGame2Locked(allLockStatuses.game2?.[selectedClass] || false);
-                        else toggleLockGame('game2', isGame2Locked, selectedClass);
-                      }}
-                    />
-
-                    {/* Kartu Game 3 - Cerdas Cermat */}
-                    <GameCard
-                      title="Cerdas Cermat"
-                      gameId="game3"
-                      description="Adu cepat pencet bel dan jawab soal!"
-                      icon={Zap} // Menggunakan ikon Petir agar terasa nuansa rebutan cepat
-                      color="purple" // Warna ungu memberikan kesan eksklusif dan cerdas
-                      student={student} // Prop ini harus ada & tidak boleh null
-                      allLockStatuses={allLockStatuses}
-                      isGameLocked={isGame3Locked} // Pastikan Bapak sudah buat state [isGame3Locked, setIsGame3Locked]
-                      getOptionLabel={(cls, label) => getOptionLabel('game3', cls, label)}
-                      onPlay={() => setShowGameLCC(true)}
-                      onToggleLock={(selectedClass, mode) => {
-                        if (mode === 'check') {
-                          setIsGame3Locked(allLockStatuses.game3?.[selectedClass] || false);
-                        } else {
-                          toggleLockGame('game3', isGame3Locked, selectedClass);
-                        }
-                      }}
-                    />
-                  </div>
+                  <PlaygroundTab
+                    student={student}
+                    allLockStatuses={allLockStatuses}
+                    gameStates={{ isGame1Locked, isGame2Locked, isGame3Locked }}
+                    handlers={{ setIsGame1Locked, setIsGame2Locked, setIsGame3Locked, toggleLockGame, getOptionLabel, setShowGameKetik, setShowGameLCC }}
+                  />
                 )}
 
+
+                {/* ... menu tugas ... */}
                 {activeTab === 'tugas' && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h2 className="text-xl font-bold flex items-center gap-2 text-white">
-                          <FileText className="text-blue-400" /> Tugas {student?.Kelas}
-                        </h2>
-                        <p className="text-xs text-slate-500 mt-1">{assignments.length} Tugas tersedia untukmu</p>
-                      </div>
-
-                      {/* TOMBOL ADMIN: Hanya muncul jika role admin */}
-                      {student?.role === 'admin' && (
-                        <button
-                          onClick={() => setShowInputTugas(true)} // Pastikan state ini sudah dibuat
-                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
-                        >
-                          <Plus size={18} />
-                          <span className="hidden md:inline">Tambah Tugas</span>
-                        </button>
-                      )}
-                    </div>
-
-                    {assignments.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {assignments.map((t) => (
-                          <AssignmentCard
-                            key={t.id}
-                            data={t}
-                            onOpen={(val) => setSelectedTugas(val)}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-20 bg-[#1e293b]/50 rounded-3xl border border-dashed border-slate-700">
-                        <div className="bg-slate-800/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <FileText className="text-slate-600" size={30} />
-                        </div>
-                        <p className="text-slate-500 italic">Belum ada tugas untuk kelasmu. Santai dulu!</p>
-                      </div>
-                    )}
-                  </div>
+                  <TugasTab
+                    student={student}
+                    assignments={assignments}
+                    setShowInputTugas={setShowInputTugas}
+                    setSelectedTugas={setSelectedTugas}
+                  />
                 )}
 
                 {/* ... menu materi ... */}
-                {activeTab === 'materi' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
-                    {/* Kartu Materi Jaringan Komputer */}
-                    {/* Kartu Materi Jaringan Komputer */}
-                    <MateriCard
-                      title="Jaringan Komputer"
-                      description="Pelajari konsep dasar jaringan, topologi, dan cara komputer saling berkomunikasi."
-                      type="link"
-                      color="blue"
-                      onOpen={() => window.open('https://mediapembelajarantekscerpenkelasixsmp.my.canva.site/c54xpr3xwymkfzrh', '_blank')}
-                    />
+                {activeTab === 'materi' && <MateriTab />}
 
-                    {/* Kartu Materi Konektivitas Jaringan */}
-                    <MateriCard
-                      title="Konektivitas Jaringan"
-                      description="Memahami cara perangkat terhubung ke internet, teknologi nirkabel, dan protokol komunikasi."
-                      type="link"
-                      color="emerald"
-                      onOpen={() => window.open('https://mediapembelajarantekscerpenkelasixsmp.my.canva.site/c5ynsts7fr4sb7sw', '_blank')}
-                    />
-
-                    {/* Kartu Materi Proteksi Data dan File */}
-                    <MateriCard
-                      title="Proteksi Data dan File"
-                      description="Pelajari cara mengamankan data pribadi, enkripsi file, dan praktik terbaik menjaga keamanan informasi di ruang digital."
-                      type="link"
-                      color="purple"
-                      onOpen={() => window.open('https://mediapembelajarantekscerpenkelasixsmp.my.canva.site/c6k759qg5av7m746', '_blank')}
-                    />
-                    {/* Kamu bisa menambahkan materi lain di sini nanti */}
-                  </div>
-                )}
                 {/* ... menu absensi ... */}
                 {activeTab === 'absen' && <Absensi student={student} />}
 
                 {/* --- TAB APPS (APLIKASI WEB) --- */}
-                {activeTab === 'apps' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
+                {activeTab === 'apps' && <AppsTab />}
 
-                    <AppsCard
-                      title="CATATAN KEDISIPLINAN"
-                      description="Sistem pencatatan poin pelanggaran dan pengabdian siswa secara real-time."
-                      icon={ShieldAlert}
-                      color="rose"
-                      badge="Sistem"
-                      onOpen={() => window.location.href = '/pelanggaran'}
-                    />
-
-                    <AppsCard
-                      title="GEMPITAS 2026"
-                      description="Pendaftaran dan informasi Gema Lomba Matematika, IPA, & IPS SMP Negeri 2 Singaraja."
-                      icon={Trophy}
-                      color="orange"
-                      badge="Competition"
-                      onOpen={() => window.location.href = '/gempitas'}
-                    />
-
-                    <AppsCard
-                      title="Monitoring Liburan"
-                      description="Laporan pembelajaran mandiri murid selama masa liburan sekolah."
-                      icon={UserCheck}
-                      color="emerald"
-                      badge="Liburan"
-                      onOpen={() => window.open('https://script.google.com/a/macros/guru.smp.belajar.id/s/AKfycbzlKlYSmo5WIcd6If6botntfyGc0E30ttGGHhL14Fhd98IoFqnEfY0iuR4tS6AWTUu0/exec', '_blank')}
-                    />
-
-                    <AppsCard
-                      title="Canva Design"
-                      description="Buat presentasi, poster, dan tugas sekolah dengan template yang kreatif."
-                      icon={Globe}
-                      color="purple"
-                      badge="Populer"
-                      onOpen={() => window.open('https://www.canva.com', '_blank')}
-                    />
-
-                    <AppsCard
-                      title="ChatGPT AI"
-                      description="Asisten cerdas untuk membantu brainstorming ide dan belajar konsep sulit."
-                      icon={Terminal}
-                      color="emerald"
-                      badge="AI Help"
-                      onOpen={() => window.open('https://chatgpt.com', '_blank')}
-                    />
-
-                    <AppsCard
-                      title="Quizizz"
-                      description="Mainkan kuis interaktif bersama teman sekelas untuk menguji pemahamanmu."
-                      icon={Gamepad2}
-                      color="rose"
-                      onOpen={() => window.open('https://quizizz.com/join', '_blank')}
-                    />
-
-                    <AppsCard
-                      title="Google Classroom"
-                      description="Cek pengumuman kelas dan kumpulkan tugas tepat waktu di sini."
-                      icon={BookOpen}
-                      color="blue"
-                      onOpen={() => window.open('https://classroom.google.com', '_blank')}
-                    />
-
-                    <AppsCard
-                      title="Typing Test"
-                      description="Latih kecepatan mengetik 10 jarimu agar mengerjakan tugas lebih cepat."
-                      icon={Cpu}
-                      color="orange"
-                      badge="Skill"
-                      onOpen={() => window.open('https://10fastfingers.com/typing-test/indonesian', '_blank')}
-                    />
-
-                  </div>
-                )}
+                {/* --- TAB RANKING (APLIKASI WEB) --- */}
                 {activeTab === 'ranking' && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4">
-                    {allStudentsData.length > 0 ? (
-                      <RankList
-                        students={allStudentsData}
-                        currentUser={student}
-                      />
-                    ) : (
-                      /* Tampilan Loading saat data diambil */
-                      <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-                        <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-                        <p className="text-xs font-black uppercase tracking-widest">Menyusun Peringkat...</p>
-                      </div>
-                    )}
-                  </div>
+                  <RankingTab
+                    allStudentsData={allStudentsData}
+                    student={student}
+                  />
                 )}
                 {/* ... Tab Lain Tetap Berfungsi di Sini ... */}
 
