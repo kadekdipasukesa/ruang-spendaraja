@@ -32,9 +32,10 @@ import TugasTab from '../components/Tugas/TugasTab';
 import RankingTab from "../components/Ranking/RankingTab"
 import PlaygroundTab from "../components/Games/PlaygroundTab";
 import AppsTab from "../components/Apps/AppsTab";
+import UlanganTab from '../components/Ulangan/UlanganTab';
 
 
-
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home as HomeIcon,
   Megaphone,
@@ -540,6 +541,18 @@ export default function Home() {
 
                 {/* --- TAB APPS (APLIKASI WEB) --- */}
                 {activeTab === 'apps' && <AppsTab />}
+
+                {/* --- TAB ULANGAN --- */}
+                {activeTab === 'ulangan' && (
+                  <motion.div
+                    key="ulangan"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                  >
+                    <UlanganTab />
+                  </motion.div>
+                )}
 
                 {/* --- TAB RANKING (APLIKASI WEB) --- */}
                 {activeTab === 'ranking' && (

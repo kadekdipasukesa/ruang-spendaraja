@@ -1,6 +1,6 @@
 import { 
   Home as HomeIcon, Megaphone, Gamepad2, FileText, 
-  Trophy, Lock, BookOpen, UserCheck, LayoutGrid 
+  Trophy, Lock, BookOpen, UserCheck, LayoutGrid, PencilLine
 } from 'lucide-react';
 
 export default function Navigation({ activeTab, setActiveTab, student }) {
@@ -9,15 +9,16 @@ export default function Navigation({ activeTab, setActiveTab, student }) {
     { id: 'apps', label: 'Apps', icon: <LayoutGrid size={18} /> },
     { id: 'info', label: 'Informasi', icon: <Megaphone size={18} /> },
     { id: 'materi', label: 'Materi', icon: <BookOpen size={18} /> },
+    { id: 'tugas', label: 'Tugas', icon: <FileText size={18} /> },
+    // Menu Ulangan Baru
+    { id: 'ulangan', label: 'Ulangan', icon: <PencilLine size={18} /> }, 
     { id: 'absen', label: 'Absensi', icon: <UserCheck size={18} /> },
     { id: 'playground', label: 'Playground', icon: <Gamepad2 size={18} /> },
-    { id: 'tugas', label: 'Tugas', icon: <FileText size={18} /> },
     { id: 'ranking', label: 'Ranking', icon: <Trophy size={18} /> },
-  ];
-
+];
   const handleTabClick = (tabId) => {
     // Menu yang wajib diproteksi (Hanya 7.1-7.11 & Admin)
-    const isProtected = ['absen', 'tugas', 'ranking', 'materi'].includes(tabId);
+    const isProtected = ['absen', 'tugas', 'ranking', 'materi', 'ulangan'].includes(tabId);
     
     if (isProtected) {
       // 1. Cek apakah admin (berdasarkan role di data student)
