@@ -5,6 +5,7 @@ import ShortcutCard from '../components/Home/ShortcutCard';
 import FeedbackForm from '../components/Home/FeedbackForm';
 import { Monitor, Globe, BookOpen, UserCheck, ShieldAlert } from 'lucide-react';
 import { checkAppAccess } from '../utils/appPermissions'; // Pastikan helper ini sudah dibuat
+import Footer from '../components/Home/Footer'; // Sesuaikan path
 
 const HomeRoot = () => {
   const [student, setStudent] = useState(null);
@@ -111,7 +112,7 @@ const HomeRoot = () => {
   }, [student]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white pb-20">
+    <div className="min-h-screen bg-slate-950 text-white">
       <main className="container mx-auto px-5 pt-24">
         
         <Hero
@@ -132,7 +133,9 @@ const HomeRoot = () => {
         </div>
 
         <FeedbackForm />
+        
       </main>
+      <Footer />
     </div>
   );
 };
