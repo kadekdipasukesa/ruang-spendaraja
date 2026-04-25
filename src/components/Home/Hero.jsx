@@ -1,110 +1,117 @@
-import { Sparkles, GraduationCap, ArrowRight, PartyPopper } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Sparkles, GraduationCap, LayoutGrid } from 'lucide-react';
 
-export default function Hero({ student, onStart }) {
-  const fullName = student ? student.NAMA : '';
+export default function Hero({ student, activeTab, setActiveTab }) {
+    const fullName = student ? student.NAMA : '';
+    const categories = ['Semua', 'Akademik', 'Event', 'Fasilitas'];
 
-  return (
-    <div className="relative overflow-hidden bg-[#1e293b]/50 border border-white/10 p-8 md:p-12 rounded-[2.5rem] mb-8 shadow-2xl backdrop-blur-xl group text-left">
-      
-      {/* --- ANIMASI KEMBANG API --- */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="firework absolute top-1/4 left-1/4"></div>
-        <div className="firework absolute top-1/3 left-2/3"></div>
-        <div className="firework absolute top-1/2 left-1/2"></div>
-      </div>
+    return (
 
-      <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
-        <div className="w-full">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-black uppercase tracking-[0.2em] mb-6 animate-pulse">
-            <Sparkles size={14} className="text-yellow-400" />
-            Platform Digital Ruang Spendaraja
-          </div>
 
-          <div className="space-y-2">
-            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-none">
-              {student ? "Selamat Datang," : "Eksplorasi"}
-            </h1>
-            
-            {/* Penyesuaian di sini: Menambahkan flex & items-center agar nama dan badge sejajar rapi */}
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-tight flex flex-wrap items-center gap-x-4 gap-y-2">
-              {student ? (
-                <>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-emerald-400 capitalize">
-                    {fullName.toLowerCase()}
-                  </span>
-                  
-                  {/* Logika: Hanya muncul jika Admin ATAU Siswa Kelas 7.1 - 7.11 */}
-{(student?.role === 'admin' || (student?.Kelas && /^7\.(1[0-1]|[1-9])$/.test(student.Kelas))) && (
-  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.1)] transition-all duration-500 hover:scale-105">
-    <div className="p-1 rounded-full bg-yellow-500/20">
-      <PartyPopper size={14} className="text-yellow-400" />
-    </div>
-    <div className="flex flex-col leading-none">
-      <span className="text-[9px] text-yellow-500/70 font-black uppercase tracking-wider">POIN</span>
-      <span className="text-lg font-black text-yellow-400">
-        {/* Fallback ke 0 jika data belum sync */}
-        {student.total_points ?? 0}
-      </span>
-    </div>
-  </div>
-)}
-                </>
-              ) : (
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">
-                  Ruang Spendaraja
-                </span>
-              )}
-            </h2>
-          </div>
+        /* BACKGROUND & BORDER DISAMAKAN DENGAN CARD (slate-900/60 & backdrop-blur-xl) */
+        <motion.div
+            // Animasi: Mulai dari transparan dan posisi agak ke atas (-40)
+            initial={{ opacity: 0, y: -400 }}
+            // Berakhir di posisi asli dan muncul penuh
+            animate={{ opacity: 1, y: 0 }}
+            // Durasi 1.5 detik dengan transisi smooth (easeOut)
+            transition={{ duration: 0.5, ease: "easeOut" }}
 
-          <p className="text-slate-400 max-w-lg text-sm md:text-base leading-relaxed my-8 font-medium">
-            Pusat kreativitas, pantau tugas, dan raih prestasi bersama teman-teman sekelas di platform kebanggaan kita.
-          </p>
-          
-          <div className="flex flex-wrap gap-4">
-            <button 
-              onClick={onStart}
-              className="group/btn flex items-center gap-3 bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] active:scale-95"
-            >
-              Mulai Petualangan <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />
-            </button>
-          </div>
-        </div>
+            // Background Hitam Pekat dengan Glassmorphism
+            className="relative overflow-hidden bg-slate-900/60 border border-white/10 p-8 md:p-12 rounded-[2.5rem] mb-12 backdrop-blur-xl group text-left mt-10 transition-all duration-500 shadow-[0_0_40px_-15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_50px_-10px_rgba(59,130,246,0.5)] hover:border-blue-500/30">
 
-        <div className="hidden lg:block relative">
-          <div className="absolute inset-0 bg-blue-500 blur-[80px] opacity-20"></div>
-          <div className="relative bg-gradient-to-tr from-blue-600 to-indigo-600 p-8 rounded-[2.5rem] shadow-2xl rotate-3 group-hover:rotate-6 transition-transform duration-500 border-2 border-white/20">
-            <GraduationCap size={100} className="text-white drop-shadow-2xl" />
-          </div>
-        </div>
-      </div>
+            {/* GLOW AKSENTUASI DI POJOK (Sama seperti card, menyala dari awal) */}
+            <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-gradient-to-br from-blue-600/20 to-transparent opacity-60 blur-[100px] -z-10 transition-opacity duration-700 group-hover:opacity-100" />
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        .firework {
-          width: 6px;
-          aspect-ratio: 1;
-          border-radius: 50%;
-          color: #60a5fa;
-          background: 
-            radial-gradient(circle at 50% 50%, currentColor 0, transparent 0) 50% 50%,
-            radial-gradient(circle at 50% 50%, currentColor 0, transparent 0) 50% 50%,
-            radial-gradient(circle at 50% 50%, currentColor 0, transparent 0) 50% 50%,
-            radial-gradient(circle at 50% 50%, currentColor 0, transparent 0) 50% 50%,
-            radial-gradient(circle at 50% 50%, currentColor 0, transparent 0) 50% 50%,
-            radial-gradient(circle at 50% 50%, currentColor 0, transparent 0) 50% 50%,
-            radial-gradient(circle at 50% 50%, currentColor 0, transparent 0) 50% 50%,
-            radial-gradient(circle at 50% 50%, currentColor 0, transparent 0) 50% 50%;
-          background-size: 0 0;
-          background-repeat: no-repeat;
-          animation: firework 3s infinite;
-        }
+            <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-12">
+                <div className="w-full lg:max-w-3xl">
 
-        @keyframes firework {
-          0% { background-size: 0 0; opacity: 1; }
-          40% { background-size: 6px 6px; opacity: 1; }
-          100% { background-size: 15px 15px; opacity: 0; background-position: 10% 10%, 90% 10%, 90% 90%, 10% 90%, 50% 0, 0 50%, 100% 50%, 50% 100%; }
-        }
-      `}} />
-    </div>
-  );
+                    {/* BADGE PLATFORM - Warna Amber disesuaikan pendarannya */}
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950/80 border border-amber-500/30 text-amber-500 text-[11px] font-black uppercase tracking-[0.2em] mb-6 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+                        <Sparkles size={14} className="text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]" />
+                        Platform Digital Ruang Spendaraja
+                    </div>
+
+                    <div className="space-y-4">
+                        <h1 className="text-3xl md:text-4xl font-black text-white/40 tracking-tight leading-none italic uppercase">
+                            {student ? "Senang Melihatmu Kembali," : "Selamat Datang di Portal"}
+                        </h1>
+
+                        <h2 className="text-4xl md:text-7xl font-black tracking-tighter leading-tight">
+                            {student ? (
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-blue-400 capitalize drop-shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+                                    {fullName.toLowerCase()}
+                                </span>
+                            ) : (
+                                <div className="flex flex-col">
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 italic">
+                                        Ruang Spendaraja
+                                    </span>
+                                    <span className="text-[14px] md:text-[18px] text-white/20 uppercase tracking-[0.5em] mt-2 ml-1 font-black">
+                                        Digital Ecosystem v3.0
+                                    </span>
+                                </div>
+                            )}
+                        </h2>
+                    </div>
+
+                    <p className="text-slate-400 max-w-lg text-sm md:text-base leading-relaxed mt-8 mb-10 font-medium">
+                        Akses seluruh layanan digital sekolah dalam satu genggaman. Pantau aktivitas, eksplorasi materi, dan raih masa depanmu.
+                    </p>
+
+                    {/* FILTER KATEGORI - Style Tombol Neon Blue */}
+                    <div className="flex flex-wrap gap-3">
+                        {categories.map((cat) => (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveTab(cat)}
+                                className={`px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] transition-all duration-500 flex items-center gap-2 border ${activeTab === cat
+                                    // SAAT AKTIF: Gunakan efek Glow Biru Neon (Default Saran)
+                                    ? 'bg-blue-500/20 border-blue-400 text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.4)] scale-105'
+                                    // SAAT TIDAK AKTIF: Redup dan menyatu dengan background
+                                    : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/20 hover:text-white'
+                                    }`}
+                            >
+                                {cat === 'Semua' && (
+                                    <LayoutGrid
+                                        size={14}
+                                        className={`transition-all ${activeTab === 'Semua' ? 'drop-shadow-[0_0_5px_rgba(96,165,250,0.8)]' : ''}`}
+                                    />
+                                )}
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* ILLUSTRATION AREA - Floating Neon Style */}
+                <div className="hidden lg:block">
+                    <motion.div
+                        animate={{ y: [0, -15, 0] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                        className="relative bg-slate-950/80 p-12 rounded-[3.5rem] shadow-[0_0_50px_rgba(59,130,246,0.2)] rotate-3 border border-white/10"
+                    >
+                        {/* Efek Cahaya di belakang Icon */}
+                        <div className="absolute inset-0 bg-blue-600/20 blur-3xl rounded-full -z-10" />
+
+                        <GraduationCap size={120} className="text-blue-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.8)]" />
+
+                        {/* Floating Small Element */}
+                        <div className="absolute -top-4 -right-4 bg-slate-900 border border-amber-500/50 p-4 rounded-2xl shadow-[0_0_15px_rgba(245,158,11,0.3)] -rotate-12">
+                            <Sparkles size={24} className="text-amber-400" />
+                        </div>
+                    </motion.div>
+                </div>
+            </div>
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .firework {
+                  color: #60a5fa;
+                  /* ... sisanya tetap sesuai kode asli kamu ... */
+                }
+              `}} />
+        </motion.div>
+    );
 }

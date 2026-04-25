@@ -40,7 +40,7 @@ export default function Navbar() {
 
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
-  
+
   useEffect(() => {
     const savedUser = localStorage.getItem('user_siswa');
     if (savedUser) setUser(JSON.parse(savedUser));
@@ -126,50 +126,51 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-[#0f172a]/90 border-b border-blue-500/20 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+    // Di Navbar.jsx ganti baris nav paling luar:
+    <nav className="fixed top-0 left-0 w-full bg-[#0f172a]/20 backdrop-blur-md border-b border-blue-500/10 px-6 py-4 flex justify-between items-center z-[100]">
       {/* LOGO DENGAN VERSI */}
       <Link to="/" className="flex items-center gap-3 group">
-  <div className="bg-blue-600 p-1.5 rounded-lg text-white shadow-lg shadow-blue-900/40 group-hover:scale-110 transition-transform">
-    <School size={22} />
-  </div>
-  
-  <div className="flex flex-col justify-center">
-    {/* Teks Utama: Gunakan leading-tight agar tidak terlalu renggang tapi tidak mepet */}
-    <span className="text-white font-black text-xl tracking-tighter leading-tight">
-      Ruang <span className="text-blue-400">Spendaraja</span>
-    </span>
-    
-    {/* Teks Versi: Beri pt-1 (padding top) untuk memisahkan diri dari teks atas */}
-    <div className="flex items-center pt-1">
-      <span className="text-[7px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-none">
-        v.{__APP_VERSION__}
-      </span>
-    </div>
-  </div>
-</Link>
+        <div className="bg-blue-600 p-1.5 rounded-lg text-white shadow-lg shadow-blue-900/40 group-hover:scale-110 transition-transform">
+          <School size={22} />
+        </div>
+
+        <div className="flex flex-col justify-center">
+          {/* Teks Utama: Gunakan leading-tight agar tidak terlalu renggang tapi tidak mepet */}
+          <span className="text-white font-black text-xl tracking-tighter leading-tight">
+            Ruang <span className="text-blue-400">Spendaraja</span>
+          </span>
+
+          {/* Teks Versi: Beri pt-1 (padding top) untuk memisahkan diri dari teks atas */}
+          <div className="flex items-center pt-1">
+            <span className="text-[7px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-none">
+              v.{__APP_VERSION__}
+            </span>
+          </div>
+        </div>
+      </Link>
 
       {user ? (
         <div className="flex items-center gap-4">
           {/* LOGIKA: HANYA MUNCUL JIKA ADMIN ATAU SISWA KELAS 7.1 - 7.11 */}
-{(user?.role === 'admin' || (user?.Kelas && /^7\.(1[0-1]|[1-9])$/.test(user.Kelas))) && (
-  <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 px-3 py-1.5 rounded-xl shadow-lg shadow-yellow-900/10 transition-all duration-500">
-    <div className="bg-yellow-500/20 p-1 rounded-lg">
-      <Sparkles size={14} className="text-yellow-400" />
-    </div>
-    <div className="flex flex-col leading-none">
-      <span className="text-[8px] font-black text-yellow-500/70 uppercase tracking-tighter">Poin</span>
-      <span className="text-sm font-black text-yellow-400">
-        {user.total_points ?? 0}
-      </span>
-    </div>
-  </div>
-)}
+          {(user?.role === 'admin' || (user?.Kelas && /^7\.(1[0-1]|[1-9])$/.test(user.Kelas))) && (
+            <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 px-3 py-1.5 rounded-xl shadow-lg shadow-yellow-900/10 transition-all duration-500">
+              <div className="bg-yellow-500/20 p-1 rounded-lg">
+                <Sparkles size={14} className="text-yellow-400" />
+              </div>
+              <div className="flex flex-col leading-none">
+                <span className="text-[8px] font-black text-yellow-500/70 uppercase tracking-tighter">Poin</span>
+                <span className="text-sm font-black text-yellow-400">
+                  {user.total_points ?? 0}
+                </span>
+              </div>
+            </div>
+          )}
 
           <div className="text-right hidden md:block border-l border-white/10 pl-4">
             <p className="text-sm font-bold text-white capitalize">{formatShortName(user.NAMA)}</p>
             <p className="text-[10px] text-blue-400 uppercase font-black tracking-widest">{user.Kelas}</p>
           </div>
-          
+
           <button
             onClick={handleLogout}
             className="group flex items-center gap-2 bg-red-500/10 hover:bg-red-600 p-2.5 rounded-xl transition-all border border-red-500/20 shadow-lg shadow-red-900/20"

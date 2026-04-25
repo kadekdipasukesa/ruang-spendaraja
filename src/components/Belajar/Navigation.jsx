@@ -40,7 +40,7 @@ export default function Navigation({ activeTab, setActiveTab, student }) {
     <div className="flex gap-2 bg-slate-900/50 p-1.5 rounded-2xl mb-8 border border-white/5 overflow-x-auto no-scrollbar">
       {tabs.map((tab) => {
         // Logika gembok: Muncul jika BUKAN admin DAN BUKAN kelas 7 pada menu terproteksi
-        const isLocked = ['absen', 'tugas', 'ranking', 'materi'].includes(tab.id) && 
+        const isLocked = ['absen', 'tugas', 'ranking', 'materi', 'ulangan'].includes(tab.id) && 
                          !(student?.role === 'admin') && 
                          !(student?.Kelas && /^7\.(1[0-1]|[1-9])$/.test(student.Kelas));
 

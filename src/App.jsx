@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
+import RuangBelajar from './pages/RuangBelajar'; // File lama yang di-rename
 import GempitasPage from './pages/Gempitas';
 import CatatPelanggaran from './pages/CatatPelanggaran';
 import FloatingOnline from './components/FloatingOnline'; // 1. Import komponennya
@@ -24,9 +25,20 @@ function AppContent() {
   // 3. Logika untuk menentukan label posisi di statistik online secara otomatis
   const getActiveTabLabel = () => {
     const path = location.pathname.toLowerCase();
-    if (path === '/') return 'Beranda';
-    if (path === '/gempitas') return 'Gempitas';
-    if (path === '/pelanggaran') return 'Pelanggaran';
+
+    // 1. Root Home (Daftar Aplikasi)
+    if (path === '/') return 'Ruang Spendaraja';
+
+    // 2. Ruang Belajar Informatika (Eks Home.jsx lama)
+    if (path === '/ruang-belajar') return 'Ruang Belajar TIK';
+
+    // 3. Halaman Gempitas
+    if (path === '/gempitas') return 'Gempitas 2026';
+
+    // 4. Halaman Pelanggaran
+    if (path === '/pelanggaran') return 'Catatan Disiplin';
+
+    // 5. Default jika tidak ada yang cocok
     return 'Menjelajah';
   };
 
@@ -36,13 +48,14 @@ function AppContent() {
 
       {/* 4. Pasang FloatingOnline di sini (di luar Routes) */}
       {/* Dia akan muncul di setiap halaman otomatis */}
-      <FloatingOnline 
-        user={user} 
-        activeTab={getActiveTabLabel()} 
+      <FloatingOnline
+        user={user}
+        activeTab={getActiveTabLabel()}
       />
-      
+
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/ruang-belajar" element={<RuangBelajar />} />
         <Route path="/login" element={<div className="p-10 text-center">Gunakan form di Home untuk Login sementara.</div>} />
         <Route path="/gempitas" element={<GempitasPage />} caseSensitive={false} />
         <Route path="/pelanggaran" element={<CatatPelanggaran />} caseSensitive={false} />
