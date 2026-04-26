@@ -69,7 +69,30 @@ export default function PelanggaranPage() {
     useEffect(() => {
         const session = localStorage.getItem('user_siswa');
         if (session) setUser(JSON.parse(session));
+
+        // Ambil data awal
         fetchInitialData();
+
+        // PASANG REALTIME DI SINI (Sekali saja untuk semua menu)
+        const channel = supabase
+            .channel('schema-db-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*', // Monitor INSERT, UPDATE, DELETE
+                    schema: 'public',
+                    table: 'log_pelanggaran_siswa'
+                },
+                (payload) => {
+                    console.log('Realtime Update:', payload);
+                    fetchInitialData(); // Ambil data terbaru setiap ada perubahan
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
     const fetchInitialData = async () => {
@@ -196,77 +219,77 @@ export default function PelanggaranPage() {
     return (
         <div className="min-h-screen bg-[#0f172a] pb-24 text-slate-200">
             <HeroPelanggaran role={role} />
-    
+
             <div className="container mx-auto px-4 -mt-16 relative z-30 max-w-6xl">
-    
+
                 {/* --- NAVIGATION (MOBILE: BOTTOM FILL | PC: TOP WITH SPACING) --- */}
-<div className="
+                <div className="
     fixed bottom-0 left-0 right-0 z-[100]           /* Style HP: Tempel di bawah layar (IG Style) */
     md:relative md:mt-4 md:mb-10 md:px-0             /* Style PC: Tetap di atas konten dengan jarak */
 ">
-    <div className="flex justify-center w-full">
-        {/* Container Menu - w-full di HP, rounded-none di HP agar nempel pinggir */}
-        <div className="
+                    <div className="flex justify-center w-full">
+                        {/* Container Menu - w-full di HP, rounded-none di HP agar nempel pinggir */}
+                        <div className="
             flex items-center w-full bg-slate-900/95 backdrop-blur-2xl border-t border-white/10 
             md:w-auto md:rounded-full md:border md:px-2 md:py-1.5 md:shadow-[0_20px_50px_rgba(0,0,0,0.5)]
         ">
-            {menus.map((m) => (
-                m.roles.includes(role) && (
-                    <button
-                        key={m.id}
-                        onClick={() => setActiveMenu(m.id)}
-                        className={`
+                            {menus.map((m) => (
+                                m.roles.includes(role) && (
+                                    <button
+                                        key={m.id}
+                                        onClick={() => setActiveMenu(m.id)}
+                                        className={`
                             relative flex flex-1 flex-col md:flex-none md:flex-row items-center justify-center 
                             gap-1 md:gap-3 py-3 md:px-8 md:py-3.5 transition-all duration-300
                             ${activeMenu === m.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}
                         `}
-                    >
-                        {/* Indikator Aktif - Di HP berupa garis atas (IG style) atau blok, di PC blok rounded */}
-                        {activeMenu === m.id && (
-                            <motion.div
-                                layoutId="activeTab"
-                                className="absolute inset-x-0 bottom-0 h-1 bg-blue-500 md:inset-0 md:h-full md:bg-gradient-to-r md:from-blue-600 md:to-indigo-600 md:rounded-full -z-10"
-                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                            />
-                        )}
+                                    >
+                                        {/* Indikator Aktif - Di HP berupa garis atas (IG style) atau blok, di PC blok rounded */}
+                                        {activeMenu === m.id && (
+                                            <motion.div
+                                                layoutId="activeTab"
+                                                className="absolute inset-x-0 bottom-0 h-1 bg-blue-500 md:inset-0 md:h-full md:bg-gradient-to-r md:from-blue-600 md:to-indigo-600 md:rounded-full -z-10"
+                                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                            />
+                                        )}
 
-                        {/* Icon */}
-                        <div className={`transition-transform ${activeMenu === m.id ? 'scale-110' : 'scale-100'}`}>
-                            {m.icon}
-                        </div>
+                                        {/* Icon */}
+                                        <div className={`transition-transform ${activeMenu === m.id ? 'scale-110' : 'scale-100'}`}>
+                                            {m.icon}
+                                        </div>
 
-                        {/* Label - Dibuat proporsional */}
-                        {/* Label - Custom Mobile: RIWAYAT, DAFTAR, CATAT, PENGABDIAN */}
-<span className={`
+                                        {/* Label - Dibuat proporsional */}
+                                        {/* Label - Custom Mobile: RIWAYAT, DAFTAR, CATAT, PENGABDIAN */}
+                                        <span className={`
     font-black uppercase tracking-widest leading-none
     text-[8px] md:text-[10px]
     ${activeMenu === m.id ? 'opacity-100' : 'opacity-60'}
 `}>
-    {/* Tampilan HP: Menggunakan label custom berdasarkan ID menu */}
-    <span className="md:hidden">
-        {m.id === 1 && "RIWAYAT"}
-        {m.id === 2 && "DAFTAR"}
-        {m.id === 3 && "CATAT"}
-        {m.id === 4 && "PENGABDIAN"}
-    </span>
-    
-    {/* Tampilan PC: Tetap menggunakan label asli dari array menus */}
-    <span className="hidden md:inline">
-        {m.label}
-    </span>
-</span>
-                    </button>
-                )
-            ))}
-        </div>
-    </div>
-</div>
-    
+                                            {/* Tampilan HP: Menggunakan label custom berdasarkan ID menu */}
+                                            <span className="md:hidden">
+                                                {m.id === 1 && "RIWAYAT"}
+                                                {m.id === 2 && "DAFTAR"}
+                                                {m.id === 3 && "CATAT"}
+                                                {m.id === 4 && "PENGABDIAN"}
+                                            </span>
+
+                                            {/* Tampilan PC: Tetap menggunakan label asli dari array menus */}
+                                            <span className="hidden md:inline">
+                                                {m.label}
+                                            </span>
+                                        </span>
+                                    </button>
+                                )
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
                 <style>{`
                     .no-scrollbar::-webkit-scrollbar { display: none; }
                     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
                 `}</style>
-    
+
                 {/* --- KONTEN DINAMIS --- */}
                 <div className="grid grid-cols-1 gap-6">
                     <AnimatePresence mode="wait">
@@ -277,7 +300,12 @@ export default function PelanggaranPage() {
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
                         >
-                            {activeMenu === 1 && <LogPelanggaran data={logData} />}
+                            {activeMenu === 1 && (
+                                <LogPelanggaran
+                                    data={logData}
+                                    onRefresh={fetchInitialData} // Kirim fungsi ini agar anak bisa memanggilnya
+                                />
+                            )}
                             {activeMenu === 2 && <RekapSiswa data={rekapSiswa} />}
                             {activeMenu === 3 && (
                                 <FormPelanggaran
