@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import StatistikSiswa from '../components/Ulangan/StatistikSiswa';
 import SesiCard from '../components/Ulangan/SesiCard'; // Import komponen baru
 import { Plus, StopCircle } from 'lucide-react';
+import { SOAL_POOL, hitungNilaiSiswa } from '../utils/soalUlanganPool';
 
 export default function AdminUjian() {
   const [sesi, setSesi] = useState(null);
@@ -89,26 +90,60 @@ export default function AdminUjian() {
     }, 4500);
   };
 
-  // Tambahkan fungsi ini di dalam AdminUjian.jsx
 
   const handleEndExam = async () => {
     if (!sesi) return;
-
-    const yakin = window.confirm("Akhiri ujian sekarang? Semua siswa yang belum selesai akan otomatis dikumpulkan jawabannya.");
-
+  
+    const yakin = window.confirm("Akhiri ujian sekarang? Nilai siswa akan langsung dihitung otomatis.");
+  
     if (yakin) {
-      const { error } = await supabase
-        .from('ujian_sesi')
-        .update({ status: 'finished' })
-        .eq('id', sesi.id);
-
-      if (error) {
-        alert("Gagal mengakhiri sesi: " + error.message);
-      } else {
-        setSesi(prev => ({ ...prev, status: 'finished' }));
-        alert("Sesi Ujian Berhasil Diakhiri.");
-      }
+      // 1. Matikan sesi di tabel utama
+      await supabase.from('ujian_sesi').update({ status: 'finished' }).eq('id', sesi.id);
+  
+      // 2. Hitung yang ada jawabannya
+      await forceSubmitAll(sesi.id);
+  
+      // 3. Sapu bersih yang tidak ada jawabannya (masih status ready/ongoing)
+      // Gunakan .in untuk mencakup status 'ready' dan 'ongoing' sekaligus
+      await supabase
+        .from('ujian_peserta')
+        .update({ status_ujian: 'submitted', nilai_akhir: 0 })
+        .eq('sesi_id', sesi.id)
+        .in('status_ujian', ['ready', 'ongoing']);
+  
+      // 4. Refresh data lokal agar StatistikSiswa berubah
+      fetchPeserta(sesi.id);
+        
+      setSesi(prev => ({ ...prev, status: 'finished' }));
+      alert("Sesi Berhasil Diakhiri & Nilai Telah Dihitung.");
     }
+  };
+  
+  const forceSubmitAll = async (sesiId) => {
+    const { data: listJawaban, error } = await supabase
+      .from('ujian_jawaban')
+      .select('peserta_id, jawaban_map, ujian_peserta!inner(sesi_id)')
+      .eq('ujian_peserta.sesi_id', sesiId);
+
+    if (error || !listJawaban) return;
+
+    const updates = listJawaban.map((item) => {
+      // Gunakan fungsi yang diimport dari utils
+      const skor = hitungNilaiSiswa(item.jawaban_map, SOAL_POOL);
+
+      return supabase
+        .from('ujian_peserta')
+        .update({
+          nilai_akhir: skor,
+          status_ujian: 'submitted'
+        })
+        .eq('id', item.peserta_id);
+    });
+
+    await Promise.all(updates);
+
+    // PENTING: Refresh data peserta agar komponen StatistikSiswa terupdate
+    fetchPeserta(sesiId);
   };
 
   if (!isAuthorized) return null;

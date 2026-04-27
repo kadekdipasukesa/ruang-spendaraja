@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { SOAL_POOL, shuffleSoal } from '../utils/soalUlanganPool';
+import { SOAL_POOL, shuffleSoal, hitungNilaiSiswa, shuffleOpsi } from '../utils/soalUlanganPool';
+
 import { AnimatePresence, motion } from 'framer-motion';
 
 // Import Hooks (Logika Terpisah)
@@ -31,7 +32,27 @@ export default function UlanganPage() {
     const [isFinished, setIsFinished] = useState(false);
 
     const { playBeep } = useAudioQuiz();
+    
+    // Tambahkan di deretan useEffect atas
+    useEffect(() => {
+        // Jika status berubah jadi ongoing dan soal masih kosong
+        if (sesi?.status === 'ongoing' && soalUjian.length === 0) {
+            console.log("Mengambil soal dari Pool dan mengacak opsi...");
+            
+            // 1. Acak urutan soal menggunakan shuffleSoal
+            const shuffledSoal = shuffleSoal(SOAL_POOL); 
 
+            // 2. Acak opsi di dalam setiap soal menggunakan shuffleOpsi
+            const soalDenganOpsiAcak = shuffledSoal.map(soal => ({
+                ...soal,
+                // Kita acak array opsi sebelum dimasukkan ke state
+                opsi: shuffleOpsi(soal.opsi) 
+            }));
+
+            setSoalUjian(soalDenganOpsiAcak);
+        }
+    }, [sesi?.status]);
+    
     // Tambahkan di deretan useEffect atas
     useEffect(() => {
         // Jika status berubah jadi ongoing dan soal masih kosong
@@ -170,25 +191,34 @@ export default function UlanganPage() {
     const handlePilih = async (soalId, opsi) => {
         const newJawab = { ...jawabanSiswa, [soalId]: opsi };
         setJawabanSiswa(newJawab);
+    
         await supabase.from('ujian_jawaban').upsert({
             peserta_id: peserta.id,
-            jawaban_map: newJawab
-        });
+            jawaban_map: newJawab,
+            updated_at: new Date()
+        }, { onConflict: 'peserta_id' }); 
     };
 
     const submitUjian = async () => {
         if (!window.confirm("Kirim jawaban sekarang?")) return;
-
-        const benar = soalUjian.filter(s => jawabanSiswa[s.id] === s.kunci).length;
-        const skor = Math.round((benar / soalUjian.length) * 100);
-
-        await supabase.from('ujian_peserta').update({
+      
+        // Menggunakan fungsi terpusat dari pool soal
+        const skor = hitungNilaiSiswa(jawabanSiswa, SOAL_POOL);
+      
+        const { error } = await supabase
+          .from('ujian_peserta')
+          .update({
             status_ujian: 'submitted',
             nilai_akhir: skor
-        }).eq('id', peserta.id);
-
-        setIsFinished(true);
-    };
+          })
+          .eq('id', peserta.id);
+      
+        if (error) {
+          alert("Gagal mengirim jawaban: " + error.message);
+        } else {
+          setIsFinished(true);
+        }
+      };
 
     // --- 4. RENDERER ---
 
