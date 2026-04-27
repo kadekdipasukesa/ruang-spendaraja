@@ -23,13 +23,19 @@ export default function LogPelanggaran({ data, onRefresh }) {
   // --- LOGIKA GROUPING DOUBLE (Tanggal -> Kelas) ---
   const grouped = data.reduce((acc, curr) => {
     if (!curr.tanggal) return acc;
-    const date = curr.tanggal.split('T')[0];
+
+    const date = new Date(curr.tanggal)
+      .toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Makassar'
+      }); // hasil: YYYY-MM-DD
+
     const kelas = curr.master_siswa?.Kelas || 'Tanpa Kelas';
 
     if (!acc[date]) acc[date] = {};
     if (!acc[date][kelas]) acc[date][kelas] = [];
-    
+
     acc[date][kelas].push(curr);
+
     return acc;
   }, {});
 
@@ -55,22 +61,23 @@ export default function LogPelanggaran({ data, onRefresh }) {
         {sortedDates.length > 0 ? sortedDates.map(date => (
           <div key={date} className="bg-slate-900/40 border border-white/5 rounded-[1.5rem] overflow-hidden">
             {/* LEVEL 1: TANGGAL */}
-            <button 
-              onClick={() => toggleDate(date)} 
+            <button
+              onClick={() => toggleDate(date)}
               className={`w-full p-4 flex items-center justify-between transition-all ${expandedDates[date] ? 'bg-blue-600/10' : 'hover:bg-white/5'}`}
             >
               <div className="flex items-center gap-3">
                 <Calendar className={expandedDates[date] ? "text-blue-400" : "text-slate-500"} size={18} />
                 <span className={`font-black text-xs uppercase ${expandedDates[date] ? 'text-blue-400' : 'text-slate-300'}`}>
-                  {new Date(date).toLocaleDateString('id-ID', { dateStyle: 'full' })}
+                  {new Date(date + 'T00:00:00')
+                    .toLocaleDateString('id-ID', { dateStyle: 'full' })}
                 </span>
               </div>
-              {expandedDates[date] ? <ChevronDown size={18} className="text-blue-400"/> : <ChevronRight size={18} className="text-slate-600"/>}
+              {expandedDates[date] ? <ChevronDown size={18} className="text-blue-400" /> : <ChevronRight size={18} className="text-slate-600" />}
             </button>
 
             <AnimatePresence>
               {expandedDates[date] && (
-                <motion.div 
+                <motion.div
                   initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
                   className="px-4 pb-4 space-y-2 overflow-hidden bg-black/20"
                 >
@@ -79,7 +86,7 @@ export default function LogPelanggaran({ data, onRefresh }) {
                     return (
                       <div key={kelas} className="mt-2 border border-white/5 rounded-xl overflow-hidden">
                         {/* LEVEL 2: KELAS */}
-                        <button 
+                        <button
                           onClick={() => toggleClass(date, kelas)}
                           className="w-full p-3 flex items-center justify-between bg-slate-800/40 hover:bg-slate-700/40 transition-all"
                         >
@@ -95,7 +102,7 @@ export default function LogPelanggaran({ data, onRefresh }) {
 
                         <AnimatePresence>
                           {expandedClasses[classKey] && (
-                            <motion.div 
+                            <motion.div
                               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                               className="p-3 space-y-3"
                             >
@@ -117,7 +124,12 @@ export default function LogPelanggaran({ data, onRefresh }) {
                                   </div>
                                   <div className="mt-3 flex items-center justify-between text-[9px] text-slate-500 font-bold uppercase">
                                     <span>Dicatat oleh: <span className="text-slate-300">{log.pelapor?.NAMA || 'Sistem'}</span></span>
-                                    <span>{new Date(log.tanggal).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                                    <span>{new Date(log.tanggal).toLocaleTimeString('id-ID', {
+                                      timeZone: 'Asia/Makassar',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                    </span>
                                   </div>
                                 </div>
                               ))}
