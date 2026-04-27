@@ -217,7 +217,7 @@ export default function PelanggaranPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#0f172a] pb-24 text-slate-200">
+        <div className="min-h-screen bg-[#0f172a] pb-24 text-slate-200 pt-24 pb-20">
             <HeroPelanggaran role={role} />
 
             <div className="container mx-auto px-4 -mt-16 relative z-30 max-w-6xl">

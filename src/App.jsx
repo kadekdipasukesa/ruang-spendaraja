@@ -6,6 +6,8 @@ import RuangBelajar from './pages/RuangBelajar'; // File lama yang di-rename
 import GempitasPage from './pages/Gempitas';
 import CatatPelanggaran from './pages/CatatPelanggaran';
 import FloatingOnline from './components/FloatingOnline'; // 1. Import komponennya
+import UlanganPage from './pages/UlanganPage'; // Pastikan path import benar
+import AdminUjian from './pages/AdminUjian'; // Pastikan path import benar
 
 function AppContent() {
   const location = useLocation();
@@ -27,7 +29,7 @@ function AppContent() {
     const path = location.pathname.toLowerCase();
 
     // 1. Root Home (Daftar Aplikasi)
-    if (path === '/') return 'Ruang Spendaraja';
+    if (path === '/') return 'Home';
 
     // 2. Ruang Belajar Informatika (Eks Home.jsx lama)
     if (path === '/ruang-belajar') return 'Ruang Belajar TIK';
@@ -37,6 +39,9 @@ function AppContent() {
 
     // 4. Halaman Pelanggaran
     if (path === '/pelanggaran') return 'Catatan Disiplin';
+
+    if (path === '/admin-ujian') return 'Control Ujian';
+    if (path === '/ulangan') return 'Ulangan';
 
     // 5. Default jika tidak ada yang cocok
     return 'Menjelajah';
@@ -59,6 +64,10 @@ function AppContent() {
         <Route path="/login" element={<div className="p-10 text-center">Gunakan form di Home untuk Login sementara.</div>} />
         <Route path="/gempitas" element={<GempitasPage />} caseSensitive={false} />
         <Route path="/pelanggaran" element={<CatatPelanggaran />} caseSensitive={false} />
+
+        {/* Tambahkan rute baru di bawah ini */}
+        <Route path="/ulangan" element={<UlanganPage />} />
+        <Route path="/admin-ujian" element={<AdminUjian />} />
       </Routes>
     </div>
   );

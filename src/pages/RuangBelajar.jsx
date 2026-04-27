@@ -473,7 +473,7 @@ export default function RuangBelajar() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 pt-24 md:pt-28 font-sans">
       {/* 1. LOGIKA FULLSCREEN GAME 3 (Tanpa Modal) */}
       {showGameLCC ? (
         <Game3Page
