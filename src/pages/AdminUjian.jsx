@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import StatistikSiswa from '../components/Ulangan/StatistikSiswa';
-import SesiCard from '../components/Ulangan/SesiCard'; // Import komponen baru
-import { Plus, StopCircle } from 'lucide-react';
+import SesiCard from '../components/Ulangan/SesiCard';
+import { Plus, StopCircle, Clock } from 'lucide-react'; // Tambah Clock icon
 import { SOAL_POOL, hitungNilaiSiswa } from '../utils/soalUlanganPool';
 
 export default function AdminUjian() {
@@ -11,17 +11,25 @@ export default function AdminUjian() {
   const [peserta, setPeserta] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date()); // State Jam
   const navigate = useNavigate();
+
+  // --- LOGIKA JAM BERJALAN ---
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user_siswa'));
+    // Catatan: Admin biasanya punya role 'admin', pastikan di localstorage sudah benar
     if (!user || user.role !== 'admin') {
       navigate('/');
     } else {
       setIsAuthorized(true);
       fetchSesiAktif();
     }
-  }, []);
+  }, [navigate]);
 
   // Realtime Monitoring
   useEffect(() => {
@@ -55,7 +63,7 @@ export default function AdminUjian() {
   const fetchPeserta = async (sesiId) => {
     const { data } = await supabase
       .from('ujian_peserta')
-      .select('*, master_siswa(NAMA)') // Gunakan NAMA (Kapital)
+      .select('*, master_siswa(NAMA)')
       .eq('sesi_id', sesiId);
     if (data) setPeserta(data);
   };
@@ -90,35 +98,27 @@ export default function AdminUjian() {
     }, 4500);
   };
 
-
   const handleEndExam = async () => {
-    if (!sesi) return;
-  
+    if (!sesi || sesi.status === 'finished') return; // Validasi tambahan
+
     const yakin = window.confirm("Akhiri ujian sekarang? Nilai siswa akan langsung dihitung otomatis.");
-  
+
     if (yakin) {
-      // 1. Matikan sesi di tabel utama
       await supabase.from('ujian_sesi').update({ status: 'finished' }).eq('id', sesi.id);
-  
-      // 2. Hitung yang ada jawabannya
       await forceSubmitAll(sesi.id);
-  
-      // 3. Sapu bersih yang tidak ada jawabannya (masih status ready/ongoing)
-      // Gunakan .in untuk mencakup status 'ready' dan 'ongoing' sekaligus
+
       await supabase
         .from('ujian_peserta')
         .update({ status_ujian: 'submitted', nilai_akhir: 0 })
         .eq('sesi_id', sesi.id)
         .in('status_ujian', ['ready', 'ongoing']);
-  
-      // 4. Refresh data lokal agar StatistikSiswa berubah
+
       fetchPeserta(sesi.id);
-        
       setSesi(prev => ({ ...prev, status: 'finished' }));
       alert("Sesi Berhasil Diakhiri & Nilai Telah Dihitung.");
     }
   };
-  
+
   const forceSubmitAll = async (sesiId) => {
     const { data: listJawaban, error } = await supabase
       .from('ujian_jawaban')
@@ -128,9 +128,7 @@ export default function AdminUjian() {
     if (error || !listJawaban) return;
 
     const updates = listJawaban.map((item) => {
-      // Gunakan fungsi yang diimport dari utils
       const skor = hitungNilaiSiswa(item.jawaban_map, SOAL_POOL);
-
       return supabase
         .from('ujian_peserta')
         .update({
@@ -141,24 +139,93 @@ export default function AdminUjian() {
     });
 
     await Promise.all(updates);
-
-    // PENTING: Refresh data peserta agar komponen StatistikSiswa terupdate
     fetchPeserta(sesiId);
   };
+
+  const handleKalkulasiPoin = async () => {
+    if (sesi.status !== 'finished') return alert("Sesi harus berstatus 'finished'!");
+
+    const yakin = window.confirm("Kalkulasi poin sekarang? Sistem akan mengambil (Skor * 1) + Poin Tambahan untuk dikirim ke Master Siswa.");
+    if (!yakin) return;
+
+    setLoading(true);
+    try {
+        // 1. Map data dengan proteksi Tipe Data (Number)
+        const dataLogSiapKirim = peserta.map(p => {
+            // Pastikan semua menjadi angka dengan Number() atau parseInt()
+            const skor = Number(p.nilai_akhir) || 0;
+            const poinTambahan = Number(p.total_poin_didapat) || 0;
+            const totalFinal = (skor * 1) + poinTambahan; 
+
+            return {
+                siswa_id: p.siswa_id,
+                amount: totalFinal, // Harus integer
+                activity_type: 'Ulangan',
+                description: `Poin Ulangan: ${sesi.judul} (Skor: ${skor})`
+            };
+        }).filter(log => log.amount > 0); 
+
+        if (dataLogSiapKirim.length === 0) {
+            alert("Tidak ada poin untuk disinkronkan (semua skor 0).");
+            setLoading(false);
+            return;
+        }
+
+        console.log("Data yang akan dikirim:", dataLogSiapKirim); // Cek di console log
+
+        // 2. Insert ke point_logs
+        const { error: logError } = await supabase
+            .from('point_logs')
+            .insert(dataLogSiapKirim);
+
+        if (logError) throw logError;
+
+        // 3. Update status sesi ke 'archived'
+        const { error: sesiError } = await supabase
+            .from('ujian_sesi')
+            .update({ status: 'archived' })
+            .eq('id', sesi.id);
+
+        if (sesiError) throw sesiError;
+
+        alert("Kalkulasi Berhasil! Poin telah masuk ke Master Siswa.");
+        
+        // Refresh state lokal
+        setSesi(prev => ({ ...prev, status: 'archived' }));
+        if (fetchPeserta) fetchPeserta(sesi.id);
+        
+    } catch (err) {
+      console.error("Detail Error:", err);
+      alert("Gagal kalkulasi: " + (err.message || "Terjadi kesalahan sistem"));
+    } finally {
+      setLoading(false);
+    }
+};
 
   if (!isAuthorized) return null;
 
   return (
     <div className="min-h-screen bg-black text-slate-200 p-6 pt-24 md:pt-28">
       <div className="max-w-6xl mx-auto">
-        <header className="flex justify-between items-center mb-10">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
           <div>
             <h1 className="text-3xl font-black tracking-tighter text-white">ADMIN UJIAN</h1>
             <p className="text-slate-500">Monitoring & Control Sesi Ulangan</p>
           </div>
-          <button onClick={handleBuatUjian} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-2xl font-bold transition-all">
-            <Plus size={20} /> BUAT SESI BARU
-          </button>
+
+          <div className="flex items-center gap-4">
+            {/* --- JAM DIGITAL --- */}
+            <div className="bg-slate-900 px-6 py-3 rounded-2xl border border-white/5 flex items-center gap-3">
+              <Clock size={20} className="text-blue-400" />
+              <span className="font-mono text-xl font-black text-white">
+                {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            </div>
+
+            <button onClick={handleBuatUjian} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-2xl font-bold transition-all">
+              <Plus size={20} /> BUAT SESI BARU
+            </button>
+          </div>
         </header>
 
         {!sesi ? (
@@ -168,28 +235,55 @@ export default function AdminUjian() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-6">
-
-              {/* Komponen Sesi Card yang kita pisah tadi */}
               <SesiCard
                 sesi={sesi}
                 pesertaCount={peserta.length}
                 loading={loading}
                 onStart={handleStartExam}
+                onEnd={handleEndExam}
               />
 
               <div className="bg-red-500/5 border border-red-500/10 p-6 rounded-[2rem]">
                 <h4 className="text-red-500 font-bold text-sm mb-2">Danger Zone</h4>
                 <button
                   onClick={handleEndExam}
-                  className="w-full text-left text-xs font-bold text-red-500/60 hover:text-red-500 flex items-center gap-2 transition-colors"
+                  // --- DISABLE BUTTON JIKA FINISHED ---
+                  disabled={sesi.status === 'finished'}
+                  className={`w-full text-left text-xs font-bold flex items-center gap-2 transition-colors ${sesi.status === 'finished'
+                    ? 'opacity-20 cursor-not-allowed text-slate-500'
+                    : 'text-red-500/60 hover:text-red-500'
+                    }`}
                 >
-                  <StopCircle size={14} /> AKHIRI SESI PAKSA
+                  <StopCircle size={14} />
+                  {sesi.status === 'finished' ? 'SESI TELAH BERAKHIR' : 'AKHIRI SESI PAKSA'}
                 </button>
               </div>
             </div>
 
+            {/* Muncul hanya jika sesi selesai */}
+            {sesi.status === 'finished' && (
+              <div className="mt-4 p-6 bg-blue-600/10 border border-blue-500/20 rounded-[2rem]">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="text-blue-400 font-bold">Sinkronisasi Poin</h4>
+                    <p className="text-xs text-slate-400">Kirim poin peserta ke Master Siswa via Point Logs.</p>
+                  </div>
+                  <button
+                    onClick={handleKalkulasiPoin}
+                    disabled={loading}
+                    className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black transition-all flex items-center gap-2"
+                  >
+                    {loading ? 'PROSES...' : 'KALKULASI POIN'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="lg:col-span-2">
-              <StatistikSiswa peserta={peserta} />
+              <StatistikSiswa
+                peserta={peserta}
+                statusSesi={sesi?.status} // Kirim status sesi (ongoing/finished/waiting)
+              />
             </div>
           </div>
         )}

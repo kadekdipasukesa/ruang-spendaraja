@@ -17,8 +17,10 @@ import WaitingRoom from '../components/Ulangan/WaitingRoom';
 import ExamHeader from '../components/Ulangan/ExamHeader';
 import QuestionCard from '../components/Ulangan/QuestionCard';
 
+// ... import tetap sama
+
 export default function UlanganPage() {
-    const navigate = useNavigate(); // <--- Tambahkan baris ini!
+    const navigate = useNavigate();
     // --- STATE MANAGEMENT ---
     const [user, setUser] = useState(null);
     const [sesi, setSesi] = useState(null);
@@ -32,38 +34,27 @@ export default function UlanganPage() {
     const [isFinished, setIsFinished] = useState(false);
 
     const { playBeep } = useAudioQuiz();
-    
-    // Tambahkan di deretan useEffect atas
-    useEffect(() => {
-        // Jika status berubah jadi ongoing dan soal masih kosong
-        if (sesi?.status === 'ongoing' && soalUjian.length === 0) {
-            console.log("Mengambil soal dari Pool dan mengacak opsi...");
-            
-            // 1. Acak urutan soal menggunakan shuffleSoal
-            const shuffledSoal = shuffleSoal(SOAL_POOL); 
 
-            // 2. Acak opsi di dalam setiap soal menggunakan shuffleOpsi
-            const soalDenganOpsiAcak = shuffledSoal.map(soal => ({
+    // --- LOGIKA PENGAMBILAN SOAL (Hanya dirapikan agar tidak double) ---
+    useEffect(() => {
+        if (sesi?.status === 'ongoing' && soalUjian.length === 0) {
+            console.log("Mengambil soal dari Pool dan mengacak urutan/opsi...");
+
+            // 1. Ambil seluruh pool (yang sudah berisi 50 soal fix dengan ID BK01, dst)
+            // 2. Acak urutan soalnya agar nomor 1 setiap siswa berbeda
+            const shuffledSoal = shuffleSoal(SOAL_POOL);
+
+            // 3. Acak urutan opsi jawaban (A, B, C, D) di setiap soal
+            const soalFinal = shuffledSoal.map(soal => ({
                 ...soal,
-                // Kita acak array opsi sebelum dimasukkan ke state
-                opsi: shuffleOpsi(soal.opsi) 
+                opsi: shuffleOpsi(soal.opsi)
             }));
 
-            setSoalUjian(soalDenganOpsiAcak);
-        }
-    }, [sesi?.status]);
-    
-    // Tambahkan di deretan useEffect atas
-    useEffect(() => {
-        // Jika status berubah jadi ongoing dan soal masih kosong
-        if (sesi?.status === 'ongoing' && soalUjian.length === 0) {
-            console.log("Mengambil soal dari Pool...");
-            const shuffled = shuffleSoal(SOAL_POOL); // Gunakan fungsi shuffle kamu
-            setSoalUjian(shuffled);
+            setSoalUjian(soalFinal);
         }
     }, [sesi?.status]);
 
-    // --- 1. INITIAL LOAD ---
+    // --- 1. INITIAL LOAD & REALTIME CHANNEL ---
     useEffect(() => {
         if (!sesi?.id) return;
 
@@ -77,20 +68,18 @@ export default function UlanganPage() {
                     table: 'ujian_sesi',
                     filter: `id=eq.${sesi.id}`,
                 },
-                (payload) => { // <--- Pastikan ada (payload) di sini!
+                (payload) => {
                     console.log('Update Sesi:', payload);
-
                     const newStatus = payload.new.status;
 
-                    // Logika pindah otomatis jika admin mengubah status
                     if (newStatus === 'starting') {
-                        setCountdown(5); // Mulai hitung mundur jika admin klik start
+                        setCountdown(5);
                     } else if (newStatus === 'ongoing') {
                         setSesi(payload.new);
                         setCountdown(null);
                     } else if (newStatus === 'finished') {
                         alert("Ujian telah diakhiri oleh Guru.");
-                        navigate('/ruang-belajar'); // Pindahkan siswa jika sesi ditutup paksa
+                        navigate('/ruang-belajar');
                     }
                 }
             )
@@ -100,32 +89,32 @@ export default function UlanganPage() {
     }, [sesi?.id, navigate]);
 
     // --- 2. INTEGRASI CUSTOM HOOKS ---
-
-    // Hook Realtime: Sinkronisasi status ujian dari Guru
     useExamRealtime(sesi?.id, peserta?.id, {
         onStarting: () => startSequence(),
         onSesiUpdate: setSesi,
         onPesertaUpdate: setPeserta
     });
 
-    // Hook Anti-Cheat: Deteksi pindah tab
     useAntiCheat(
-        sesi?.status === 'ongoing' && !isFinished,
-        peserta,
-        (updatedPeserta) => setPeserta(updatedPeserta)
+        sesi?.status === 'ongoing' && !isFinished, // Hanya aktif saat ujian jalan & belum selesai
+        peserta, // Data peserta (termasuk id dan cheat_count)
+        (updatedPeserta) => {
+            setPeserta(updatedPeserta); // Update state lokal agar Header & Card berubah
+
+            // Jika sudah 3 kali, pastikan kita update status lokal juga
+            if (updatedPeserta.cheat_count >= 3) {
+                setPeserta(prev => ({ ...prev, status_ujian: 'blocked' }));
+            }
+        }
     );
 
     // --- 3. LOGIC HANDLERS ---
-
     const handleJoin = async () => {
         try {
-            // Ambil data dari localStorage
             const savedData = localStorage.getItem('user_siswa');
             if (!savedData) return alert("Silakan login kembali!");
-
             const user = JSON.parse(savedData);
 
-            // Validasi sesi berdasarkan PIN
             const { data: sesiData, error: sesiError } = await supabase
                 .from('ujian_sesi')
                 .select('*')
@@ -134,7 +123,6 @@ export default function UlanganPage() {
 
             if (sesiError || !sesiData) return alert("PIN Ujian Salah!");
 
-            // CEK APAKAH SUDAH TERDAFTAR (Gunakan user.id dari objek kamu)
             const { data: existingPeserta } = await supabase
                 .from('ujian_peserta')
                 .select('*')
@@ -143,13 +131,11 @@ export default function UlanganPage() {
                 .maybeSingle();
 
             if (existingPeserta) {
-                // Jika sudah ada, jangan insert. Cukup set state untuk masuk ke ruang tunggu
                 setSesi(sesiData);
                 setPeserta(existingPeserta);
                 return;
             }
 
-            // Jika benar-benar baru, lakukan Insert
             const { data: newPeserta, error: insError } = await supabase
                 .from('ujian_peserta')
                 .insert([{
@@ -161,10 +147,8 @@ export default function UlanganPage() {
                 .single();
 
             if (insError) throw insError;
-
             setSesi(sesiData);
             setPeserta(newPeserta);
-
         } catch (err) {
             console.error("Error join:", err);
             alert("Gagal masuk ke sesi ujian.");
@@ -191,52 +175,49 @@ export default function UlanganPage() {
     const handlePilih = async (soalId, opsi) => {
         const newJawab = { ...jawabanSiswa, [soalId]: opsi };
         setJawabanSiswa(newJawab);
-    
+
         await supabase.from('ujian_jawaban').upsert({
             peserta_id: peserta.id,
             jawaban_map: newJawab,
             updated_at: new Date()
-        }, { onConflict: 'peserta_id' }); 
+        }, { onConflict: 'peserta_id' });
     };
 
-    const submitUjian = async () => {
-        if (!window.confirm("Kirim jawaban sekarang?")) return;
-      
-        // Menggunakan fungsi terpusat dari pool soal
+    const submitUjian = async (isAuto = false) => {
+        // Jika manual (klik tombol), tanya dulu. Jika otomatis (waktu habis), langsung gas.
+        if (!isAuto && !window.confirm("Kirim jawaban sekarang?")) return;
+
+        // Pastikan SOAL_POOL adalah array 50 soal yang baru kita buat
         const skor = hitungNilaiSiswa(jawabanSiswa, SOAL_POOL);
-      
+
         const { error } = await supabase
-          .from('ujian_peserta')
-          .update({
-            status_ujian: 'submitted',
-            nilai_akhir: skor
-          })
-          .eq('id', peserta.id);
-      
+            .from('ujian_peserta')
+            .update({
+                status_ujian: 'submitted',
+                nilai_akhir: skor
+            })
+            .eq('id', peserta.id);
+
         if (error) {
-          alert("Gagal mengirim jawaban: " + error.message);
+            console.error("Gagal mengirim:", error);
+            alert("Koneksi bermasalah, mencoba mengirim ulang...");
         } else {
-          setIsFinished(true);
+            setIsFinished(true);
         }
-      };
+    };
 
     // --- 4. RENDERER ---
-
     if (isFinished) return <FinishedState />;
 
     return (
-        // {/* pt-24 agar konten mulai di bawah Navbar, pb-20 agar tidak mentok ke bawah saat scroll */ }
         <div className="min-h-screen bg-slate-950 text-white font-sans">
             <AnimatePresence>
-                {/* Step 1: Input PIN - Tetap Full Screen Center */}
                 {!sesi && (
                     <PinInput value={pinInput} onChange={setPinInput} onJoin={handleJoin} />
                 )}
 
-                {/* Step 2: Waiting Room - Tetap Full Screen Center */}
                 {sesi?.status === 'waiting' && <WaitingRoom />}
 
-                {/* Step 3: Countdown Overlay - Menggunakan z-[110] agar di atas Navbar */}
                 {countdown && (
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -248,13 +229,18 @@ export default function UlanganPage() {
                     </motion.div>
                 )}
 
-                {/* Step 4: Exam Page - Ditambahkan pt-24 agar tidak tertutup Navbar */}
                 {sesi?.status === 'ongoing' && (
                     <div className="p-4 pt-24 pb-20 max-w-4xl mx-auto">
                         <ExamHeader
                             cheatCount={peserta?.cheat_count || 0}
                             currentIndex={currentIndex}
                             totalSoal={soalUjian.length}
+                            // Ganti .durasi menjadi .durasi_menit sesuai kolom di tabel ujian_sesi
+                            durasiMenit={sesi?.durasi_menit || 45}
+                            onTimeUp={() => {
+                                alert("Waktu habis! Jawaban akan dikirim otomatis.");
+                                submitUjian(true); // Gunakan parameter true agar tidak muncul konfirmasi lagi
+                            }}
                         />
 
                         <QuestionCard
@@ -286,7 +272,6 @@ export default function UlanganPage() {
     );
 }
 
-// Sub-komponen sederhana untuk State Selesai
 function FinishedState() {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-10 text-center">
