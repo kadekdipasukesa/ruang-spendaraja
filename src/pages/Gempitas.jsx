@@ -15,8 +15,9 @@ import {
   Microscope,
   X,
   BarChart2,
-  FileText, 
-  FileCheck
+  FileText,
+  FileCheck,
+  Video
 } from 'lucide-react';
 import "../App.css"; // Gunakan titik dua (..) untuk keluar dari folder pages ke folder src
 import PosterGempitas from '../assets/Gempitas/foster_gempitas.jpeg'; // Tambahkan ini
@@ -26,6 +27,33 @@ const GempitasPage = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isPosterOpen, setIsPosterOpen] = useState(false);
   const [showKisiKisi, setShowKisiKisi] = useState(false);
+
+  const [countdown, setCountdown] = useState("");
+
+  useEffect(() => {
+    const target = new Date("2026-04-29T14:00:00+08:00");
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const diff = target - now;
+
+      if (diff <= 0) {
+        setCountdown("LIVE SEKARANG");
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+
+      setCountdown(`${days} hari ${hours} jam ${minutes} menit lagi`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // 1. Hook untuk Loading
   useEffect(() => {
@@ -409,45 +437,45 @@ const GempitasPage = () => {
 
 
         {/* --- SEKSI DOKUMEN PENDUKUNG --- */}
-<motion.div
-  initial={{ y: 20, opacity: 0 }}
-  animate={{ y: 0, opacity: 1 }}
-  className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-4"
->
-  {/* Card Juknis */}
-  <a
-    href="https://drive.google.com/file/d/1pxXJt_ZqgKzftsqumFQZOWDuuESt2W5K/view?usp=sharing"
-    target="_blank"
-    rel="noreferrer"
-    className="group relative flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-blue-600/10 hover:border-blue-500/50 transition-all duration-300"
-  >
-    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-600/20 flex items-center justify-center text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
-      <FileText size={24} />
-    </div>
-    <div className="flex-grow">
-      <h4 className="text-white text-xs font-black uppercase tracking-widest">Juknis Lomba</h4>
-      <p className="text-white/40 text-[10px]">Panduan Teknis Pelaksanaan (PDF)</p>
-    </div>
-    <Download size={16} className="text-white/20 group-hover:text-white transition-all" />
-  </a>
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-4"
+        >
+          {/* Card Juknis */}
+          <a
+            href="https://drive.google.com/file/d/1pxXJt_ZqgKzftsqumFQZOWDuuESt2W5K/view?usp=sharing"
+            target="_blank"
+            rel="noreferrer"
+            className="group relative flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-blue-600/10 hover:border-blue-500/50 transition-all duration-300"
+          >
+            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-600/20 flex items-center justify-center text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
+              <FileText size={24} />
+            </div>
+            <div className="flex-grow">
+              <h4 className="text-white text-xs font-black uppercase tracking-widest">Juknis Lomba</h4>
+              <p className="text-white/40 text-[10px]">Panduan Teknis Pelaksanaan (PDF)</p>
+            </div>
+            <Download size={16} className="text-white/20 group-hover:text-white transition-all" />
+          </a>
 
-  {/* Card Surat Rekomendasi */}
-  <a
-    href="https://drive.google.com/file/d/1r7ZSOz-ABuRlHEnBDl36KpFj0noO3kLy/view?usp=sharing"
-    target="_blank"
-    rel="noreferrer"
-    className="group relative flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-indigo-600/10 hover:border-indigo-500/50 transition-all duration-300"
-  >
-    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-      <FileCheck size={24} />
-    </div>
-    <div className="flex-grow">
-      <h4 className="text-white text-xs font-black uppercase tracking-widest">Surat Rekomendasi</h4>
-      <p className="text-white/40 text-[10px]">Format Surat Utusan Sekolah</p>
-    </div>
-    <Download size={16} className="text-white/20 group-hover:text-white transition-all" />
-  </a>
-</motion.div>
+          {/* Card Surat Rekomendasi */}
+          <a
+            href="https://drive.google.com/file/d/1r7ZSOz-ABuRlHEnBDl36KpFj0noO3kLy/view?usp=sharing"
+            target="_blank"
+            rel="noreferrer"
+            className="group relative flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-indigo-600/10 hover:border-indigo-500/50 transition-all duration-300"
+          >
+            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+              <FileCheck size={24} />
+            </div>
+            <div className="flex-grow">
+              <h4 className="text-white text-xs font-black uppercase tracking-widest">Surat Rekomendasi</h4>
+              <p className="text-white/40 text-[10px]">Format Surat Utusan Sekolah</p>
+            </div>
+            <Download size={16} className="text-white/20 group-hover:text-white transition-all" />
+          </a>
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
@@ -527,15 +555,64 @@ const GempitasPage = () => {
               </div>
             </div>
 
+
+
+
+            {/* WHATSAPP TETAP ADA */}
             <div className="bg-green-600/10 rounded-[2rem] p-8 border border-green-500/20 flex flex-col md:flex-row items-center gap-6">
               <div className="text-center md:text-left flex-1">
                 <h3 className="text-xl font-black mb-2 text-green-400 flex items-center gap-3 justify-center md:justify-start">
                   <MessageCircle /> GRUP WHATSAPP
                 </h3>
-                <p className="text-slate-400 text-sm">Bergabunglah ke grup resmi untuk mendapatkan link Zoom Technical Meeting dan pengumuman lomba.</p>
+
+                <p className="text-slate-400 text-sm">
+                  Bergabunglah ke grup resmi untuk mendapatkan link Zoom Technical Meeting dan pengumuman lomba.
+                </p>
               </div>
-              <a href="https://chat.whatsapp.com/DtksLgLLYZWCO5kO0XDDgt" target="_blank" rel="noreferrer" className="bg-green-600 hover:bg-green-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg shadow-green-900/20 shrink-0">
+
+              <a
+                href="https://chat.whatsapp.com/DtksLgLLYZWCO5kO0XDDgt"
+                target="_blank"
+                rel="noreferrer"
+                className="bg-green-600 hover:bg-green-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg shadow-green-900/20 shrink-0"
+              >
                 JOIN GRUP WA
+              </a>
+            </div>
+
+            <div className="bg-blue-600/10 rounded-[2rem] p-8 border border-blue-500/20 flex flex-col md:flex-row items-center gap-6 mb-6">
+              <div className="text-center md:text-left flex-1">
+
+                <h3 className="text-xl font-black mb-2 text-blue-400 flex items-center gap-3 justify-center md:justify-start">
+                  <Video /> ZOOM TECHNICAL MEETING
+                </h3>
+
+                <p className="text-slate-400 text-sm">
+                  Technical Meeting GEMPITAS Tahun 2026 <br />
+                  Rabu, 29 April 2026 • 14.00 WITA
+                </p>
+
+                {/* Countdown */}
+                <div className="mt-4 inline-flex bg-blue-500/10 border border-blue-400/30 rounded-xl px-4 py-2">
+                  <span className="text-blue-300 font-black text-sm">
+                    ⏳ {countdown}
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-500 mt-4">
+                  Meeting ID: 859 3024 4370 <br />
+                  Passcode: kominfo26
+                </p>
+
+              </div>
+
+              <a
+                href="https://us06web.zoom.us/j/85930244370?pwd=ua9OfXY1ne9Hk1txGYFb304YsWn1Zu.1"
+                target="_blank"
+                rel="noreferrer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg shadow-blue-900/20 shrink-0"
+              >
+                JOIN ZOOM
               </a>
             </div>
           </div>
