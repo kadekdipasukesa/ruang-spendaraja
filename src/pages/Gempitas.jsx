@@ -444,7 +444,7 @@ const GempitasPage = () => {
         >
           {/* Card Juknis */}
           <a
-            href="https://drive.google.com/file/d/1pxXJt_ZqgKzftsqumFQZOWDuuESt2W5K/view?usp=sharing"
+            href="https://drive.google.com/file/d/1CQHfiOxWg8aka7Q4ADiut0p0s5frMM99/view?usp=sharing"
             target="_blank"
             rel="noreferrer"
             className="group relative flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-blue-600/10 hover:border-blue-500/50 transition-all duration-300"
