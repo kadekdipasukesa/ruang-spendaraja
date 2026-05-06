@@ -8,6 +8,7 @@ import CatatPelanggaran from './pages/CatatPelanggaran';
 import FloatingOnline from './components/FloatingOnline'; // 1. Import komponennya
 import UlanganPage from './pages/UlanganPage'; // Pastikan path import benar
 import AdminUjian from './pages/AdminUjian'; // Pastikan path import benar
+import TypingChallengePage from './pages/typing-challenge';
 
 function AppContent() {
   const location = useLocation();
@@ -42,6 +43,7 @@ function AppContent() {
 
     if (path === '/admin-ujian') return 'Control Ujian';
     if (path === '/ulangan') return 'Ulangan';
+    if (path === '/typing-challenge') return 'Typing Challenge';
 
     // 5. Default jika tidak ada yang cocok
     return 'Menjelajah';
@@ -68,6 +70,7 @@ function AppContent() {
         {/* Tambahkan rute baru di bawah ini */}
         <Route path="/ulangan" element={<UlanganPage />} />
         <Route path="/admin-ujian" element={<AdminUjian />} />
+        <Route path="/typing-challenge" element={<TypingChallengePage />} />
       </Routes>
     </div>
   );

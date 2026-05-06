@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import Hero from '../components/Home/Hero';
 import ShortcutCard from '../components/Home/ShortcutCard';
 import FeedbackForm from '../components/Home/FeedbackForm';
-import { Monitor, Globe, BookOpen, UserCheck, ShieldAlert } from 'lucide-react';
+import { Monitor, Globe, BookOpen, UserCheck, ShieldAlert, Keyboard } from 'lucide-react';
 import { checkAppAccess } from '../utils/appPermissions'; // Pastikan helper ini sudah dibuat
 import Footer from '../components/Home/Footer'; // Sesuaikan path
 
@@ -31,6 +31,20 @@ const HomeRoot = () => {
       path: '/ruang-belajar',
       desc: 'Materi, Tugas, & Ulangan interaktif.',
       isLocked: true // Default state, akan diproses di processedApps
+    },
+    {
+      id: 'typing7',
+      tag: 'Akademik',
+      title: 'Typing Challenge',
+      subtitle: 'Lomba Ketik Cepat',
+      icon: <Keyboard size={28} />,
+      color: 'from-green-400/30 to-transparent',
+      glow: 'group-hover:border-green-400',
+      shadow: 'hover:shadow-[0_0_30px_-5px_rgba(34,197,94,0.5)]',
+      glowColor: 'text-green-400',
+      path: '/typing-challenge',
+      desc: 'Latihan dan lomba mengetik cepat.',
+      isLocked: true
     },
     {
       id: 'gempitas',
