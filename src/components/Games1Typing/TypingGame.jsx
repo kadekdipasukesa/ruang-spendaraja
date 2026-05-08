@@ -13,6 +13,7 @@ const TypingGame = () => {
     const [leaderboard, setLeaderboard] = useState([]);
     const [showHistory, setShowHistory] = useState(false);
     const [historyData, setHistoryData] = useState([]);
+    const [showFullLeaderboard, setShowFullLeaderboard] = useState(false); // Tambahkan ini
     const scrollRef = useRef(null);
     const inputRef = useRef(null);
 

@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import Hero from '../components/Home/Hero';
 import ShortcutCard from '../components/Home/ShortcutCard';
 import FeedbackForm from '../components/Home/FeedbackForm';
-import { Monitor, Globe, BookOpen, UserCheck, ShieldAlert, Keyboard } from 'lucide-react';
+import { Monitor, Globe, BookOpen, UserCheck, ShieldAlert, Keyboard, Sparkles} from 'lucide-react';
 import { checkAppAccess } from '../utils/appPermissions'; // Pastikan helper ini sudah dibuat
 import Footer from '../components/Home/Footer'; // Sesuaikan path
 
@@ -85,6 +85,20 @@ const HomeRoot = () => {
       path: 'https://script.google.com/a/macros/guru.smp.belajar.id/s/AKfycbzlKlYSmo5WIcd6If6botntfyGc0E30ttGGHhL14Fhd98IoFqnEfY0iuR4tS6AWTUu0/exec',
       isExternal: true,
       desc: 'Monitoring belajar mandiri siswa masa liburan.'
+    },
+    {
+      id: 'bee2026',
+      tag: 'Event',
+      title: 'BEE 2026',
+      subtitle: 'Education Expo',
+      icon: <Sparkles size={28} />, // Atau <GraduationCap size={28} />
+      color: 'from-amber-400/30 to-transparent',
+      glow: 'group-hover:border-amber-400',
+      shadow: 'hover:shadow-[0_0_30px_-5px_rgba(251,191,36,0.5)]',
+      glowColor: 'text-amber-400',
+      path: '/bee-2026', // Pastikan route ini sudah terdaftar jika ingin bisa diklik
+      desc: 'Pameran pendidikan & kreativitas siswa Spenda.',
+      isLocked: false // Biasanya event publik tidak dikunci
     },
     {
       id: 'presensi',

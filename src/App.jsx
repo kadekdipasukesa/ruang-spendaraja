@@ -9,6 +9,7 @@ import FloatingOnline from './components/FloatingOnline'; // 1. Import komponenn
 import UlanganPage from './pages/UlanganPage'; // Pastikan path import benar
 import AdminUjian from './pages/AdminUjian'; // Pastikan path import benar
 import TypingChallengePage from './pages/typing-challenge';
+import BEE2026 from './pages/bee-2026';
 
 function AppContent() {
   const location = useLocation();
@@ -44,6 +45,7 @@ function AppContent() {
     if (path === '/admin-ujian') return 'Control Ujian';
     if (path === '/ulangan') return 'Ulangan';
     if (path === '/typing-challenge') return 'Typing Challenge';
+    if (path === '/bee-2026') return 'Melihat Expo BEE';
 
     // 5. Default jika tidak ada yang cocok
     return 'Menjelajah';
@@ -71,6 +73,7 @@ function AppContent() {
         <Route path="/ulangan" element={<UlanganPage />} />
         <Route path="/admin-ujian" element={<AdminUjian />} />
         <Route path="/typing-challenge" element={<TypingChallengePage />} />
+        <Route path="/bee-2026" element={<BEE2026 />} />
       </Routes>
     </div>
   );
