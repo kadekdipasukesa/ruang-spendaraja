@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExternalLink, Gamepad2, Globe, Cpu, Smartphone } from 'lucide-react';
+import { Link } from 'react-router-dom'; // PENTING: Import Link
 
 export default function ExpoCard({ item }) {
   const getCategoryStyle = (cat) => {
@@ -13,6 +14,9 @@ export default function ExpoCard({ item }) {
   };
 
   const style = getCategoryStyle(item.category);
+
+  // Cek apakah link adalah route internal atau URL eksternal
+  const isInternal = item.link.startsWith('/');
 
   return (
     <div className="group bg-white rounded-[2.5rem] p-4 border border-slate-200 shadow-sm hover:shadow-2xl hover:shadow-amber-200/40 transition-all duration-500">
@@ -40,18 +44,29 @@ export default function ExpoCard({ item }) {
           {item.description}
         </p>
 
-        {/* Tombol Link */}
-        <a 
-          href={item.link} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="flex items-center justify-between w-full bg-slate-50 hover:bg-amber-500 hover:text-white p-4 rounded-2xl transition-all duration-300 group/btn"
-        >
-          <span className="text-xs font-black uppercase tracking-widest">Kunjungi Karya</span>
-          <div className="bg-white group-hover/btn:bg-white/20 p-2 rounded-xl text-slate-900 group-hover/btn:text-white transition-colors">
-            <ExternalLink size={16} />
-          </div>
-        </a>
+        {isInternal ? (
+          <Link 
+            to={item.link} 
+            className="flex items-center justify-between w-full bg-slate-50 hover:bg-amber-500 hover:text-white p-4 rounded-2xl transition-all duration-300 group/btn"
+          >
+            <span className="text-xs font-black uppercase tracking-widest">Coba Prototype</span>
+            <div className="bg-white group-hover/btn:bg-white/20 p-2 rounded-xl text-slate-900 group-hover/btn:text-white transition-colors">
+              <Cpu size={16} />
+            </div>
+          </Link>
+        ) : (
+          <a 
+            href={item.link} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center justify-between w-full bg-slate-50 hover:bg-amber-500 hover:text-white p-4 rounded-2xl transition-all duration-300 group/btn"
+          >
+            <span className="text-xs font-black uppercase tracking-widest">Kunjungi Karya</span>
+            <div className="bg-white group-hover/btn:bg-white/20 p-2 rounded-xl text-slate-900 group-hover/btn:text-white transition-colors">
+              <ExternalLink size={16} />
+            </div>
+          </a>
+        )}
       </div>
     </div>
   );

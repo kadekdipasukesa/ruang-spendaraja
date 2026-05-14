@@ -12,7 +12,7 @@ export default function BEE2026() {
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-200/20 blur-[120px] rounded-full -mr-48 -mt-48" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-200/20 blur-[100px] rounded-full -ml-32 -mb-32" />
 
-            <div className="relative pt-20 pb-20 px-4">
+            <div className="relative pt-32 pb-20 px-4">
                 {/* Header Section */}
                 <div className="max-w-6xl mx-auto mb-20 text-center">
                     <div className="inline-flex items-center gap-2 bg-white border border-amber-200 px-5 py-2 rounded-full shadow-sm mb-6 animate-bounce">

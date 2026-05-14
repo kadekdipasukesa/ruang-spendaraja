@@ -10,6 +10,13 @@ import UlanganPage from './pages/UlanganPage'; // Pastikan path import benar
 import AdminUjian from './pages/AdminUjian'; // Pastikan path import benar
 import TypingChallengePage from './pages/typing-challenge';
 import BEE2026 from './pages/bee-2026';
+import DashboardGuru from './pages/DashboardGuru';
+import AnalisisPelanggaran from './pages/AnalisisPelanggaran';
+import MonitoringRealtime from './pages/MonitoringRealtime';
+import SimulasiInteraktif from './pages/SimulasiInteraktif';
+import PortfolioLeaderboard from './pages/PortfolioLeaderboard';
+import AnalisisNilai from './pages/AnalisisNilai';
+import FaceAbsenPage from './pages/face-absen';
 
 function AppContent() {
   const location = useLocation();
@@ -46,7 +53,13 @@ function AppContent() {
     if (path === '/ulangan') return 'Ulangan';
     if (path === '/typing-challenge') return 'Typing Challenge';
     if (path === '/bee-2026') return 'Melihat Expo BEE';
-
+    if (path === '/guru') return 'dasboard guru';
+    if (path === '/analisis-pelanggaran') return 'Analisis Pelanggaran';
+    if (path === '/monitoring-realtime') return 'Monitoring Realtime';
+    if (path === '/simulasi-interaktif') return 'Simulasi Interaktif';
+    if (path === '/portfolio-leaderboard') return 'Portfolio Leaderboard';
+    if (path === '/analisis-nilai') return 'Analisis Nilai';
+    if (path === '/face-absen') return 'Face Absen';
     // 5. Default jika tidak ada yang cocok
     return 'Menjelajah';
   };
@@ -74,6 +87,13 @@ function AppContent() {
         <Route path="/admin-ujian" element={<AdminUjian />} />
         <Route path="/typing-challenge" element={<TypingChallengePage />} />
         <Route path="/bee-2026" element={<BEE2026 />} />
+        <Route path="/guru" element={<DashboardGuru />} />
+        <Route path="/analisis-pelanggaran" element={<AnalisisPelanggaran />} />
+        <Route path="/monitoring-realtime" element={<MonitoringRealtime />} />
+        <Route path="/simulasi-interaktif" element={<SimulasiInteraktif />} />
+        <Route path="/portfolio-leaderboard" element={<PortfolioLeaderboard />} />
+        <Route path="/analisis-nilai" element={<AnalisisNilai />} />
+        <Route path="/face-absen" element={<FaceAbsenPage />} />
       </Routes>
     </div>
   );
