@@ -12,7 +12,7 @@ import TypingChallengePage from './pages/typing-challenge';
 import BEE2026 from './pages/bee-2026';
 import DashboardGuru from './pages/DashboardGuru';
 import AnalisisPelanggaran from './pages/AnalisisPelanggaran';
-import MonitoringRealtime from './pages/MonitoringRealtime';
+import MonitoringRealtime from './pages/MonitoringRealTime';
 import SimulasiInteraktif from './pages/SimulasiInteraktif';
 import PortfolioLeaderboard from './pages/PortfolioLeaderboard';
 import AnalisisNilai from './pages/AnalisisNilai';
