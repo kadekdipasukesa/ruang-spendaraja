@@ -137,7 +137,7 @@ export default function Navbar() {
         animate={isHidden ? "hidden" : "visible"}
         transition={{ duration: 0.35, ease: "easeInOut" }}
         className="fixed top-0 left-0 w-full bg-slate-950/1 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex justify-between items-center z-[100] transition-all duration-300"
-        >
+      >
         <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent shadow-[0_1px_10px_rgba(245,158,11,0.2)]" />
 
         <Link to="/" className="flex items-center gap-3 group">
@@ -145,9 +145,17 @@ export default function Navbar() {
             <School size={22} />
           </div>
           <div className="flex flex-col justify-center">
-            <span className="text-white font-black text-xl tracking-tighter leading-tight">
-              Ruang <span className="text-blue-400">Spendaraja</span>
+            <span className="font-black text-xl tracking-tighter leading-tight">
+
+              <span className="text-white drop-shadow-[0_0_6px_rgba(0,0,0,0.6)]">
+                Ruang
+              </span>{" "}
+
+              <span className="text-blue-400 drop-shadow-[0_0_6px_rgba(0,0,0,0.5)] drop-shadow-[0_0_10px_rgba(59,130,246,0.4)]">
+                Spendaraja
+              </span>
             </span>
+
             <div className="flex items-center pt-1">
               <span className="text-[7px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-none">
                 v.{__APP_VERSION__}
@@ -170,8 +178,15 @@ export default function Navbar() {
               </div>
             )}
             <div className="text-right hidden md:block border-l border-white/10 pl-4">
-              <p className="text-sm font-bold text-white capitalize">{formatShortName(user.NAMA)}</p>
-              <p className="text-[10px] text-blue-400 uppercase font-black tracking-widest">{user.Kelas}</p>
+
+              <p className="text-sm font-bold capitalize text-white drop-shadow-[0_0_4px_rgba(0,0,0,0.6)]">
+                {formatShortName(user.NAMA)}
+              </p>
+
+              <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 drop-shadow-[0_0_4px_rgba(0,0,0,0.5)] drop-shadow-[0_0_8px_rgba(59,130,246,0.4)]">
+                {user.Kelas}
+              </p>
+
             </div>
             <button onClick={handleLogout} className="group flex items-center gap-2 bg-red-500/10 hover:bg-red-600 p-2.5 rounded-xl transition-all border border-red-500/20 shadow-lg shadow-red-900/20">
               <LogOut size={18} className="text-red-500 group-hover:text-white" />

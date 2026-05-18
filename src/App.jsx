@@ -17,6 +17,7 @@ import SimulasiInteraktif from './pages/SimulasiInteraktif';
 import PortfolioLeaderboard from './pages/PortfolioLeaderboard';
 import AnalisisNilai from './pages/AnalisisNilai';
 import FaceAbsenPage from './pages/face-absen';
+import InputNilaiPage from './pages/input-nilai';
 
 function AppContent() {
   const location = useLocation();
@@ -60,6 +61,7 @@ function AppContent() {
     if (path === '/portfolio-leaderboard') return 'Portfolio Leaderboard';
     if (path === '/analisis-nilai') return 'Analisis Nilai';
     if (path === '/face-absen') return 'Face Absen';
+    if (path === '/input-nilai') return 'Input Nilai';
     // 5. Default jika tidak ada yang cocok
     return 'Menjelajah';
   };
@@ -94,6 +96,7 @@ function AppContent() {
         <Route path="/portfolio-leaderboard" element={<PortfolioLeaderboard />} />
         <Route path="/analisis-nilai" element={<AnalisisNilai />} />
         <Route path="/face-absen" element={<FaceAbsenPage />} />
+        <Route path="/input-nilai" element={<InputNilaiPage />} />
       </Routes>
     </div>
   );
