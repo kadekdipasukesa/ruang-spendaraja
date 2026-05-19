@@ -2,6 +2,7 @@ import React from 'react';
 import { useBEE } from '../hooks/BEE/useBEE';
 import ExpoCard from '../components/BEE/ExpoCard';
 import { Sparkles, ArrowRight } from 'lucide-react';
+import FeedbackBEE2026 from '../components/BEE/feedback_bee2026'
 
 export default function BEE2026() {
     const { works, loading } = useBEE();
@@ -47,26 +48,9 @@ export default function BEE2026() {
                     )}
                 </div>
 
-                {/* Call to Action Footer */}
-                <div className="max-w-4xl mx-auto mt-24 bg-slate-900 rounded-[3rem] p-10 text-center relative overflow-hidden shadow-2xl">
-                    <div className="relative z-10">
-                        <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter">Punya Karya Inovatif?</h2>
-                        <p className="text-slate-400 mb-8 font-medium">Daftarkan karyamu untuk dipamerkan di BEE 2026 melalui Guru Informatika.</p>
-
-                        {/* Link WhatsApp */}
-                        <a
-                            href="https://wa.me/6281939415343?text=Halo%20Admin%20BEE%202026%2C%20saya%20ingin%20mendaftarkan%20karya%20inovasi%20saya%20untuk%20dipamerkan."
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-3 bg-amber-500 hover:bg-amber-400 text-slate-900 px-8 py-4 rounded-2xl font-black transition-all transform hover:scale-105 shadow-xl"
-                        >
-                            HUBUNGI ADMIN <ArrowRight size={20} />
-                        </a>
-                    </div>
-
-                    {/* Efek Cahaya di Footer */}
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-amber-500/10 to-transparent pointer-events-none" />
-                </div>
+                {/* Feedback BEE 2026 */}
+                {/* Feedback Section */}
+                <FeedbackBEE2026 />
             </div>
         </div>
     );

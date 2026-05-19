@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import ecoImg from '../../assets/BEE/eco.png';
 import ternakImg from '../../assets/BEE/ternak.png';
+import faceImg from '../../assets/BEE/face_recognition.png';
+import fluppyImg from '../../assets/BEE/fluppy.png';
+import typingImg from '../../assets/BEE/ketik_cepat.png';
+
 
 
 export const useBEE = () => {
@@ -28,49 +32,44 @@ export const useBEE = () => {
         image_url: ternakImg,
         link: "https://view.genially.com/69b780ba5871e2285c11952e"
       },
+
       {
-        id: 3,
-        title: "Game Labirin Informatika",
-        creator_name: "Gede Aris Sugiantara",
+        id: 102,
+        title: "Flappy Bird Quiz Informatika",
+        creator_name: "MICHAEL YAP SUGIANTO",
         category: "Game",
-        description: "Game edukasi logika pemrograman untuk anak SMP menggunakan Scratch.",
-        image_url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=400",
-        link: "https://scratch.mit.edu" // Contoh Link
+        description: "Game Flappy Bird edukasi informatika di mana pemain harus menghindari rintangan. Jika menabrak tembok, pemain akan mendapatkan pertanyaan quiz informatika untuk melanjutkan permainan.",
+        image_url: fluppyImg,
+        link: "/flappy.html" // File berada di folder public
       },
+
       {
-        id: 4,
-        title: "E-Library Spenda",
-        creator_name: "Putu Ayu Lestari",
-        category: "App",
-        description: "Prototipe aplikasi perpustakaan digital untuk mempermudah peminjaman buku.",
-        image_url: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=400",
-        link: "https://www.figma.com" // Contoh Link
+        id: 103,
+        title: "Game Ketik Cepat",
+        creator_name: "MADE DIYONANDA FEBRIYANA SUKKE",
+        category: "Game",
+        description: "Permainan interaktif untuk melatih kecepatan mengetik, akurasi, dan konsentrasi dalam mengetik kata-kata dengan cepat dan tepat.",
+        image_url: typingImg,
+        link: "/typing-challenge" // Diarahkan ke route internal
       },
+
       {
-        id: 5,
-        title: "Robot Penyiram Tanaman Otomatis",
-        creator_name: "Kadek Dwi Pratama",
-        category: "IoT",
-        description: "Inovasi sistem penyiraman taman sekolah berbasis sensor kelembaban tanah.",
-        image_url: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=400",
-        link: "https://google.com" // Contoh Link
+        id: 104,
+        title: "Game Catur",
+        creator_name: "SAMUEL HOSENA",
+        category: "Game",
+        description: "Permainan catur interaktif yang memungkinkan pemain mengasah strategi, logika, dan kemampuan berpikir beberapa langkah ke depan.",
+        image_url: "https://images.unsplash.com/photo-1528819622765-d6bcf132f793?q=80&w=400",
+        link: "/chess.html" // File berada di folder public
       },
-      {
-        id: 6,
-        title: "Web Portofolio Digital",
-        creator_name: "Komang Indah Wahyuni",
-        category: "Web",
-        description: "Kumpulan karya desain grafis dan coding HTML/CSS dasar.",
-        image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=400",
-        link: "https://vercel.com" // Contoh Link
-      },
+
       {
         id: 101,
         title: "Absensi Face Recognition",
         creator_name: "Project kelas 7.1",
         category: "App",
         description: "Prototipe sistem absensi masa depan menggunakan pengenalan wajah untuk keamanan sekolah.",
-        image_url: "https://images.unsplash.com/photo-1507146426996-ef05306b995a?q=80&w=400",
+        image_url: faceImg,
         link: "/face-absen" // Diarahkan ke route internal
       }
     ];
