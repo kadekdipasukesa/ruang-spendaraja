@@ -1,3 +1,4 @@
+// src/hooks/Game1Typing/useTypingGame.js
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const WORD_POOL = [
@@ -33,6 +34,12 @@ export const useTypingGame = (onGameEnd) => {
   const [accuracy, setAccuracy] = useState(100);
 
   const startTimeRef = useRef(null);
+  
+  // Menggunakan Ref untuk mengunci callback onGameEnd agar tidak memicu reset internal pada useEffect
+  const onGameEndRef = useRef(onGameEnd);
+  useEffect(() => {
+    onGameEndRef.current = onGameEnd;
+  }, [onGameEnd]);
 
   const initGame = useCallback(() => {
     const shuffled = [...WORD_POOL].sort(() => Math.random() - 0.5).slice(0, 100);
@@ -51,30 +58,44 @@ export const useTypingGame = (onGameEnd) => {
     startTimeRef.current = null;
   }, []);
 
+  // Memisahkan penanda status selesai murni dari pengiriman callback skor Supabase
   const endGame = useCallback(() => {
     setIsPlaying(false);
     setIsFinished(true);
-    if (onGameEnd) onGameEnd(wpm, accuracy);
-  }, [onGameEnd, wpm, accuracy]);
+  }, []);
 
+  // Memicu pengiriman skor ke Supabase ketika game selesai terkonfirmasi
+  useEffect(() => {
+    if (isFinished && onGameEndRef.current) {
+      onGameEndRef.current(wpm, accuracy);
+    }
+  }, [isFinished, wpm, accuracy]);
+
+  // ==========================================
+  // LOGIKA TIMER (ANTI-DELAY STABILIZER)
+  // ==========================================
   useEffect(() => {
     let timer;
     if (isPlaying && isTimerStarted && timeLeft > 0) {
       if (!startTimeRef.current) startTimeRef.current = Date.now();
+
       timer = setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
         const remaining = Math.max(0, TIME_LIMIT - elapsed);
-        if (remaining <= 0) {
-          setTimeLeft(0);
-          endGame();
-          clearInterval(timer);
-        } else {
-          setTimeLeft(remaining);
-        }
+        
+        // Mencegah re-render jika nilainya sama
+        setTimeLeft((prev) => {
+          if (prev === remaining) return prev;
+          if (remaining <= 0) {
+            endGame();
+            return 0;
+          }
+          return remaining;
+        });
       }, 100);
     }
     return () => clearInterval(timer);
-  }, [isPlaying, isTimerStarted, timeLeft, endGame]);
+  }, [isPlaying, isTimerStarted, endGame]);
 
   const handleInput = (e) => {
     const val = e.target.value;
@@ -91,6 +112,7 @@ export const useTypingGame = (onGameEnd) => {
       if (isCorrect) newCorrect += targetWord.length;
       setCorrectChars(newCorrect);
 
+      // Hitung akumulasi total karakter yang terproses secara akurat
       const newTotal = totalTypedChars + targetWord.length;
       setTotalTypedChars(newTotal);
 
@@ -102,6 +124,7 @@ export const useTypingGame = (onGameEnd) => {
 
       setCurrentIndex(prev => prev + 1);
       setUserInput('');
+      
       if (currentIndex + 1 >= words.length) endGame();
     } else if (val !== ' ') {
       setUserInput(val);

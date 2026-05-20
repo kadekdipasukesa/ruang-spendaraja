@@ -36,7 +36,7 @@ export const useBEE = () => {
       {
         id: 102,
         title: "Flappy Bird Quiz Informatika",
-        creator_name: "MICHAEL YAP SUGIANTO",
+        creator_name: "KADEK KIRANA SUPARMITHA MAHESTRI",
         category: "Game",
         description: "Game Flappy Bird edukasi informatika di mana pemain harus menghindari rintangan. Jika menabrak tembok, pemain akan mendapatkan pertanyaan quiz informatika untuk melanjutkan permainan.",
         image_url: fluppyImg,
@@ -56,7 +56,7 @@ export const useBEE = () => {
       {
         id: 104,
         title: "Game Catur",
-        creator_name: "SAMUEL HOSENA",
+        creator_name: "KETUT PASEK ADI WIGUNA",
         category: "Game",
         description: "Permainan catur interaktif yang memungkinkan pemain mengasah strategi, logika, dan kemampuan berpikir beberapa langkah ke depan.",
         image_url: "https://images.unsplash.com/photo-1528819622765-d6bcf132f793?q=80&w=400",
