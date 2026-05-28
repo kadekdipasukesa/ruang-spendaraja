@@ -14,11 +14,12 @@ export default function QuestionCard({ soal, selectedJawab, onPilih, isBlocked }
 
   return (
     <motion.div 
-      key={soal.id}
-      initial={{ x: 20, opacity: 0 }} 
-      animate={{ x: 0, opacity: 1 }}
-      className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-6 md:p-10 shadow-2xl relative overflow-hidden"
-    >
+  key={soal.id}
+  initial={{ x: 20, opacity: 0 }} 
+  animate={{ x: 0, opacity: 1 }}
+  /* ⚡ Ditambahkan mt-12 (layar HP) dan md:mt-16 (layar laptop) untuk memberi jarak dari header melayang */
+  className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-6 md:p-10 shadow-2xl relative overflow-hidden mt-2 md:mt-6"
+>
       {/* Overlay jika siswa diblokir karena curang */}
       {isBlocked && (
         <div className="absolute inset-0 bg-red-600/95 backdrop-blur-xl z-50 flex flex-col items-center justify-center p-8 text-center">

@@ -19,6 +19,9 @@ import AnalisisNilai from './pages/AnalisisNilai';
 import FaceAbsenPage from './pages/face-absen';
 import InputNilaiPage from './pages/input-nilai';
 
+import RemidiPage from './pages/RemidiPage';
+import AdminRemidi from './pages/AdminRemidi';
+
 function AppContent() {
   const location = useLocation();
   const [user, setUser] = useState(null);
@@ -52,6 +55,10 @@ function AppContent() {
 
     if (path === '/admin-ujian') return 'Control Ujian';
     if (path === '/ulangan') return 'Ulangan';
+
+    if (path === '/admin-remidi') return 'Control Remidi';
+    if (path === '/remidi') return 'Remidi';
+
     if (path === '/typing-challenge') return 'Typing Challenge';
     if (path === '/bee-2026') return 'Melihat Expo BEE';
     if (path === '/guru') return 'dasboard guru';
@@ -62,7 +69,9 @@ function AppContent() {
     if (path === '/analisis-nilai') return 'Analisis Nilai';
     if (path === '/face-absen') return 'Face Absen';
     if (path === '/input-nilai') return 'Input Nilai';
+    
     // 5. Default jika tidak ada yang cocok
+    
     return 'Menjelajah';
   };
 
@@ -87,6 +96,14 @@ function AppContent() {
         {/* Tambahkan rute baru di bawah ini */}
         <Route path="/ulangan" element={<UlanganPage />} />
         <Route path="/admin-ujian" element={<AdminUjian />} />
+
+        {/* --------------------------------------------------------
+            ⚡ ROUTING REMIDI BARU (MENGIKUTI POLA SEBELUMNYA)
+           -------------------------------------------------------- */}
+        <Route path="/remidi" element={<RemidiPage />} />
+        <Route path="/admin-remidi" element={<AdminRemidi />} />
+
+
         <Route path="/typing-challenge" element={<TypingChallengePage />} />
         <Route path="/bee-2026" element={<BEE2026 />} />
         <Route path="/guru" element={<DashboardGuru />} />

@@ -1,7 +1,9 @@
+// C:\Users\dexdi\ruang-spenda\src\components\SAS\FormInputManual.jsx
 import React, { useState } from 'react';
 import { useInputNilai } from '../../hooks/SAS/useInputNilai';
 import PreviewModal from './PreviewModal';
-import { User, CheckCircle2, ClipboardEdit, Search, GraduationCap, Code2, Sparkles, Camera, Loader2, RefreshCw } from 'lucide-react';
+import GridLjkOverlay from './GridLjkOverlay'; // Komponen Overlay Baru
+import { User, CheckCircle2, ClipboardEdit, Search, GraduationCap, Code2, Sparkles, Camera, Loader2, Image as ImageIcon } from 'lucide-react';
 import { analyzeLJKWithGemini } from '../../lib/geminiService';
 
 export default function FormInputManual() {
@@ -15,6 +17,12 @@ export default function FormInputManual() {
   const [fastJsonInput, setFastJsonInput] = useState('');
   const [showFastInput, setShowFastInput] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [ljkImageUrl, setLJKImageUrl] = useState(null); // State penampung background layer
+
+  // 🆕 STATE KALIBRASI YANG DIANGKAT DARI KELAS ANAK (UNTUK DIKIRIM KE HOOKS SUPABASE)
+  const [gridDimensions, setGridDimensions] = useState({ width: 90, height: 85, top: 8, left: 5 });
+  const [columnGap, setColumnGap] = useState(16);
+  const [opacity, setOpacity] = useState(40);
 
   const hasilPG = selectedSiswa ? hitungPG() : { benar: 0, total: 50, nilai: 0 };
 
@@ -28,7 +36,6 @@ export default function FormInputManual() {
       const parsed = JSON.parse(fastJsonInput);
 
       if (parsed.jawaban_pilihan_ganda) {
-        // Pastikan semua key string (1-50) masuk ke state
         setJawabanPG(prev => ({ ...prev, ...parsed.jawaban_pilihan_ganda }));
       }
 
@@ -91,93 +98,114 @@ export default function FormInputManual() {
         )}
       </div>
 
-      {/* PANEL INPUT CEPAT JSON & AI VISION (TAMPIL HANYA JIKA DIKLIK) */}
-{selectedSiswa && showFastInput && (
-  <div className="mb-8 p-6 bg-slate-950 text-slate-200 rounded-3xl border border-slate-800 shadow-2xl animate-in slide-in-from-top-5 duration-300">
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-4">
-      <div className="flex items-center gap-2.5">
-        <div className="p-2 bg-amber-500/10 rounded-xl text-amber-400">
-          <Sparkles size={20} />
+      {/* PANEL INPUT CEPAT JSON & AI VISION (MURNI PROSES EKSTRAKSI DATA GEMINI) */}
+      {selectedSiswa && showFastInput && (
+        <div className="mb-8 p-6 bg-slate-950 text-slate-200 rounded-3xl border border-slate-800 shadow-2xl animate-in slide-in-from-top-5 duration-300">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-amber-500/10 rounded-xl text-amber-400">
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <h4 className="text-sm font-black uppercase tracking-wider text-white">Smart AI LJK Scanner</h4>
+                <p className="text-[11px] text-slate-400">Ekstrak otomatis teks jawaban menggunakan kecerdasan Gemini AI</p>
+              </div>
+            </div>
+
+            {/* MURNI TOMBOL PROSES AI GEMINI (TIDAK MERUBAH VISUAL BACKGROUND OVERLAY) */}
+            <label className={`inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl cursor-pointer hover:from-amber-400 hover:to-orange-400 transition-all ${isAiLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+              {isAiLoading ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
+              {isAiLoading ? 'AI Membaca Kertas...' : 'Scan Lewat AI Gemini'}
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+
+                  setIsAiLoading(true);
+                  try {
+                    const aiOutput = await analyzeLJKWithGemini(file);
+
+                    if (aiOutput.jawaban_pilihan_ganda) {
+                      setJawabanPG(prev => ({ ...prev, ...aiOutput.jawaban_pilihan_ganda }));
+                    }
+                    if (aiOutput.jawaban_essay) {
+                      setJawabanEssay(prev => ({ ...prev, ...aiOutput.jawaban_essay }));
+                    }
+
+                    alert("⚡ AI Sukses! Lembar jawaban fisik berhasil diekstrak ke dalam form.");
+                    setShowFastInput(false);
+                    setFastJsonInput('');
+                  } catch (err) {
+                    alert("❌ Gagal membaca gambar: " + err.message);
+                  } finally {
+                    setIsAiLoading(false);
+                  }
+                }}
+              />
+            </label>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block">Atau Input Teks Objek JSON Manual</label>
+            <textarea
+              rows="4"
+              className="w-full bg-slate-900 p-3 font-mono text-xs rounded-xl border border-slate-800 text-emerald-400 outline-none focus:border-amber-500 transition-all"
+              placeholder={`{\n  "jawaban_pilihan_ganda": { "1": "D", "2": "A" },\n  "jawaban_essay": { "1": "Hasil Jawaban..." }\n}`}
+              value={fastJsonInput}
+              onChange={(e) => setFastJsonInput(e.target.value)}
+              disabled={isAiLoading}
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowFastInput(false)}
+                className="px-4 py-2 bg-slate-900 text-slate-400 rounded-xl font-bold text-xs uppercase hover:bg-slate-800"
+                disabled={isAiLoading}
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleProcessFastInput}
+                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black text-xs uppercase"
+                disabled={isAiLoading}
+              >
+                Proses JSON Teks
+              </button>
+            </div>
+          </div>
         </div>
-        <div>
-          <h4 className="text-sm font-black uppercase tracking-wider text-white">Smart AI LJK Scanner</h4>
-          <p className="text-[11px] text-slate-400">Scan otomatis kertas LJK menggunakan Gemini AI Vision</p>
-        </div>
-      </div>
-
-      {/* Input File dengan opsi capture kamera langsung untuk perangkat Mobile */}
-      <label className={`inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl cursor-pointer hover:bg-amber-400 transition-all ${isAiLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-        {isAiLoading ? (
-          <Loader2 size={15} className="animate-spin" />
-        ) : (
-          <Camera size={15} />
-        )}
-        {isAiLoading ? 'Menganalisis Gambar...' : 'Foto LJK / Upload'}
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment" /* Memicu kamera belakang otomatis di HP */
-          className="hidden"
-          onChange={async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            setIsAiLoading(true);
-            try {
-              const aiOutput = await analyzeLJKWithGemini(file);
-              
-              if (aiOutput.jawaban_pilihan_ganda) {
-                setJawabanPG(prev => ({ ...prev, ...aiOutput.jawaban_pilihan_ganda }));
-              }
-              if (aiOutput.jawaban_essay) {
-                setJawabanEssay(prev => ({ ...prev, ...aiOutput.jawaban_essay }));
-              }
-              
-              alert("⚡ AI Sukses! Lembar jawaban fisik berhasil diekstrak ke dalam form.");
-              setShowFastInput(false);
-            } catch (err) {
-              alert("❌ Gagal membaca gambar: " + err.message);
-            } finally {
-              setIsAiLoading(false);
-            }
-          }}
-        />
-      </label>
-    </div>
-
-    {/* Alternatif Manual JSON (Disediakan sebagai cadangan) */}
-    <div className="space-y-2">
-      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block">Atau Input Teks Objek JSON Manual</label>
-      <textarea
-        rows="4"
-        className="w-full bg-slate-900 p-3 font-mono text-xs rounded-xl border border-slate-800 text-emerald-400 outline-none focus:border-amber-500 transition-all"
-        placeholder={`{\n  "jawaban_pilihan_ganda": { "1": "D", "2": "A" },\n  "jawaban_essay": { "1": "Hasil Jawaban..." }\n}`}
-        value={fastJsonInput}
-        onChange={(e) => setFastJsonInput(e.target.value)}
-        disabled={isAiLoading}
-      />
-      <div className="flex justify-end gap-2 pt-2">
-        <button
-          onClick={() => setShowFastInput(false)}
-          className="px-4 py-2 bg-slate-900 text-slate-400 rounded-xl font-bold text-xs uppercase hover:bg-slate-800"
-          disabled={isAiLoading}
-        >
-          Batal
-        </button>
-        <button
-          onClick={handleProcessFastInput}
-          className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black text-xs uppercase"
-          disabled={isAiLoading}
-        >
-          Proses JSON Teks
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
       {selectedSiswa ? (
         <div className="space-y-8 animate-in fade-in duration-300">
+
+          {/* BARIS BARU: MENU UNTUK INPUT/LOAD GAMBAR LATAR BELAKANG OVERLAY MANUAL */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-50 border border-slate-200/80 rounded-2xl">
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-700">Pratinjau Kertas Fisik LJK</h4>
+              <p className="text-[11px] text-slate-400">Gunakan tombol kanan jika ingin mengupload foto LJK asli ke dasar layer bodi koreksi</p>
+            </div>
+            
+            {/* TOMBOL BARU: KHUSUS INPUT BACKGROUND OVERLAY */}
+            <label className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-200 hover:border-amber-500 text-slate-700 hover:text-amber-600 font-black text-xs uppercase tracking-wider rounded-xl cursor-pointer transition-all shadow-sm">
+              <ImageIcon size={14} />
+              {ljkImageUrl ? 'Ganti Gambar LJK' : 'Upload Gambar LJK (Manual)'}
+              <input 
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setLJKImageUrl(URL.createObjectURL(file));
+                  }
+                }}
+              />
+            </label>
+          </div>
 
           {/* Badge Informasi Siswa Terpilih */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-amber-50/70 border border-amber-100 p-5 rounded-2xl">
@@ -202,68 +230,24 @@ export default function FormInputManual() {
           </div>
 
           {/* Grid Jawaban Pilihan Ganda */}
-<div>
-  <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
-    <CheckCircle2 size={18} className="text-emerald-500" /> Lembar Pilihan Ganda (50 Soal)
-  </h3>
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+              <CheckCircle2 size={18} className="text-emerald-500" /> Lembar Pilihan Ganda (50 Soal)
+            </h3>
 
-  {/* PENTING: Mengunci Grid Mutlak 2 Kolom di Seluruh Ukuran Layar */}
-  <div className="grid grid-cols-2 gap-3 bg-slate-50/50 p-2.5 rounded-2xl border border-slate-100">
-
-    {/* KOLOM KIRI: Soal Nomor 1 sampai 25 */}
-    <div className="bg-white p-2 rounded-xl border border-slate-200/60 shadow-sm space-y-1">
-      <div className="text-[10px] font-black uppercase tracking-wider text-amber-600 border-b border-slate-100 pb-1 mb-1.5 text-center">
-        Soal 1 - 25
-      </div>
-      <div className="space-y-1">
-        {Array.from({ length: 25 }, (_, i) => (i + 1).toString()).map((no) => (
-          <div key={no} className="flex items-center justify-between px-2 py-0.5 bg-slate-50/60 rounded-lg border border-slate-100/50">
-            <span className="text-[11px] font-black text-slate-500">No. {no}</span>
-            <select
-              // Mengubah default value menjadi 'Null' jika data state belum ada/kosong
-              value={jawabanPG[no] || 'Null'}
-              onChange={(e) => handlePGChange(no, e.target.value)}
-              // w-10 diubah ke w-11 agar teks "Null" muat dengan rapi di dalam kotak select
-              className="w-11 text-[11px] font-black text-center bg-white py-0.5 rounded border border-slate-200 outline-none focus:border-amber-500 cursor-pointer appearance-none"
-            >
-              {/* Menambahkan opsi "Null" di barisan pilihan */}
-              {["", "A", "B", "C", "D"].map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
+            {/* ADJUSTED: Mengirim state & handler pengubah agar sinkronisasi data kalibrasi berjalan dua arah */}
+            <GridLjkOverlay 
+              jawabanPG={jawabanPG}
+              handlePGChange={handlePGChange}
+              ljkImageUrl={ljkImageUrl}
+              gridDimensions={gridDimensions}
+              setGridDimensions={setGridDimensions}
+              columnGap={columnGap}
+              setColumnGap={setColumnGap}
+              opacity={opacity}
+              setOpacity={setOpacity}
+            />
           </div>
-        ))}
-      </div>
-    </div>
-
-    {/* KOLOM KANAN: Soal Nomor 26 sampai 50 */}
-    <div className="bg-white p-2 rounded-xl border border-slate-200/60 shadow-sm space-y-1">
-      <div className="text-[10px] font-black uppercase tracking-wider text-amber-600 border-b border-slate-100 pb-1 mb-1.5 text-center">
-        Soal 26 - 50
-      </div>
-      <div className="space-y-1">
-        {Array.from({ length: 25 }, (_, i) => (i + 26).toString()).map((no) => (
-          <div key={no} className="flex items-center justify-between px-2 py-0.5 bg-slate-50/60 rounded-lg border border-slate-100/50">
-            <span className="text-[11px] font-black text-slate-500">No. {no}</span>
-            <select
-              // Mengubah default value menjadi 'Null' jika data state belum ada/kosong
-              value={jawabanPG[no] || 'Null'}
-              onChange={(e) => handlePGChange(no, e.target.value)}
-              // w-10 diubah ke w-11 agar teks "Null" muat dengan rapi di dalam kotak select
-              className="w-11 text-[11px] font-black text-center bg-white py-0.5 rounded border border-slate-200 outline-none focus:border-amber-500 cursor-pointer appearance-none"
-            >
-              {/* Menambahkan opsi "Null" di barisan pilihan */}
-              {["", "A", "B", "C", "D"].map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
-        ))}
-      </div>
-    </div>
-
-  </div>
-</div>
 
           {/* Input Rubrik Jawaban & Nilai Essay */}
           <div>
@@ -323,7 +307,8 @@ export default function FormInputManual() {
           jawabanEssay={jawabanEssay}
           onClose={() => setShowPreview(false)}
           onConfirm={async () => {
-            const res = await simpanKeSupabase();
+            // 🆕 ADJUSTED: Mengirimkan parameter kalibrasi ke dalam baris fungsi simpan hooks
+            const res = await simpanKeSupabase(gridDimensions, columnGap, opacity);
             alert(res.message);
             if (res.success) {
               setShowPreview(false);
