@@ -246,7 +246,7 @@ export default function RemidiPage() {
 
                     {/* Tombol Aksi Selesai */}
                     <button
-                        onClick={() => navigate('/ruang-belajar')}
+                        onClick={() => navigate('/pengumuman-sas')}
                         className="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white py-4 rounded-2xl font-black w-full transition-all text-sm tracking-wide shadow-lg shadow-blue-600/20"
                     >
                         KEMBALI KE KELAS

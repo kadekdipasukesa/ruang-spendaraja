@@ -22,6 +22,8 @@ import InputNilaiPage from './pages/input-nilai';
 import RemidiPage from './pages/RemidiPage';
 import AdminRemidi from './pages/AdminRemidi';
 
+import HalamanPengumuman from './pages/HalamanPengumuman';
+
 function AppContent() {
   const location = useLocation();
   const [user, setUser] = useState(null);
@@ -102,6 +104,9 @@ function AppContent() {
            -------------------------------------------------------- */}
         <Route path="/remidi" element={<RemidiPage />} />
         <Route path="/admin-remidi" element={<AdminRemidi />} />
+
+        {/* 🌟 RUTE BARU: Halaman Pengumuman SAS & Tugas Scratch */}
+        <Route path="/pengumuman-sas" element={<HalamanPengumuman />} />
 
 
         <Route path="/typing-challenge" element={<TypingChallengePage />} />
