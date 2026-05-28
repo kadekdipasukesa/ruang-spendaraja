@@ -288,7 +288,8 @@ export default function RemidiPage() {
 
                         <div className="mt-8 flex justify-between items-center bg-slate-900/50 p-4 rounded-3xl border border-white/5">
                             <button
-                                onClick={() => setCurrentIndex(c => Math.max(0, c - 1))}
+                                // 🛠️ UBAH 'c' MENJADI 'prevIndex' AGAR TIDAK BENTROK SAAT DI-MINIFY VITE
+                                onClick={() => setCurrentIndex(prevIndex => Math.max(0, prevIndex - 1))}
                                 className="px-6 py-3 font-bold text-slate-500 disabled:opacity-10"
                                 disabled={currentIndex === 0}
                             >
@@ -296,9 +297,20 @@ export default function RemidiPage() {
                             </button>
 
                             {currentIndex === soalUjian.length - 1 ? (
-                                <button onClick={() => submitRemidi(false)} className="bg-emerald-600 px-8 py-3 rounded-xl font-black">KIRIM</button>
+                                <button
+                                    onClick={() => submitRemidi(false)}
+                                    className="bg-emerald-600 px-8 py-3 rounded-xl font-black"
+                                >
+                                    KIRIM
+                                </button>
                             ) : (
-                                <button onClick={() => setCurrentIndex(c => c + 1)} className="bg-white text-black px-8 py-3 rounded-xl font-black">LANJUT</button>
+                                <button
+                                    // 🛠️ UBAH 'c' MENJADI 'prevIndex' DI SINI JUGA
+                                    onClick={() => setCurrentIndex(prevIndex => prevIndex + 1)}
+                                    className="bg-white text-black px-8 py-3 rounded-xl font-black"
+                                >
+                                    LANJUT
+                                </button>
                             )}
                         </div>
                     </div>

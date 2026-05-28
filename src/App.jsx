@@ -24,6 +24,9 @@ import AdminRemidi from './pages/AdminRemidi';
 
 import HalamanPengumuman from './pages/HalamanPengumuman';
 
+import ResetPasswordAdmin from './pages/Admin/ResetPasswordAdmin';
+import ResetRemidiAdmin from './pages/Admin/ResetRemidiAdmin';
+
 function AppContent() {
   const location = useLocation();
   const [user, setUser] = useState(null);
@@ -71,6 +74,10 @@ function AppContent() {
     if (path === '/analisis-nilai') return 'Analisis Nilai';
     if (path === '/face-absen') return 'Face Absen';
     if (path === '/input-nilai') return 'Input Nilai';
+
+    if (path === '/pengumuman-sas') return 'Pengumuman SAS';
+    if (path === '/admin_ruangspendara/reset-password') return 'Admin Spendaraja';
+    if (path === '/admin_ruangspendara/reset-remidi') return 'Admin Spendaraja';
     
     // 5. Default jika tidak ada yang cocok
     
@@ -108,6 +115,8 @@ function AppContent() {
         {/* 🌟 RUTE BARU: Halaman Pengumuman SAS & Tugas Scratch */}
         <Route path="/pengumuman-sas" element={<HalamanPengumuman />} />
 
+        <Route path="/admin_ruangspendara/reset-password" element={<ResetPasswordAdmin />} />
+        <Route path="/admin_ruangspendara/reset-remidi" element={<ResetRemidiAdmin />} />
 
         <Route path="/typing-challenge" element={<TypingChallengePage />} />
         <Route path="/bee-2026" element={<BEE2026 />} />
