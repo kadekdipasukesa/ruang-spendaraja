@@ -27,6 +27,9 @@ import HalamanPengumuman from './pages/HalamanPengumuman';
 import ResetPasswordAdmin from './pages/Admin/ResetPasswordAdmin';
 import ResetRemidiAdmin from './pages/Admin/ResetRemidiAdmin';
 
+// 📝 IMPOR HALAMAN AGENDA GURU YANG BARU
+import AgendaGuruPage from './pages/AgendaGuruPage';
+
 function AppContent() {
   const location = useLocation();
   const [user, setUser] = useState(null);
@@ -78,6 +81,8 @@ function AppContent() {
     if (path === '/pengumuman-sas') return 'Pengumuman SAS';
     if (path === '/admin_ruangspendara/reset-password') return 'Admin Spendaraja';
     if (path === '/admin_ruangspendara/reset-remidi') return 'Admin Spendaraja';
+    if (path === '/agenda-guru') return 'lagi ngisi agenda';
+    
     
     // 5. Default jika tidak ada yang cocok
     
@@ -128,6 +133,9 @@ function AppContent() {
         <Route path="/analisis-nilai" element={<AnalisisNilai />} />
         <Route path="/face-absen" element={<FaceAbsenPage />} />
         <Route path="/input-nilai" element={<InputNilaiPage />} />
+
+        {/* ─── 🗓️ RUTE BARU: JURNAL & AGENDA KERJA GURU ─── */}
+        <Route path="/agenda-guru" element={<AgendaGuruPage />} />
       </Routes>
     </div>
   );
