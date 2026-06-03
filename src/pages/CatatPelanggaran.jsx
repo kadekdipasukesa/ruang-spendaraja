@@ -56,7 +56,7 @@ const DAFTAR_PELANGGARAN = [
     { id: 41, jenis: "Menikah", kategori: "BERAT", skor: 3 },
     { id: 42, jenis: "Membawa rokok (elektrik maupun konvensional)", kategori: "BERAT", skor: 3 },
     { id: 43, jenis: "Membully", kategori: "BERAT", skor: 3 },
-    { id: 44, jenis: "Melakukan pelecehan seksual", kategori: "BERAT", skor: 4 }
+    { id: 44, jenis: "Melakukan pelecehan seksual", kategori: "BERAT", skor: 3 }
 ];
 
 export default function PelanggaranPage() {
@@ -108,13 +108,11 @@ export default function PelanggaranPage() {
                 `)
                 .order('tanggal', { ascending: false });
 
-            // 2. Ambil Rekap Siswa (Pastikan kolom total_pelanggaran sesuai)
-            // Kita coba hilangkan dulu .gt(0) untuk memastikan data masuk atau tidak
+            // 2. Ambil Rekap Siswa (HAPUS LIMIT 10 AGAR SHOW MORE BERFUNGSI)
             const { data: rekap, error: rekapError } = await supabase
                 .from('master_siswa')
-                .select('id, NAMA, Kelas, total_pelanggaran') // Sebutkan kolom secara spesifik
-                .order('total_pelanggaran', { ascending: false })
-                .limit(10); // Ambil 10 besar saja
+                .select('id, NAMA, Kelas, total_pelanggaran')
+                .order('total_pelanggaran', { ascending: false }); // .limit(10) DIHAPUS
 
             if (logError) console.error("Error Log:", logError.message);
             if (rekapError) console.error("Error Rekap:", rekapError.message);
@@ -132,8 +130,12 @@ export default function PelanggaranPage() {
         } catch (err) {
             console.error("Sistem Error:", err);
         } finally {
-            setLoading(false);
+            boxLoading();
         }
+    };
+
+    const boxLoading = () => {
+        setLoading(false);
     };
 
     const handleFormSubmit = async ({ selectedSiswa, pelanggaran, catatan, type }) => {
@@ -151,16 +153,12 @@ export default function PelanggaranPage() {
                 const p = DAFTAR_PELANGGARAN.find(item => item.jenis === pelanggaran);
                 poinAksi = p ? p.skor : 0;
             } else {
-                // UBAH BARIS INI: 
                 // Ambil total poin siswa saat ini dan jadikan MINUS agar hasil akhirnya 0
-                // Kita gunakan data dari selectedSiswa yang dikirim oleh Form
                 poinAksi = -(selectedSiswa.total_pelanggaran || 0);
-
-                // jenisFinal otomatis mengikuti teks "PENGABDIAN SEMINGGU" dll dari Form
                 jenisFinal = pelanggaran;
             }
 
-            // 3. INSERT KE LOG (Wajib pakai AWAIT dan tangkap ERROR)
+            // 3. INSERT KE LOG 
             const { error: insertError } = await supabase
                 .from('log_pelanggaran_siswa')
                 .insert([{
@@ -173,7 +171,6 @@ export default function PelanggaranPage() {
                 }]);
 
             if (insertError) {
-                // Jika masuk sini, berarti Supabase menolak (RLS atau Kolom Salah)
                 throw new Error(`Gagal Simpan Log: ${insertError.message}`);
             }
 
@@ -198,7 +195,6 @@ export default function PelanggaranPage() {
             setActiveMenu(1); // Balik ke tab riwayat
 
         } catch (err) {
-            // Jika ada masalah di tengah jalan, alert akan memberitahu alasannya
             console.error("ERROR SISTEM:", err);
             alert("❌ DATABASE ERROR: " + err.message);
         } finally {
@@ -223,28 +219,16 @@ export default function PelanggaranPage() {
             <div className="container mx-auto px-4 -mt-16 relative z-30 max-w-6xl">
 
                 {/* --- NAVIGATION (MOBILE: BOTTOM FILL | PC: TOP WITH SPACING) --- */}
-                <div className="
-    fixed bottom-0 left-0 right-0 z-[100]           /* Style HP: Tempel di bawah layar (IG Style) */
-    md:relative md:mt-4 md:mb-10 md:px-0             /* Style PC: Tetap di atas konten dengan jarak */
-">
+                <div className="fixed bottom-0 left-0 right-0 z-[100] md:relative md:mt-4 md:mb-10 md:px-0">
                     <div className="flex justify-center w-full">
-                        {/* Container Menu - w-full di HP, rounded-none di HP agar nempel pinggir */}
-                        <div className="
-            flex items-center w-full bg-slate-900/95 backdrop-blur-2xl border-t border-white/10 
-            md:w-auto md:rounded-full md:border md:px-2 md:py-1.5 md:shadow-[0_20px_50px_rgba(0,0,0,0.5)]
-        ">
+                        <div className="flex items-center w-full bg-slate-900/95 backdrop-blur-2xl border-t border-white/10 md:w-auto md:rounded-full md:border md:px-2 md:py-1.5 md:shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                             {menus.map((m) => (
                                 m.roles.includes(role) && (
                                     <button
                                         key={m.id}
                                         onClick={() => setActiveMenu(m.id)}
-                                        className={`
-                            relative flex flex-1 flex-col md:flex-none md:flex-row items-center justify-center 
-                            gap-1 md:gap-3 py-3 md:px-8 md:py-3.5 transition-all duration-300
-                            ${activeMenu === m.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}
-                        `}
+                                        className={`relative flex flex-1 flex-col md:flex-none md:flex-row items-center justify-center gap-1 md:gap-3 py-3 md:px-8 md:py-3.5 transition-all duration-300 ${activeMenu === m.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
                                     >
-                                        {/* Indikator Aktif - Di HP berupa garis atas (IG style) atau blok, di PC blok rounded */}
                                         {activeMenu === m.id && (
                                             <motion.div
                                                 layoutId="activeTab"
@@ -253,27 +237,17 @@ export default function PelanggaranPage() {
                                             />
                                         )}
 
-                                        {/* Icon */}
                                         <div className={`transition-transform ${activeMenu === m.id ? 'scale-110' : 'scale-100'}`}>
                                             {m.icon}
                                         </div>
 
-                                        {/* Label - Dibuat proporsional */}
-                                        {/* Label - Custom Mobile: RIWAYAT, DAFTAR, CATAT, PENGABDIAN */}
-                                        <span className={`
-    font-black uppercase tracking-widest leading-none
-    text-[8px] md:text-[10px]
-    ${activeMenu === m.id ? 'opacity-100' : 'opacity-60'}
-`}>
-                                            {/* Tampilan HP: Menggunakan label custom berdasarkan ID menu */}
+                                        <span className={`font-black uppercase tracking-widest leading-none text-[8px] md:text-[10px] ${activeMenu === m.id ? 'opacity-100' : 'opacity-60'}`}>
                                             <span className="md:hidden">
                                                 {m.id === 1 && "RIWAYAT"}
                                                 {m.id === 2 && "DAFTAR"}
                                                 {m.id === 3 && "CATAT"}
                                                 {m.id === 4 && "PENGABDIAN"}
                                             </span>
-
-                                            {/* Tampilan PC: Tetap menggunakan label asli dari array menus */}
                                             <span className="hidden md:inline">
                                                 {m.label}
                                             </span>
@@ -303,7 +277,7 @@ export default function PelanggaranPage() {
                             {activeMenu === 1 && (
                                 <LogPelanggaran
                                     data={logData}
-                                    onRefresh={fetchInitialData} // Kirim fungsi ini agar anak bisa memanggilnya
+                                    onRefresh={fetchInitialData}
                                 />
                             )}
                             {activeMenu === 2 && <RekapSiswa data={rekapSiswa} />}

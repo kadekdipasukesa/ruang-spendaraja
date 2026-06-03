@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { usePengumumanData } from '../hooks/PengumumanSas/usePengumumanData';
+import ReviewTugasScratch from '../components/Remidi/ReviewTugasScratch';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Award, Video, Search, Send, Youtube, Flame, SearchCode, Sparkles, AlertTriangle, CheckCircle, KeyRound, ExternalLink, HelpCircle, Cloud, CloudRain } from 'lucide-react';
+import { Award, Video, Search, Send, Youtube, Flame, SearchCode, Sparkles, AlertTriangle, CheckCircle, KeyRound, ExternalLink, HelpCircle, Cloud, CloudRain, FileSpreadsheet, Star } from 'lucide-react';
 
 // --- ☁️ KOMPONEN ANIMASI AWAN BACKGROUND ---
 const BackgroundClouds = () => {
@@ -38,9 +39,9 @@ const FireworksAnimation = () => {
                         <motion.div
                             key={i}
                             initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
-                            animate={{ 
-                                scale: [0, 1.2, 0], 
-                                x: Math.cos((i * 36) * (Math.PI / 180)) * 90, 
+                            animate={{
+                                scale: [0, 1.2, 0],
+                                x: Math.cos((i * 36) * (Math.PI / 180)) * 90,
                                 y: Math.sin((i * 36) * (Math.PI / 180)) * 90,
                                 opacity: [1, 1, 0]
                             }}
@@ -131,7 +132,7 @@ export default function HalamanPengumuman() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-white p-4 md:p-8 pt-24 md:pt-28 font-sans selection:bg-amber-500 selection:text-slate-900 relative">
-            
+
             {/* ☁️ Efek animasi awan mengambang di seluruh background halaman */}
             <BackgroundClouds />
 
@@ -359,36 +360,44 @@ export default function HalamanPengumuman() {
                         </div>
                     </div>
 
-                    {/* KOLOM 3: 🔥 SHOWCASE GALLERY 10 KARYA TERBAIK (DENGAN EMBED VIDEO) */}
-                    <div className="bg-slate-900/50 border border-white/5 rounded-[2.5rem] p-6 shadow-xl">
-                        <h3 className="text-xs font-black flex items-center gap-2 mb-4 text-orange-500"><Flame size={15} /> Showcase 10 Video</h3>
-                        {karyaTerbaik.length === 0 ? (
-                            <div className="text-center py-16 text-[10px] text-slate-600 italic">Belum ada karya pilihan guru.</div>
+                    {/* KOLOM 3: 🔥 SHOWCASE GALLERY ATAU PANEL ADMIN REVIEW TUGAS SCRATCH */}
+                    <div className="lg:col-span-1">
+                        {user?.role === 'admin' ? (
+                            /* 🛡️ JIKA ADMIN: Tampilkan Komponen Spesial Review + Download CSV yang Sudah Kita Buat */
+                            <ReviewTugasScratch />
                         ) : (
-                            <div className="space-y-4 max-h-[385px] overflow-y-auto pr-1 scrollbar-hide">
-                                {karyaTerbaik.map((karya) => (
-                                    <div key={karya.id} className="bg-slate-950/40 p-2.5 rounded-xl border border-white/5 space-y-2">
-                                        <div className="overflow-hidden flex items-center gap-2">
-                                            <Youtube size={14} className="text-red-500 shrink-0" />
-                                            <div className="overflow-hidden">
-                                                <h4 className="font-bold text-[11px] text-slate-200 truncate">{karya.nama_siswa}</h4>
-                                                <p className="text-[9px] text-slate-500">Kelas {karya.kelas}</p>
+                            /* 🎓 JIKA SISWA/UMUM: Tampilkan Galeri Showcase 10 Karya Biasa */
+                            <div className="bg-slate-900/50 border border-white/5 rounded-[2.5rem] p-6 shadow-xl">
+                                <h3 className="text-xs font-black flex items-center gap-2 mb-4 text-orange-500">
+                                    <Flame size={15} /> Showcase 10 Video
+                                </h3>
+                                {karyaTerbaik.length === 0 ? (
+                                    <div className="text-center py-16 text-[10px] text-slate-600 italic">Belum ada karya pilihan guru.</div>
+                                ) : (
+                                    <div className="space-y-4 max-h-[385px] overflow-y-auto pr-1 scrollbar-hide">
+                                        {karyaTerbaik.map((karya) => (
+                                            <div key={karya.id} className="bg-slate-950/40 p-2.5 rounded-xl border border-white/5 space-y-2">
+                                                <div className="overflow-hidden flex items-center gap-2">
+                                                    <Youtube size={14} className="text-red-500 shrink-0" />
+                                                    <div className="overflow-hidden">
+                                                        <h4 className="font-bold text-[11px] text-slate-200 truncate">{karya.nama_siswa}</h4>
+                                                        <p className="text-[9px] text-slate-500">Kelas {karya.kelas}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="w-full aspect-video rounded-lg overflow-hidden border border-white/5 bg-slate-900">
+                                                    <iframe
+                                                        className="w-full h-full"
+                                                        src={dapatkanUrlEmbedYoutube(karya.link_youtube)}
+                                                        title={`Karya Scratch ${karya.nama_siswa}`}
+                                                        frameBorder="0"
+                                                        allowFullScreen
+                                                    ></iframe>
+                                                </div>
                                             </div>
-                                        </div>
-                                        
-                                        {/* Player interaktif internal agar video milik siswa bisa langsung diputar di tempat */}
-                                        <div className="w-full aspect-video rounded-lg overflow-hidden border border-white/5 bg-slate-900">
-                                            <iframe
-                                                className="w-full h-full"
-                                                src={dapatkanUrlEmbedYoutube(karya.link_youtube)}
-                                                title={`Karya Scratch ${karya.nama_siswa}`}
-                                                frameBorder="0"
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                allowFullScreen
-                                            ></iframe>
-                                        </div>
+                                        ))}
                                     </div>
-                                ))}
+                                )}
                             </div>
                         )}
                     </div>

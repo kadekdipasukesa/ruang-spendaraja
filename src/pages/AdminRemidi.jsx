@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { Plus, Clock, Users, ShieldAlert } from 'lucide-react';
 import StatistikSiswa from '../components/Ulangan/StatistikSiswa';
+import DownloadCsvRemidi from '../components/Remidi/DownloadCsvRemidi';
 
 export default function AdminRemidi() {
     const [listSesi, setListSesi] = useState([]);
@@ -72,7 +73,7 @@ export default function AdminRemidi() {
         if (!durasi) return;
 
         const pin = Math.random().toString(36).substring(2, 7).toUpperCase();
-        
+
         // Atur tenggat waktu otomatis valid sampai 2 hari kedepan
         const waktuMulai = new Date();
         const waktuSelesai = new Date();
@@ -135,8 +136,8 @@ export default function AdminRemidi() {
                     <div className="space-y-4 lg:col-span-1">
                         <h3 className="text-xs uppercase font-black tracking-wider text-slate-400 mb-2">Sesi Remidi Terbuka</h3>
                         {listSesi.map((s) => (
-                            <div 
-                                key={s.id} 
+                            <div
+                                key={s.id}
                                 onClick={() => { setSelectedSesi(s); fetchPesertaRemidi(s.id); }}
                                 className={`p-5 rounded-2xl border transition-all cursor-pointer ${selectedSesi?.id === s.id ? 'bg-slate-900 border-emerald-500/40 shadow-lg' : 'bg-slate-900/40 border-white/5 hover:border-white/10'}`}
                             >
@@ -147,7 +148,7 @@ export default function AdminRemidi() {
                                 <div className="font-mono text-2xl font-black text-emerald-400 tracking-wider mb-3">{s.pin_remidi}</div>
                                 <p className="text-[10px] text-slate-500">Tenggat Akhir: {new Date(s.waktu_selesai).toLocaleString('id-ID')}</p>
                                 {s.status === 'active' && (
-                                    <button 
+                                    <button
                                         onClick={(e) => { e.stopPropagation(); handleArsipkanSesi(s.id); }}
                                         className="mt-4 text-[10px] text-red-400/70 hover:text-red-400 font-bold block"
                                     >
@@ -167,14 +168,23 @@ export default function AdminRemidi() {
                                         <h2 className="text-xl font-black text-white">{selectedSesi.judul}</h2>
                                         <p className="text-xs text-slate-400">Durasi Per Siswa: <span className="text-white font-bold">{selectedSesi.durasi_menit} Menit</span></p>
                                     </div>
-                                    <div className="flex gap-4">
+
+                                    {/* 🛠️ MODIFIKASI DISINI: BARIS JUMPlAH PESERTA & TOMBOL EKSPOR CSV */}
+                                    <div className="flex items-center gap-4">
                                         <div className="text-center bg-slate-800/50 px-4 py-2 rounded-xl min-w-[70px]">
                                             <span className="text-[10px] text-slate-500 block uppercase font-bold">Peserta</span>
                                             <span className="text-lg font-black text-white">{peserta.length}</span>
                                         </div>
+
+                                        {/* 🚀 PEMICU KOMPONEN DOWNLOAD CSV & PREVIEW MODAL */}
+                                        <DownloadCsvRemidi
+                                            sesiId={selectedSesi.id}
+                                            judulSesi={selectedSesi.judul}
+                                        />
                                     </div>
                                 </div>
-                                {/* Gunakan komponen statistik lama, sesuaikan property mapping jika diperlukan */}
+
+                                {/* Gunakan komponen statistik lama */}
                                 <StatistikSiswa peserta={peserta} statusSesi="finished" />
                             </div>
                         ) : (
