@@ -12,6 +12,9 @@ import LogPelanggaran from '../components/CatatanPelanggaran/LogPelanggaran';
 import RekapSiswa from '../components/CatatanPelanggaran/RekapSiswa';
 import FormPelanggaran from '../components/CatatanPelanggaran/FormPelanggaran';
 
+// PATOKAN TANGGAL AWAL TAHUN AJARAN BARU (1 JULI 2026)
+const AWAL_TAHUN_AJARAN_BARU = '2026-07-01T00:00:00.000Z';
+
 const DAFTAR_PELANGGARAN = [
     { id: 1, jenis: "Datang terlambat", kategori: "RINGAN", skor: 1 },
     { id: 2, jenis: "Keluar kelas tanpa ijin", kategori: "RINGAN", skor: 1 },
@@ -60,7 +63,7 @@ const DAFTAR_PELANGGARAN = [
 ];
 
 export default function PelanggaranPage() {
-    const [activeMenu, setActiveMenu] = useState(1); // Default ke Menu 1
+    const [activeMenu, setActiveMenu] = useState(1);
     const [user, setUser] = useState(null);
     const [logData, setLogData] = useState([]);
     const [rekapSiswa, setRekapSiswa] = useState([]);
@@ -70,22 +73,20 @@ export default function PelanggaranPage() {
         const session = localStorage.getItem('user_siswa');
         if (session) setUser(JSON.parse(session));
 
-        // Ambil data awal
         fetchInitialData();
 
-        // PASANG REALTIME DI SINI (Sekali saja untuk semua menu)
         const channel = supabase
             .channel('schema-db-changes')
             .on(
                 'postgres_changes',
                 {
-                    event: '*', // Monitor INSERT, UPDATE, DELETE
+                    event: '*',
                     schema: 'public',
                     table: 'log_pelanggaran_siswa'
                 },
                 (payload) => {
                     console.log('Realtime Update:', payload);
-                    fetchInitialData(); // Ambil data terbaru setiap ada perubahan
+                    fetchInitialData();
                 }
             )
             .subscribe();
@@ -98,7 +99,7 @@ export default function PelanggaranPage() {
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            // 1. Ambil Log Pelanggaran (Gunakan 'tanggal' dan alias pelapor)
+            // 1. Ambil Log Pelanggaran hanya dari tanggal 1 Juli 2026 ke atas
             const { data: logs, error: logError } = await supabase
                 .from('log_pelanggaran_siswa')
                 .select(`
@@ -106,26 +107,35 @@ export default function PelanggaranPage() {
                     master_siswa!log_pelanggaran_siswa_siswa_id_fkey (NAMA, Kelas),
                     pelapor:master_siswa!log_pelanggaran_siswa_pelapor_id_fkey (NAMA)
                 `)
+                .gte('tanggal', AWAL_TAHUN_AJARAN_BARU) // <-- FILTER TAHUN AJARAN BARU
                 .order('tanggal', { ascending: false });
 
-            // 2. Ambil Rekap Siswa (HAPUS LIMIT 10 AGAR SHOW MORE BERFUNGSI)
-            const { data: rekap, error: rekapError } = await supabase
+            // 2. Ambil seluruh data siswa
+            const { data: siswaList, error: siswaError } = await supabase
                 .from('master_siswa')
-                .select('id, NAMA, Kelas, total_pelanggaran')
-                .order('total_pelanggaran', { ascending: false }); // .limit(10) DIHAPUS
+                .select('id, NAMA, Kelas');
 
             if (logError) console.error("Error Log:", logError.message);
-            if (rekapError) console.error("Error Rekap:", rekapError.message);
+            if (siswaError) console.error("Error Siswa:", siswaError.message);
 
-            // Filter manual di sini supaya lebih aman didebug
-            const siswaMelanggar = rekap ? rekap.filter(s => s.total_pelanggaran > 0) : [];
+            // 3. Kalkulasi Poin Seri Baru secara manual dari Log Juli 2026+
+            const poinMap = {};
+            (logs || []).forEach(log => {
+                const sId = log.siswa_id;
+                poinMap[sId] = (poinMap[sId] || 0) + (log.poin_pelanggaran || 0);
+            });
+
+            // 4. Petakan poin baru ke rekap siswa (Hanya yang total poin > 0)
+            const rekapFiltered = (siswaList || [])
+                .map(s => ({
+                    ...s,
+                    total_pelanggaran: Math.max(0, poinMap[s.id] || 0)
+                }))
+                .filter(s => s.total_pelanggaran > 0)
+                .sort((a, b) => b.total_pelanggaran - a.total_pelanggaran);
 
             setLogData(logs || []);
-            setRekapSiswa(siswaMelanggar);
-
-            // DEBUG: Cek di console browser (F12)
-            console.log("Data Rekap Ter-load:", rekap);
-            console.log("Data Rekap Melanggar:", siswaMelanggar);
+            setRekapSiswa(rekapFiltered);
 
         } catch (err) {
             console.error("Sistem Error:", err);
@@ -141,11 +151,9 @@ export default function PelanggaranPage() {
     const handleFormSubmit = async ({ selectedSiswa, pelanggaran, catatan, type }) => {
         setLoading(true);
         try {
-            // 1. Ambil Session Pelapor (Siswa/Admin yang sedang login)
             const session = JSON.parse(localStorage.getItem('user_siswa'));
             const pelaporId = session?.id;
 
-            // 2. Tentukan Poin (Pelanggaran positif, Pengabdian negatif)
             let poinAksi = 0;
             let jenisFinal = pelanggaran;
 
@@ -153,12 +161,12 @@ export default function PelanggaranPage() {
                 const p = DAFTAR_PELANGGARAN.find(item => item.jenis === pelanggaran);
                 poinAksi = p ? p.skor : 0;
             } else {
-                // Ambil total poin siswa saat ini dan jadikan MINUS agar hasil akhirnya 0
+                // Untuk pengabdian, kurangi dari total poin berjalan (Juli 2026+)
                 poinAksi = -(selectedSiswa.total_pelanggaran || 0);
                 jenisFinal = pelanggaran;
             }
 
-            // 3. INSERT KE LOG 
+            // INSERT KE LOG DENGAN TANGGAL SAAT INI
             const { error: insertError } = await supabase
                 .from('log_pelanggaran_siswa')
                 .insert([{
@@ -174,25 +182,20 @@ export default function PelanggaranPage() {
                 throw new Error(`Gagal Simpan Log: ${insertError.message}`);
             }
 
-            // 4. UPDATE TOTAL POIN SISWA
+            // Hitung poin total terbaru versi database
             const poinLama = selectedSiswa.total_pelanggaran || 0;
             const poinBaru = Math.max(0, poinLama + poinAksi);
 
-            const { error: updateError } = await supabase
+            // Update kolom `total_pelanggaran` di master_siswa
+            await supabase
                 .from('master_siswa')
                 .update({ total_pelanggaran: poinBaru })
                 .eq('id', selectedSiswa.id);
 
-            if (updateError) {
-                throw new Error(`Gagal Update Poin Siswa: ${updateError.message}`);
-            }
-
-            // 5. JIKA SEMUA LOLOS, BARU MUNCUL ALERT
             alert("✅ DATA BERHASIL DICATAT KE DATABASE!");
 
-            // Sinkronkan ulang data di layar
             await fetchInitialData();
-            setActiveMenu(1); // Balik ke tab riwayat
+            setActiveMenu(1);
 
         } catch (err) {
             console.error("ERROR SISTEM:", err);
@@ -204,7 +207,6 @@ export default function PelanggaranPage() {
 
     const role = user?.role || 'tamu';
 
-    // Definisi Menu & Hak Akses
     const menus = [
         { id: 1, label: "Catatan Pelanggaran", icon: <History size={18} />, roles: ['tamu', 'siswa', 'osis', 'admin', 'guru'] },
         { id: 2, label: "Daftar Siswa", icon: <AlertOctagon size={18} />, roles: ['tamu', 'siswa', 'osis', 'admin', 'guru'] },
@@ -218,7 +220,7 @@ export default function PelanggaranPage() {
 
             <div className="container mx-auto px-4 -mt-16 relative z-30 max-w-6xl">
 
-                {/* --- NAVIGATION (MOBILE: BOTTOM FILL | PC: TOP WITH SPACING) --- */}
+                {/* --- NAVIGATION --- */}
                 <div className="fixed bottom-0 left-0 right-0 z-[100] md:relative md:mt-4 md:mb-10 md:px-0">
                     <div className="flex justify-center w-full">
                         <div className="flex items-center w-full bg-slate-900/95 backdrop-blur-2xl border-t border-white/10 md:w-auto md:rounded-full md:border md:px-2 md:py-1.5 md:shadow-[0_20px_50px_rgba(0,0,0,0.5)]">

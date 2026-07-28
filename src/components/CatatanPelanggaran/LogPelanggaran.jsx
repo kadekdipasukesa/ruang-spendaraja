@@ -10,6 +10,8 @@ export default function LogPelanggaran({ data, onRefresh }) {
   const [expandedClasses, setExpandedClasses] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
   
+  const [showChart, setShowChart] = useState(false); // Default HIDE
+
   // State pemicu modal CSV
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -214,32 +216,77 @@ export default function LogPelanggaran({ data, onRefresh }) {
               <AnimatePresence>
                 {isMonthExpanded && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden px-4 pb-5 pt-2 space-y-5">
-                    <div className="bg-slate-950/50 border border-white/5 rounded-2xl p-4">
-                      <div className="flex items-center gap-2 text-slate-400 mb-4 px-1">
-                        <BarChart3 size={14} className="text-blue-400" />
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Grafik Kasus Per Kelas ({groupedData[monthKey].namaBulan})</span>
-                      </div>
-                      {chartData.length > 0 ? (
-                        <div className="space-y-2.5">
-                          {chartData.map((item, idx) => {
-                            const persentaseBar = (item.value / nilaiTertinggi) * 100;
-                            return (
-                              <div key={idx} className="space-y-1">
-                                <div className="flex justify-between text-[9px] font-bold uppercase tracking-tight px-1">
-                                  <span className="text-slate-300">Kelas {item.name}</span>
-                                  <span className="text-blue-400 font-mono font-black">{item.value} Pelanggaran</span>
-                                </div>
-                                <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-white/[0.02]">
-                                  <motion.div initial={{ width: 0 }} animate={{ width: `${persentaseBar}%` }} transition={{ duration: 0.5, ease: "easeOut" }} className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full" />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-[10px] text-slate-600 italic text-center py-2">Tidak ada data statistik.</p>
-                      )}
+                    <div className="bg-slate-950/50 border border-white/5 rounded-2xl overflow-hidden">
+  {/* --- HEADER (TOMBOL TOGGLE SHOW/HIDE) --- */}
+  <button
+    type="button"
+    onClick={() => setShowChart(!showChart)}
+    className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors text-left"
+  >
+    <div className="flex items-center gap-2 text-slate-400 px-1">
+      <BarChart3 size={14} className="text-blue-400" />
+      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+        Grafik Kasus Per Kelas ({groupedData[monthKey].namaBulan})
+      </span>
+    </div>
+
+    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
+      <span className="text-[9px] uppercase tracking-wider text-slate-500">
+        {showChart ? 'Tutup' : 'Lihat'}
+      </span>
+      <motion.div
+        animate={{ rotate: showChart ? 180 : 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <ChevronDown size={14} />
+      </motion.div>
+    </div>
+  </button>
+
+  {/* --- ISI GRAFIK (DEFAULT HIDE) --- */}
+  <AnimatePresence>
+    {showChart && (
+      <motion.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: 'auto', opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }}
+        transition={{ duration: 0.25, ease: 'easeInOut' }}
+      >
+        <div className="px-4 pb-4 pt-1 border-t border-white/5">
+          {chartData.length > 0 ? (
+            <div className="space-y-2.5">
+              {chartData.map((item, idx) => {
+                const persentaseBar = (item.value / nilaiTertinggi) * 100;
+                return (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between text-[9px] font-bold uppercase tracking-tight px-1">
+                      <span className="text-slate-300">Kelas {item.name}</span>
+                      <span className="text-blue-400 font-mono font-black">
+                        {item.value} Pelanggaran
+                      </span>
                     </div>
+                    <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-white/[0.02]">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${persentaseBar}%` }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                        className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-[10px] text-slate-600 italic text-center py-2">
+              Tidak ada data statistik.
+            </p>
+          )}
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
 
                     {/* DAFTAR TANGGAL & KELAS */}
                     <div className="space-y-3">

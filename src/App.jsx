@@ -30,6 +30,10 @@ import ResetRemidiAdmin from './pages/Admin/ResetRemidiAdmin';
 // 📝 IMPOR HALAMAN AGENDA GURU YANG BARU
 import AgendaGuruPage from './pages/AgendaGuruPage';
 
+import KelolaSiswaPage from './pages/Admin/KelolaSiswaPage';
+
+
+
 function AppContent() {
   const location = useLocation();
   const [user, setUser] = useState(null);
@@ -82,11 +86,11 @@ function AppContent() {
     if (path === '/admin_ruangspendara/reset-password') return 'Admin Spendaraja';
     if (path === '/admin_ruangspendara/reset-remidi') return 'Admin Spendaraja';
     if (path === '/agenda-guru') return 'lagi ngisi agenda';
-    
-    
+
+
     // 5. Default jika tidak ada yang cocok
-    
-    return 'Menjelajah';
+
+    return 'Lagi Gabut';
   };
 
   return (
@@ -136,6 +140,9 @@ function AppContent() {
 
         {/* ─── 🗓️ RUTE BARU: JURNAL & AGENDA KERJA GURU ─── */}
         <Route path="/agenda-guru" element={<AgendaGuruPage />} />
+
+        <Route path="/admin/kelola-siswa" element={<KelolaSiswaPage />} />
+      
       </Routes>
     </div>
   );
