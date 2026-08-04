@@ -9,6 +9,8 @@ import ModalSelesai from './ModalSelesai';
 export default function TimelineCard({ 
   item, 
   role, 
+  role_2,
+  isPengurusLab,
   currentUserId,
   onApprove, 
   onComplete,
@@ -86,24 +88,33 @@ export default function TimelineCard({
   };
 
   const styles = getThemeStyles();
-  const isAdminOrGuru = ['admin', 'guru'].includes(role);
 
-  // Ambil ID pembuat dari berbagai kemungkinan properti backend
-  const ownerId = item.created_by || item.user_id || item.pemohon_id || item.pemohon?.id;
-  
-  // PERBAIKAN: Selalu tampilkan tombol hapus jika role admin/guru ATAU id pemilik cocok ATAU jika id tidak terbatas saat development
-  const canDelete = 
+  // 1. Pengecekan Admin, Guru, atau Pengurus Lab
+  const isPengurusOrAdmin = 
     role === 'admin' || 
     role === 'guru' || 
-    (currentUserId && ownerId && String(currentUserId) === String(ownerId)) ||
-    Boolean(onDelete); // Selalu tampil selama handler onDelete diteruskan dari parent
+    role === 'pengurus_lab' || 
+    role_2 === 'pengurus_lab' || 
+    Boolean(isPengurusLab);
+
+  // 2. Ambil ID pembuat/pemohon pengajuan dari backend
+  const ownerId = item.created_by || item.user_id || item.pemohon_id || item.pemohon?.id;
+  
+  // 3. Cek apakah user saat ini adalah orang yang mengajukan
+  const isOwner = Boolean(currentUserId && ownerId && String(currentUserId) === String(ownerId));
+
+  // 4. Hak Akses Hapus: Harus ada handler onDelete DAN (Admin/Pengurus Lab OR Pemohon Asal)
+  const canDelete = Boolean(onDelete) && (
+    role === 'admin' || 
+    role === 'pengurus_lab' || 
+    role_2 === 'pengurus_lab' || 
+    Boolean(isPengurusLab) || 
+    isOwner
+  );
 
   const handleDelete = () => {
-    console.log("Proses hapus dikonfirmasi untuk ID Jurnal:", item.id);
     if (onDelete) {
       onDelete(item.id);
-    } else {
-      console.warn("Fungsi onDelete tidak ditemukan!");
     }
     setShowDeleteConfirm(false);
   };
@@ -136,10 +147,7 @@ export default function TimelineCard({
             {canDelete && (
               <button
                 type="button"
-                onClick={() => {
-                  console.log("Tombol sampah diklik, membuka konfirmasi...");
-                  setShowDeleteConfirm(true);
-                }}
+                onClick={() => setShowDeleteConfirm(true)}
                 title="Hapus Pengajuan"
                 className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
               >
@@ -155,6 +163,11 @@ export default function TimelineCard({
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-950/60 font-normal border border-slate-800">
               Kelas {item.kelas}
             </span>
+            {item.kategori_kegiatan && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-950/60 text-indigo-300 font-medium border border-indigo-800/60">
+                {item.kategori_kegiatan}
+              </span>
+            )}
           </h3>
           <p className="text-xs opacity-80 mt-0.5 line-clamp-1">{item.materi_kegiatan || 'Tidak ada uraian materi.'}</p>
         </div>
@@ -164,25 +177,28 @@ export default function TimelineCard({
             <User className="w-3 h-3 shrink-0 opacity-60" />
             <span className="truncate">Guru: <strong>{item.guru_pengajar}</strong></span>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <Users className="w-3 h-3 opacity-60" />
-            <span><strong>{item.jumlah_siswa}</strong> siswa</span>
-          </div>
         </div>
 
         {expanded && (
           <div className="mt-3 pt-2 border-t border-white/10 text-xs space-y-1.5 bg-black/40 p-2.5 rounded-lg">
             <div className="flex items-center gap-1.5">
-              <BookOpen className="w-3 h-3 opacity-60" />
-              <span>Kategori: <strong>{item.kategori_kegiatan}</strong></span>
+              <Users className="w-3 h-3 opacity-60 shrink-0" />
+              <span>Jumlah Siswa: <strong>{item.jumlah_siswa}</strong> siswa</span>
             </div>
+
             {item.pemohon?.NAMA && <div><span className="opacity-60">Diajukan Oleh:</span> {item.pemohon.NAMA} ({item.pemohon.Kelas})</div>}
-            {item.acc_by && <div><span className="opacity-60">Di-ACC Oleh:</span> {item.acc_by}</div>}
+            
+            {item.acc_by && <div><span className="opacity-60">Pengurus Lab:</span> {item.acc_by}</div>}
+            
             {item.alasan_penolakan && <div className="text-rose-400 font-semibold"><span className="opacity-70">Alasan Penolakan:</span> {item.alasan_penolakan}</div>}
-            <div className="flex items-center gap-4 pt-1">
-              <div><span className="opacity-60">Kondisi Awal:</span> <span className="font-semibold">{item.kondisi_awal || 'Baik'}</span></div>
-              <div><span className="opacity-60">Kondisi Akhir:</span> <span className="font-semibold">{item.kondisi_akhir || '-'}</span></div>
-            </div>
+            
+            {item.kondisi_akhir && (
+              <div className="flex items-center gap-4 pt-1 border-t border-white/5 mt-1">
+                <div><span className="opacity-60">Kondisi Awal:</span> <span className="font-semibold">{item.kondisi_awal || 'Baik'}</span></div>
+                <div><span className="opacity-60">Kondisi Akhir:</span> <span className="font-semibold">{item.kondisi_akhir}</span></div>
+              </div>
+            )}
+
             {item.catatan_kendala && (
               <div className="text-amber-300 bg-amber-500/10 p-2 rounded border border-amber-500/20 flex items-start gap-1.5 mt-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
@@ -203,7 +219,7 @@ export default function TimelineCard({
           </button>
 
           <div className="flex items-center gap-1.5">
-            {isAdminOrGuru && item.status_pengajuan === 'pending' && (
+            {isPengurusOrAdmin && item.status_pengajuan === 'pending' && (
               <>
                 <button
                   type="button"
@@ -222,7 +238,7 @@ export default function TimelineCard({
               </>
             )}
 
-            {isAdminOrGuru && (item.status_pengajuan === 'approved' || item.status_pengajuan === 'completed') && (
+            {isPengurusOrAdmin && (item.status_pengajuan === 'approved' || item.status_pengajuan === 'completed') && (
               <button
                 type="button"
                 onClick={() => setShowSelesaiModal(true)}

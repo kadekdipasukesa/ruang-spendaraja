@@ -16,7 +16,7 @@ export default function JurnalLabPage({ user: propsUser }) {
         handleApproval,
         handleComplete,
         handleDelete
-    } = useJurnalLab('Lab TIK');
+    } = useJurnalLab('LAB Komputer');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -66,6 +66,18 @@ export default function JurnalLabPage({ user: propsUser }) {
     // Status Login
     const isLoggedIn = Boolean(currentUser);
 
+    // ==========================================
+    // LOGIKA PENYESUAIAN ROLE & PENGERUS LAB
+    // ==========================================
+    // User dianggap Pengurus/Admin jika:
+    // 1. Role utamanya 'admin'
+    // 2. ATAU role_2 miliknya berisi 'pengurus_lab'
+    const isPengurusLab = Boolean(
+        currentUser?.role === 'admin' || 
+        currentUser?.role_2 === 'pengurus_lab' ||
+        role === 'admin'
+    );
+
     return (
         <div className="min-h-screen bg-[#0f172a] text-slate-200 pt-20 pb-24 px-4 md:px-8">
             <div className="max-w-4xl mx-auto">
@@ -114,6 +126,7 @@ export default function JurnalLabPage({ user: propsUser }) {
                     <TimelineContainer
                         items={jurnalList}
                         role={role}
+                        isPengurusLab={isPengurusLab} // <-- Oper prop baru ini
                         user={currentUser}
                         onApprove={handleApproval}
                         onComplete={handleComplete}

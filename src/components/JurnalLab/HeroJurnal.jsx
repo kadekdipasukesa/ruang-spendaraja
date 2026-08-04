@@ -1,10 +1,11 @@
 import React from 'react';
-import { Calendar, Monitor, Film } from 'lucide-react';
+import { Calendar, Monitor, Film, FlaskConical } from 'lucide-react';
 
 export default function HeroJurnal({ selectedLab, setSelectedLab }) {
     const labs = [
-        { id: 'Lab TIK', name: 'Lab TIK', icon: <Monitor className="w-5 h-5" />, desc: 'Komputer & IT' },
-        { id: 'Lab Multimedia', name: 'Lab Multimedia', icon: <Film className="w-5 h-5" />, desc: 'Audio, Video & Grafis' }
+        { id: 'LAB Komputer', name: 'LAB Komputer', icon: <Monitor className="w-5 h-5" />, desc: 'Komputer & IT' },
+        { id: 'LAB Multimedia', name: 'LAB Multimedia', icon: <Film className="w-5 h-5" />, desc: 'Audio, Video & Grafis' },
+        { id: 'LAB IPA', name: 'LAB IPA', icon: <FlaskConical className="w-5 h-5" />, desc: 'Sains & Praktikum' }
     ];
 
     return (

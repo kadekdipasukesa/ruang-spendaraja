@@ -2,14 +2,16 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Clock, Calendar, ChevronDown, ChevronRight } from 'lucide-react';
 import TimelineCard from './TimelineCard';
 
-export default function TimelineContainer({ 
-    items, 
-    role, 
+export default function TimelineContainer({
+    items,
+    role,
+    role_2,
+    isPengurusLab,
     user,
-    onApprove, 
-    onComplete, 
-    onDelete 
-  }) {
+    onApprove,
+    onComplete,
+    onDelete
+}) {
     const [timeWITA, setTimeWITA] = useState('');
     const [openGroups, setOpenGroups] = useState({});
     const scrollRef = useRef(null);
@@ -75,7 +77,7 @@ export default function TimelineContainer({
         });
 
         return months;
-    }, [items]); // Diubah dari jurnalList menjadi items
+    }, [items]);
 
     useEffect(() => {
         if (Object.keys(groupedData).length === 0) return;
@@ -102,7 +104,8 @@ export default function TimelineContainer({
     const monthKeys = Object.keys(groupedData).sort().reverse();
 
     return (
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 md:p-6 shadow-xl max-w-3xl mx-auto">
+        // SESUDAH (Ubah max-w-3xl menjadi max-w-5xl):
+        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 md:p-6 shadow-xl max-w-5xl mx-auto">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
@@ -187,14 +190,16 @@ export default function TimelineContainer({
                                                         <div className="p-2 pt-3 border-t border-slate-800/40 space-y-2">
                                                             {dayGroup.items.map((item) => (
                                                                 <TimelineCard
-                                                                key={item.id}
-                                                                item={item}
-                                                                role={role}
-                                                                currentUserId={user?.id}
-                                                                onApprove={onApprove}
-                                                                onComplete={onComplete}
-                                                                onDelete={onDelete}
-                                                              />
+                                                                    key={item.id}
+                                                                    item={item}
+                                                                    role={role}
+                                                                    role_2={role_2}
+                                                                    isPengurusLab={isPengurusLab}
+                                                                    currentUserId={user?.id}
+                                                                    onApprove={onApprove}
+                                                                    onComplete={onComplete}
+                                                                    onDelete={onDelete}
+                                                                />
                                                             ))}
                                                         </div>
                                                     )}

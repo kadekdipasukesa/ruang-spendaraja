@@ -1,16 +1,22 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
-export function useJurnalLab(defaultLab = 'Lab TIK') {
+export function useJurnalLab(defaultLab = 'LAB Komputer') { // 1. Ubah default lab ke 'LAB Komputer'
     const [selectedLab, setSelectedLab] = useState(defaultLab);
     const [jurnalList, setJurnalList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
 
+    // Ambil session user dari LocalStorage
     useEffect(() => {
-        const session = localStorage.getItem('user_siswa');
+        // Cek key 'user_siswa' atau fallback ke 'user'
+        const session = localStorage.getItem('user_siswa') || localStorage.getItem('user');
         if (session) {
-            setUser(JSON.parse(session));
+            try {
+                setUser(JSON.parse(session));
+            } catch (e) {
+                console.error("Gagal parse session user:", e);
+            }
         }
     }, []);
 
@@ -154,10 +160,12 @@ export function useJurnalLab(defaultLab = 'Lab TIK') {
         loading,
         user,
         role: user?.role || 'tamu',
+        role_2: user?.role_2 || null, // 2. Kembalikan role_2 agar bisa dibaca di komponen lain
+        isPengurusLab: user?.role === 'admin' || user?.role_2 === 'pengurus_lab', // 3. Flag praktis siap pakai
         submitPengajuan,
         handleApproval,
         handleComplete,
-        handleDelete, // <-- Wajib ada di sini!
+        handleDelete,
         refreshData: fetchJurnal
     };
 }
