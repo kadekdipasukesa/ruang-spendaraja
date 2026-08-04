@@ -29,9 +29,9 @@ import ResetRemidiAdmin from './pages/Admin/ResetRemidiAdmin';
 
 // 📝 IMPOR HALAMAN AGENDA GURU YANG BARU
 import AgendaGuruPage from './pages/AgendaGuruPage';
-
 import KelolaSiswaPage from './pages/Admin/KelolaSiswaPage';
 
+import JurnalLabPage from './pages/JurnalLabPage';      // Halaman Jurnal Lab Baru
 
 
 function AppContent() {
@@ -140,9 +140,10 @@ function AppContent() {
 
         {/* ─── 🗓️ RUTE BARU: JURNAL & AGENDA KERJA GURU ─── */}
         <Route path="/agenda-guru" element={<AgendaGuruPage />} />
-
         <Route path="/admin/kelola-siswa" element={<KelolaSiswaPage />} />
-      
+S
+        <Route path="/jurnal-lab" element={<JurnalLabPage />} />
+
       </Routes>
     </div>
   );
