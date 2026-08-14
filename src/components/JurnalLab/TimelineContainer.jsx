@@ -10,6 +10,7 @@ export default function TimelineContainer({
     user,
     onApprove,
     onComplete,
+    onEdit, // <-- 1. Terima prop onEdit di sini
     onDelete
 }) {
     const [timeWITA, setTimeWITA] = useState('');
@@ -104,7 +105,6 @@ export default function TimelineContainer({
     const monthKeys = Object.keys(groupedData).sort().reverse();
 
     return (
-        // SESUDAH (Ubah max-w-3xl menjadi max-w-5xl):
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 md:p-6 shadow-xl max-w-5xl mx-auto">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
                 <div className="flex items-center gap-2">
@@ -198,6 +198,7 @@ export default function TimelineContainer({
                                                                     currentUserId={user?.id}
                                                                     onApprove={onApprove}
                                                                     onComplete={onComplete}
+                                                                    onEdit={onEdit} // <-- 2. Operkan ke TimelineCard
                                                                     onDelete={onDelete}
                                                                 />
                                                             ))}

@@ -19,6 +19,8 @@ export default function JurnalLabPage({ user: propsUser }) {
     } = useJurnalLab('LAB Komputer');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    // 1. State simpan data item yang akan diedit
+    const [editItem, setEditItem] = useState(null);
 
     // Deteksi otomatis user dari localStorage
     const getLocalUser = () => {
@@ -69,14 +71,17 @@ export default function JurnalLabPage({ user: propsUser }) {
     // ==========================================
     // LOGIKA PENYESUAIAN ROLE & PENGERUS LAB
     // ==========================================
-    // User dianggap Pengurus/Admin jika:
-    // 1. Role utamanya 'admin'
-    // 2. ATAU role_2 miliknya berisi 'pengurus_lab'
     const isPengurusLab = Boolean(
         currentUser?.role === 'admin' || 
         currentUser?.role_2 === 'pengurus_lab' ||
         role === 'admin'
     );
+
+    // 2. Handler untuk membuka modal saat tombol Edit diklik di timeline card
+    const handleOpenEdit = (item) => {
+        setEditItem(item);
+        setIsModalOpen(true);
+    };
 
     return (
         <div className="min-h-screen bg-[#0f172a] text-slate-200 pt-20 pb-24 px-4 md:px-8">
@@ -98,6 +103,7 @@ export default function JurnalLabPage({ user: propsUser }) {
                                 alert("Harus login terlebih dahulu untuk membuat pengajuan jam lab!");
                                 return;
                             }
+                            setEditItem(null); // Reset ke mode tambah baru
                             setIsModalOpen(true);
                         }}
                         className={`font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all cursor-pointer ${
@@ -126,10 +132,11 @@ export default function JurnalLabPage({ user: propsUser }) {
                     <TimelineContainer
                         items={jurnalList}
                         role={role}
-                        isPengurusLab={isPengurusLab} // <-- Oper prop baru ini
+                        isPengurusLab={isPengurusLab}
                         user={currentUser}
                         onApprove={handleApproval}
                         onComplete={handleComplete}
+                        onEdit={handleOpenEdit} // <-- 3. Oper handler edit di sini
                         onDelete={handleDelete}
                     />
                 )}
@@ -137,9 +144,13 @@ export default function JurnalLabPage({ user: propsUser }) {
                 {/* Modal Form Pengajuan */}
                 <FormPengajuanModal
                     isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditItem(null);
+                    }}
                     onSubmit={submitPengajuan}
                     selectedLab={selectedLab}
+                    editData={editItem} // <-- 4. Oper data yang mau diedit ke Form Modal
                 />
             </div>
         </div>

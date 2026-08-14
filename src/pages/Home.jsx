@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import Hero from '../components/Home/Hero';
 import ShortcutCard from '../components/Home/ShortcutCard';
 import FeedbackForm from '../components/Home/FeedbackForm';
-import { Monitor, Globe, BookOpen, UserCheck, ShieldAlert, Keyboard, Sparkles} from 'lucide-react';
+import { Monitor, Globe, BookOpen, UserCheck, ShieldAlert, Keyboard, Sparkles, Cpu} from 'lucide-react';
 import { checkAppAccess } from '../utils/appPermissions'; // Pastikan helper ini sudah dibuat
 import Footer from '../components/Home/Footer'; // Sesuaikan path
 
@@ -100,6 +100,22 @@ const HomeRoot = () => {
       desc: 'Pameran pendidikan & kreativitas siswa Spenda.',
       isLocked: false // Biasanya event publik tidak dikunci
     },
+
+    {
+      id: 'ekstra_tik7',
+      tag: 'Ekstra',
+      title: 'Ekstra TIK',
+      subtitle: 'Kelas 7',
+      icon: <Cpu size={28} />,
+      color: 'from-violet-400/30 to-transparent',
+      glow: 'group-hover:border-violet-400',
+      shadow: 'hover:shadow-[0_0_30px_-5px_rgba(139,92,246,0.5)]',
+      glowColor: 'text-violet-400',
+      path: 'https://script.google.com/a/macros/guru.smp.belajar.id/s/AKfycbxzlOsy8mXTGNL9EKXaIK1czzrY-Yytt4cucshshqLXe_neMr53QabznFAS-gTowIkknA/exec?page=absen',
+      isExternal: true,
+      desc: 'Presensi & kegiatan Ekstrakurikuler TIK Kelas 7.'
+    },
+
     {
       id: 'presensi',
       tag: 'Fasilitas',

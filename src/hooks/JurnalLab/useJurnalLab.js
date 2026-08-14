@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
-export function useJurnalLab(defaultLab = 'LAB Komputer') { // 1. Ubah default lab ke 'LAB Komputer'
+export function useJurnalLab(defaultLab = 'LAB Komputer') {
     const [selectedLab, setSelectedLab] = useState(defaultLab);
     const [jurnalList, setJurnalList] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -9,7 +9,6 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') { // 1. Ubah default l
 
     // Ambil session user dari LocalStorage
     useEffect(() => {
-        // Cek key 'user_siswa' atau fallback ke 'user'
         const session = localStorage.getItem('user_siswa') || localStorage.getItem('user');
         if (session) {
             try {
@@ -61,30 +60,55 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') { // 1. Ubah default l
         };
     }, [selectedLab]);
 
-    // Submit Pengajuan / Booking Baru
-    const submitPengajuan = async (formData) => {
+    // 🔄 PERBAIKAN: Submit Pengajuan Baru ATAU Update Data Lama (Edit)
+    const submitPengajuan = async (formData, isEdit = false) => {
         try {
-            const { error } = await supabase
-                .from('jurnal_lab')
-                .insert([{
-                    nama_lab: selectedLab,
-                    waktu_mulai: formData.waktu_mulai,
-                    waktu_selesai: formData.waktu_selesai,
-                    pemohon_id: user?.id || null,
-                    guru_pengajar: formData.guru_pengajar,
-                    mata_pelajaran: formData.mata_pelajaran,
-                    kelas: formData.kelas,
-                    jumlah_siswa: parseInt(formData.jumlah_siswa) || 0,
-                    kategori_kegiatan: formData.kategori_kegiatan,
-                    materi_kegiatan: formData.materi_kegiatan,
-                    kondisi_awal: formData.kondisi_awal || 'Baik',
-                    status_pengajuan: 'pending'
-                }]);
+            // Data yang dikirim ke database
+            const payload = {
+                nama_lab: selectedLab,
+                waktu_mulai: formData.waktu_mulai,
+                waktu_selesai: formData.waktu_selesai,
+                guru_pengajar: formData.guru_pengajar,
+                mata_pelajaran: formData.mata_pelajaran,
+                kelas: formData.kelas,
+                jumlah_siswa: parseInt(formData.jumlah_siswa) || 0,
+                kategori_kegiatan: formData.kategori_kegiatan,
+                materi_kegiatan: formData.materi_kegiatan,
+                kondisi_awal: formData.kondisi_awal || 'Baik'
+            };
+
+            let error;
+
+            if (isEdit || formData.id) {
+                // ------------------------------------
+                // 1. MODE EDIT -> Gunakan UPDATE berdasarkan ID
+                // ------------------------------------
+                const { error: updateError } = await supabase
+                    .from('jurnal_lab')
+                    .update(payload)
+                    .eq('id', formData.id);
+
+                error = updateError;
+            } else {
+                // ------------------------------------
+                // 2. MODE BARU -> Gunakan INSERT
+                // ------------------------------------
+                const { error: insertError } = await supabase
+                    .from('jurnal_lab')
+                    .insert([{
+                        ...payload,
+                        pemohon_id: user?.id || null,
+                        status_pengajuan: 'pending'
+                    }]);
+
+                error = insertError;
+            }
 
             if (error) throw error;
             await fetchJurnal();
             return { success: true };
         } catch (err) {
+            console.error('Error submit pengajuan:', err.message);
             return { success: false, message: err.message };
         }
     };
@@ -135,9 +159,8 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') { // 1. Ubah default l
         }
     };
 
-    // ➕ FUNGSI HAPUS JURNAL
+    // FUNGSI HAPUS JURNAL
     const handleDelete = async (id) => {
-        console.log("Menghapus jurnal dengan ID:", id);
         try {
             const { error } = await supabase
                 .from('jurnal_lab')
@@ -160,8 +183,8 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') { // 1. Ubah default l
         loading,
         user,
         role: user?.role || 'tamu',
-        role_2: user?.role_2 || null, // 2. Kembalikan role_2 agar bisa dibaca di komponen lain
-        isPengurusLab: user?.role === 'admin' || user?.role_2 === 'pengurus_lab', // 3. Flag praktis siap pakai
+        role_2: user?.role_2 || null,
+        isPengurusLab: user?.role === 'admin' || user?.role_2 === 'pengurus_lab',
         submitPengajuan,
         handleApproval,
         handleComplete,

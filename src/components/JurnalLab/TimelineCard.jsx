@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Clock, User, BookOpen, Users, AlertTriangle, 
-  CheckCircle2, XCircle, ChevronDown, Check, X, Flag, PlayCircle, Trash2 
+  CheckCircle2, XCircle, ChevronDown, Check, X, Flag, PlayCircle, Trash2, Pencil 
 } from 'lucide-react';
 import ModalReject from './ModalReject';
 import ModalSelesai from './ModalSelesai';
@@ -14,6 +14,7 @@ export default function TimelineCard({
   currentUserId,
   onApprove, 
   onComplete,
+  onEdit,   // <-- Prop baru untuk penanganan edit
   onDelete
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -32,14 +33,19 @@ export default function TimelineCard({
   };
 
   const now = new Date();
-  const start = new Date(item.waktu_mulai);
-  const end = new Date(item.waktu_selesai);
+  const start = new Date(item?.waktu_mulai);
+  const end = new Date(item?.waktu_selesai);
 
+  // Status berdasarkan Waktu
   const isOngoing = now >= start && now <= end;
   const isPast = now > end;
   const isFutureTime = now < start;
-  const isRejected = item.status_pengajuan === 'rejected';
-  const isPending = item.status_pengajuan === 'pending';
+
+  // Status berdasarkan Pengajuan Backend
+  const isRejected = item?.status_pengajuan === 'rejected';
+  const isPending = item?.status_pengajuan === 'pending';
+  const isApproved = item?.status_pengajuan === 'approved';
+  const isCompleted = item?.status_pengajuan === 'completed';
 
   const getThemeStyles = () => {
     if (isRejected) {
@@ -98,52 +104,63 @@ export default function TimelineCard({
     Boolean(isPengurusLab);
 
   // 2. Ambil ID pembuat/pemohon pengajuan dari backend
-  const ownerId = item.created_by || item.user_id || item.pemohon_id || item.pemohon?.id;
+  const ownerId = item?.created_by || item?.user_id || item?.pemohon_id || item?.pemohon?.id;
   
   // 3. Cek apakah user saat ini adalah orang yang mengajukan
   const isOwner = Boolean(currentUserId && ownerId && String(currentUserId) === String(ownerId));
 
-  // 4. Hak Akses Hapus: Harus ada handler onDelete DAN (Admin/Pengurus Lab OR Pemohon Asal)
-  const canDelete = Boolean(onDelete) && (
-    role === 'admin' || 
-    role === 'pengurus_lab' || 
-    role_2 === 'pengurus_lab' || 
-    Boolean(isPengurusLab) || 
-    isOwner
-  );
+  // 4. Hak Akses Hapus & Edit
+  const canDelete = Boolean(onDelete) && (isPengurusOrAdmin || isOwner);
+  const canEdit = Boolean(onEdit) && (isPengurusOrAdmin || isOwner);
 
   const handleDelete = () => {
-    if (onDelete) {
+    if (onDelete && item?.id) {
       onDelete(item.id);
     }
     setShowDeleteConfirm(false);
   };
 
   return (
-    <div id={`timeline-item-${item.id}`} className={`relative pl-5 md:pl-7 border-l-2 ${styles.line} pb-5 last:pb-0`}>
+    <div id={`timeline-item-${item?.id}`} className={`relative pl-5 md:pl-7 border-l-2 ${styles.line} pb-5 last:pb-0`}>
       <div className={`absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 transition-all ${styles.node}`} />
 
       <div className={`border rounded-xl p-3.5 transition-all duration-200 shadow-md ${styles.card}`}>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5 text-[11px] font-semibold">
             <span className="bg-slate-950/60 px-2 py-0.5 rounded border border-slate-800">
-              {formatDate(item.waktu_mulai)}
+              {formatDate(item?.waktu_mulai)}
             </span>
             <span>•</span>
             <span className={styles.timeText}>
-              {formatTime(item.waktu_mulai)} - {formatTime(item.waktu_selesai)} WITA
+              {formatTime(item?.waktu_mulai)} - {formatTime(item?.waktu_selesai)} WITA
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {/* Status Badge */}
             <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border flex items-center gap-1 ${styles.badge}`}>
               {isRejected && <><XCircle className="w-3 h-3" /> Ditolak</>}
               {isPending && <><Clock className="w-3 h-3" /> Belum Dikonfirmasi</>}
-              {isOngoing && <><PlayCircle className="w-3 h-3" /> Sedang Berlangsung</>}
-              {isPast && !isRejected && <><CheckCircle2 className="w-3 h-3" /> Selesai / Berlalu</>}
-              {isFutureTime && !isPending && !isRejected && <><CheckCircle2 className="w-3 h-3" /> Disetujui</>}
+              {isOngoing && !isRejected && <><PlayCircle className="w-3 h-3" /> Sedang Berlangsung</>}
+              {isCompleted && <><CheckCircle2 className="w-3 h-3" /> Selesai</>}
+              {isApproved && !isOngoing && !isCompleted && (
+                <><CheckCircle2 className="w-3 h-3" /> {isPast ? 'Selesai / Berlalu' : 'Disetujui'}</>
+              )}
             </span>
 
+            {/* Tombol Edit */}
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => onEdit(item)}
+                title="Edit Pengajuan"
+                className="p-1 text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {/* Tombol Hapus */}
             {canDelete && (
               <button
                 type="button"
@@ -159,23 +176,23 @@ export default function TimelineCard({
 
         <div>
           <h3 className="text-sm font-bold flex items-center gap-2">
-            {item.mata_pelajaran || 'Kegiatan Lab'}
+            {item?.mata_pelajaran || 'Kegiatan Lab'}
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-950/60 font-normal border border-slate-800">
-              Kelas {item.kelas}
+              Kelas {item?.kelas || '-'}
             </span>
-            {item.kategori_kegiatan && (
+            {item?.kategori_kegiatan && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-950/60 text-indigo-300 font-medium border border-indigo-800/60">
                 {item.kategori_kegiatan}
               </span>
             )}
           </h3>
-          <p className="text-xs opacity-80 mt-0.5 line-clamp-1">{item.materi_kegiatan || 'Tidak ada uraian materi.'}</p>
+          <p className="text-xs opacity-80 mt-0.5 line-clamp-1">{item?.materi_kegiatan || 'Tidak ada uraian materi.'}</p>
         </div>
 
         <div className="flex items-center gap-4 text-xs opacity-80 mt-2 pt-2 border-t border-white/10">
           <div className="flex items-center gap-1 truncate">
             <User className="w-3 h-3 shrink-0 opacity-60" />
-            <span className="truncate">Guru: <strong>{item.guru_pengajar}</strong></span>
+            <span className="truncate">Guru: <strong>{item?.guru_pengajar || '-'}</strong></span>
           </div>
         </div>
 
@@ -183,23 +200,31 @@ export default function TimelineCard({
           <div className="mt-3 pt-2 border-t border-white/10 text-xs space-y-1.5 bg-black/40 p-2.5 rounded-lg">
             <div className="flex items-center gap-1.5">
               <Users className="w-3 h-3 opacity-60 shrink-0" />
-              <span>Jumlah Siswa: <strong>{item.jumlah_siswa}</strong> siswa</span>
+              <span>Jumlah Siswa: <strong>{item?.jumlah_siswa || 0}</strong> siswa</span>
             </div>
 
-            {item.pemohon?.NAMA && <div><span className="opacity-60">Diajukan Oleh:</span> {item.pemohon.NAMA} ({item.pemohon.Kelas})</div>}
+            {item?.pemohon?.NAMA && (
+              <div><span className="opacity-60">Diajukan Oleh:</span> {item.pemohon.NAMA} ({item.pemohon.Kelas})</div>
+            )}
             
-            {item.acc_by && <div><span className="opacity-60">Pengurus Lab:</span> {item.acc_by}</div>}
+            {item?.acc_by && (
+              <div><span className="opacity-60">Pengurus Lab:</span> {item.acc_by}</div>
+            )}
             
-            {item.alasan_penolakan && <div className="text-rose-400 font-semibold"><span className="opacity-70">Alasan Penolakan:</span> {item.alasan_penolakan}</div>}
+            {item?.alasan_penolakan && (
+              <div className="text-rose-400 font-semibold">
+                <span className="opacity-70">Alasan Penolakan:</span> {item.alasan_penolakan}
+              </div>
+            )}
             
-            {item.kondisi_akhir && (
+            {item?.kondisi_akhir && (
               <div className="flex items-center gap-4 pt-1 border-t border-white/5 mt-1">
                 <div><span className="opacity-60">Kondisi Awal:</span> <span className="font-semibold">{item.kondisi_awal || 'Baik'}</span></div>
                 <div><span className="opacity-60">Kondisi Akhir:</span> <span className="font-semibold">{item.kondisi_akhir}</span></div>
               </div>
             )}
 
-            {item.catatan_kendala && (
+            {item?.catatan_kendala && (
               <div className="text-amber-300 bg-amber-500/10 p-2 rounded border border-amber-500/20 flex items-start gap-1.5 mt-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                 <div><strong>Kendala:</strong> {item.catatan_kendala}</div>
@@ -219,26 +244,26 @@ export default function TimelineCard({
           </button>
 
           <div className="flex items-center gap-1.5">
-            {isPengurusOrAdmin && item.status_pengajuan === 'pending' && (
+            {isPengurusOrAdmin && isPending && (
               <>
                 <button
                   type="button"
                   onClick={() => onApprove && onApprove(item.id, 'approved')}
-                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow cursor-pointer"
+                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow cursor-pointer transition-colors"
                 >
                   <Check className="w-3 h-3" /> ACC
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowRejectModal(true)}
-                  className="px-2.5 py-1 bg-rose-600/80 hover:bg-rose-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                  className="px-2.5 py-1 bg-rose-600/80 hover:bg-rose-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
                 >
                   <X className="w-3 h-3" /> Tolak
                 </button>
               </>
             )}
 
-            {isPengurusOrAdmin && (item.status_pengajuan === 'approved' || item.status_pengajuan === 'completed') && (
+            {isPengurusOrAdmin && (isApproved || isCompleted) && (
               <button
                 type="button"
                 onClick={() => setShowSelesaiModal(true)}
@@ -254,6 +279,7 @@ export default function TimelineCard({
         </div>
       </div>
 
+      {/* Modal Konfirmasi Hapus */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 max-w-xs w-full shadow-2xl text-center">
@@ -273,7 +299,7 @@ export default function TimelineCard({
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold cursor-pointer"
+                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
               >
                 Hapus
               </button>
