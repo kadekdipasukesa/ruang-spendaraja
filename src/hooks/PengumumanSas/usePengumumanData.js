@@ -24,8 +24,9 @@ export const usePengumumanData = () => {
         fetchDataDefault();
 
         // ⚡ Setup Realtime Subscription untuk tabel remidi_peserta
+        const channelId = `live_remidi_announcement_${Math.random().toString(36).substring(2, 7)}`;
         const channel = supabase
-            .channel('live_remidi_announcement')
+            .channel(channelId)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'remidi_peserta' }, () => {
                 fetchLiveRemidi();
             })

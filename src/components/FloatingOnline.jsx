@@ -16,32 +16,45 @@ export default function FloatingOnline({ user, activeTab }) {
     const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
-        const isUserReady = user && user.NAMA;
-        const identifier = isUserReady ? user.NAMA : `Tamu-${Math.floor(Math.random() * 1000)}`;
+        const isUserReady = user && (user.NAMA || user.nama);
+        const identifier = isUserReady ? (user.NAMA || user.nama) : `Tamu-${Math.floor(Math.random() * 1000)}`;
+        const userClass = user?.KELAS || user?.Kelas || user?.kelas || 'N/A';
 
-        const channel = supabase.channel('online_room', {
+        // Buat channel baru dengan removeChannel sebelumnya jika ada
+        const channel = supabase.channel(`online_room_${Math.random().toString(36).substring(2, 7)}`, {
             config: { presence: { key: identifier } },
         });
 
         channel
             .on('presence', { event: 'sync' }, () => {
-                const state = channel.presenceState();
-                setOnlineCount(Object.keys(state).length);
-                setOnlineUsers(Object.values(state).flat());
+                try {
+                    const state = channel.presenceState();
+                    const users = Object.values(state).flat();
+                    setOnlineCount(users.length);
+                    setOnlineUsers(users);
+                } catch (err) {
+                    console.warn("Presence sync error:", err);
+                }
             })
             .subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
-                    await channel.track({
-                        nama: identifier,
-                        kelas: isUserReady ? user.Kelas : 'N/A',
-                        posisi: activeTab, 
-                        online_at: new Date().toISOString(),
-                    });
+                    try {
+                        await channel.track({
+                            nama: identifier,
+                            kelas: userClass,
+                            posisi: activeTab || 'Ruang Belajar', 
+                            online_at: new Date().toISOString(),
+                        });
+                    } catch (err) {
+                        console.warn("Presence track error:", err);
+                    }
                 }
             });
 
-        return () => { channel.unsubscribe(); };
-    }, [user?.NAMA, activeTab]);
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user?.NAMA, user?.nama, user?.Kelas, user?.KELAS, activeTab]);
 
     return (
         <>

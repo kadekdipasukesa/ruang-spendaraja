@@ -116,7 +116,8 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
 
   // Tambahkan prop onArchiveAchievement saat memanggil komponen ini
   const handleGameOver = async (finalWpm) => {
-    // Logika cek apakah masuk Top 10 (asumsi kamu punya data leaderboard)
+    // Logika cek apakah masuk Top 10
+    const isTop10 = leaderboard.length < 10 || leaderboard.some(item => (finalWpm || 0) > (item.wpm || 0));
     if (isTop10) {
       const message = `Baru saja mencetak rekor baru di Game Ketik Cepat dengan kecepatan ${finalWpm} WPM! 🚀`;
 
@@ -402,8 +403,9 @@ const GameKetikCepat = ({ onArchiveAchievement }) => {
     fetchLeaderboard();
 
     // Setup Realtime Subscription
+    const channelId = `realtime_typing_scores_${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
-      .channel('realtime_typing_scores')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'game1_scores_typing' },

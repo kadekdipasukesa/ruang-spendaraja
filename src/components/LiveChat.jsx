@@ -67,8 +67,9 @@ export default function LiveChat({ student, externalTrigger, setExternalTrigger,
 
         fetchLockStatuses();
 
+        const channelId = `livechat_system_${Math.random().toString(36).substring(2, 7)}`;
         const channel = supabase
-            .channel('livechat_system')
+            .channel(channelId)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'livechat' },
                 (payload) => {
                     // DEBUG: Cek apakah pesan masuk terdeteksi

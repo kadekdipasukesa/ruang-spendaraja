@@ -44,8 +44,9 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') {
         fetchJurnal();
 
         // Realtime Subscription
+        const channelId = `realtime_jurnal_lab_${Math.random().toString(36).substring(2, 7)}`;
         const channel = supabase
-            .channel('realtime-jurnal-lab')
+            .channel(channelId)
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'jurnal_lab' },

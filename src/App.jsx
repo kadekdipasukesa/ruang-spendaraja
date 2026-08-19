@@ -33,6 +33,10 @@ import KelolaSiswaPage from './pages/Admin/KelolaSiswaPage';
 
 import JurnalLabPage from './pages/JurnalLabPage';      // Halaman Jurnal Lab Baru
 
+// 📂 IMPOR HALAMAN TUGAS KHUSUS RUANG BELAJAR
+import TugasSimulasiFolder from './pages/TugasKhusus/TugasSimulasiFolder';
+import TugasKuisAlgoritma from './pages/TugasKhusus/TugasKuisAlgoritma';
+
 
 function AppContent() {
   const location = useLocation();
@@ -141,8 +145,11 @@ function AppContent() {
         {/* ─── 🗓️ RUTE BARU: JURNAL & AGENDA KERJA GURU ─── */}
         <Route path="/agenda-guru" element={<AgendaGuruPage />} />
         <Route path="/admin/kelola-siswa" element={<KelolaSiswaPage />} />
-S
         <Route path="/jurnal-lab" element={<JurnalLabPage />} />
+
+        {/* ─── 📚 RUTE TUGAS KHUSUS RUANG BELAJAR ─── */}
+        <Route path="/ruang-belajar/tugas/simulasi-folder" element={<TugasSimulasiFolder />} />
+        <Route path="/ruang-belajar/tugas/kuis-algoritma" element={<TugasKuisAlgoritma />} />
 
       </Routes>
     </div>

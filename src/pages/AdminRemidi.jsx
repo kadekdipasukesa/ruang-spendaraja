@@ -31,8 +31,9 @@ export default function AdminRemidi() {
 
     useEffect(() => {
         if (!selectedSesi?.id) return;
+        const channelId = `admin_remidi_monitor_${selectedSesi.id}_${Math.random().toString(36).substring(2, 7)}`;
         const channel = supabase
-            .channel('admin_remidi_monitor')
+            .channel(channelId)
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',

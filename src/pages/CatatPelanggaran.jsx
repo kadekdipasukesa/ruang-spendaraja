@@ -75,8 +75,9 @@ export default function PelanggaranPage() {
 
         fetchInitialData();
 
+        const channelId = `schema_db_changes_${Math.random().toString(36).substring(2, 7)}`;
         const channel = supabase
-            .channel('schema-db-changes')
+            .channel(channelId)
             .on(
                 'postgres_changes',
                 {

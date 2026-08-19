@@ -26,8 +26,9 @@ const UlanganTab = () => {
       fetchHasilRemidi();
 
       // Setup Realtime Subscription agar nilai yang masuk langsung muncul di tabel tanpa reload
+      const channelId = `live_hasil_remidi_${Math.random().toString(36).substring(2, 7)}`;
       const channel = supabase
-        .channel('live_hasil_remidi')
+        .channel(channelId)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'remidi_peserta' }, () => {
           fetchHasilRemidi();
         })

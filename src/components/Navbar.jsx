@@ -32,8 +32,9 @@ export default function Navbar() {
 
   useEffect(() => {
     if (!user?.id) return;
+    const channelId = `navbar_points_${user.id}_${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
-      .channel('navbar-points')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'master_siswa', filter: `id=eq.${user.id}` },
@@ -44,12 +45,18 @@ export default function Navbar() {
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user?.id]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user_siswa');
     if (savedUser) setUser(JSON.parse(savedUser));
+
+    const handleOpenLogin = () => setShowModal(true);
+    window.addEventListener('open-login-modal', handleOpenLogin);
+    return () => window.removeEventListener('open-login-modal', handleOpenLogin);
   }, []);
 
   const formatShortName = (fullName) => {

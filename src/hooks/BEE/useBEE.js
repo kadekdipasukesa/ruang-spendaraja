@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import ecoImg from '../../assets/BEE/eco.png';
-import ternakImg from '../../assets/BEE/ternak.png';
 import faceImg from '../../assets/BEE/face_recognition.png';
 import fluppyImg from '../../assets/BEE/fluppy.png';
-import typingImg from '../../assets/BEE/ketik_cepat.png';
+
+const ternakImg = "https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=400";
+const typingImg = "https://images.unsplash.com/photo-1587829741301-dc798b83add3?q=80&w=400";
 
 
 

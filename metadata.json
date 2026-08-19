@@ -1,0 +1,11 @@
+{
+  "name": "Ruang Spendaraja",
+  "description": "Learning platform and classroom management system for SMP Negeri 2 Singaraja with interactive games, assignments, exam proctoring, and lab journaling.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

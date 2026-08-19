@@ -59,7 +59,7 @@ export default function ReviewTugasScratch() {
     
         try {
             // Regex mutakhir untuk menangkap segala jenis keanehan link YouTube dari kiriman siswa
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
             const match = cleanUrl.match(regExp);
             
             if (match && match[2] && match[2].length === 11) {

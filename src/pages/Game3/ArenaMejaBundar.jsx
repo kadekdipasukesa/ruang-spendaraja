@@ -21,6 +21,52 @@ const ArenaMejaBundar = ({ student, isAdmin, soalPool, onExit }) => {
         isRMRef.current = isRM;
     }, [isRM]);
 
+    const handleJudgeWinner = (newPush) => {
+        setCandidates((prev) => {
+            const newList = [...prev, newPush];
+            if (newList.length === 1 && isRMRef.current) {
+                setTimeout(() => {
+                    setCandidates(current => {
+                        if (current.length === 0) return [];
+                        const sorted = [...current].sort((a, b) => a.timestamp - b.timestamp);
+                        const realWinner = sorted[0];
+                        if (channelRef.current) {
+                            channelRef.current.send({
+                                type: 'broadcast',
+                                event: 'announce_winner',
+                                payload: { winner: realWinner }
+                            });
+                        }
+                        return [];
+                    });
+                }, 500);
+            }
+            return newList;
+        });
+    };
+
+    const startRound = async () => {
+        if (!soalPool || soalPool.length === 0) return;
+        const soalAcak = soalPool[Math.floor(Math.random() * soalPool.length)];
+        
+        if (channelRef.current) {
+            channelRef.current.send({
+                type: 'broadcast',
+                event: 'game_start',
+                payload: { soal: soalAcak }
+            });
+
+            await channelRef.current.track({
+                id: student?.id,
+                nama: student?.NAMA,
+                kelas: student?.KELAS || "7A",
+                joined_at: Date.now(),
+                currentStatus: 'PLAYING',
+                currentSoal: soalAcak
+            });
+        }
+    };
+
     // --- LOGIKA TIMER 60 DETIK ---
     useEffect(() => {
         if (gameStatus === 'PLAYING' && currentSoal) {
@@ -47,14 +93,6 @@ const ArenaMejaBundar = ({ student, isAdmin, soalPool, onExit }) => {
         const parts = fullName.trim().split(/\s+/);
         return parts.length > 1 ? parts[1] : parts[0];
     };
-
-    if (!student || !student.id) {
-        return (
-            <div className="flex items-center justify-center h-full bg-slate-950">
-                <p className="text-white animate-pulse">Menyiapkan Kursi Arena...</p>
-            </div>
-        );
-    }
 
     useEffect(() => {
         if (!student?.id || channelRef.current) return;
@@ -126,52 +164,6 @@ const ArenaMejaBundar = ({ student, isAdmin, soalPool, onExit }) => {
         };
     }, [student?.id, currentSoal]);
 
-    const handleJudgeWinner = (newPush) => {
-        setCandidates((prev) => {
-            const newList = [...prev, newPush];
-            if (newList.length === 1 && isRMRef.current) {
-                setTimeout(() => {
-                    setCandidates(current => {
-                        if (current.length === 0) return [];
-                        const sorted = [...current].sort((a, b) => a.timestamp - b.timestamp);
-                        const realWinner = sorted[0];
-                        if (channelRef.current) {
-                            channelRef.current.send({
-                                type: 'broadcast',
-                                event: 'announce_winner',
-                                payload: { winner: realWinner }
-                            });
-                        }
-                        return [];
-                    });
-                }, 500);
-            }
-            return newList;
-        });
-    };
-
-    const startRound = async () => {
-        if (!soalPool || soalPool.length === 0) return;
-        const soalAcak = soalPool[Math.floor(Math.random() * soalPool.length)];
-        
-        if (channelRef.current) {
-            channelRef.current.send({
-                type: 'broadcast',
-                event: 'game_start',
-                payload: { soal: soalAcak }
-            });
-
-            await channelRef.current.track({
-                id: student.id,
-                nama: student.NAMA,
-                kelas: student.KELAS || "7A",
-                joined_at: Date.now(),
-                currentStatus: 'PLAYING',
-                currentSoal: soalAcak
-            });
-        }
-    };
-
     const handleBelClick = () => {
         if (channelRef.current && gameStatus === 'PLAYING') {
             channelRef.current.send({
@@ -186,6 +178,14 @@ const ArenaMejaBundar = ({ student, isAdmin, soalPool, onExit }) => {
             });
         }
     };
+
+    if (!student || !student.id) {
+        return (
+            <div className="flex items-center justify-center h-full bg-slate-950">
+                <p className="text-white animate-pulse">Menyiapkan Kursi Arena...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 w-full h-screen bg-slate-950 z-[9999] flex flex-col items-center justify-between py-6 overflow-hidden touch-none">

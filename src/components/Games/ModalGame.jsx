@@ -32,8 +32,9 @@ const ModalGame = ({ children, onClose, title, subtitle, gameId, userClass, isAd
     checkLockStatus();
 
     // LOGIKA REALTIME: Mendengarkan perubahan status kunci secara langsung
+    const channelId = `lock_channel_${gameId}_${userClass}_${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
-      .channel(`lock_channel_${gameId}_${userClass}`)
+      .channel(channelId)
       .on('postgres_changes',
         {
           event: '*',

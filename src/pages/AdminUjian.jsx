@@ -34,8 +34,9 @@ export default function AdminUjian() {
   // Realtime Monitoring
   useEffect(() => {
     if (!sesi?.id) return;
+    const channelId = `admin_monitor_${sesi.id}_${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
-      .channel('admin_monitor')
+      .channel(channelId)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
