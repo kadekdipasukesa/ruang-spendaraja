@@ -33,12 +33,13 @@ const norm = (str) => (str || '').trim().toLowerCase().replace(/[\s\-_]/g, '');
  */
 export const MISSIONS_DEF = [
   // === KATEGORI A: STRUKTUR FOLDER UTAMA & TINGKAT 1 (24 Poin) ===
+  // === KATEGORI A: STRUKTUR FOLDER UTAMA & TINGKAT 1 (24 Poin) ===
   {
     id: 'm01',
     category: 'Struktur Folder',
     categoryCode: 'folder',
     title: 'Buat Folder Utama "TUGAS_INFORMATIKA_7"',
-    instruction: 'Buat folder utama bernama "TUGAS_INFORMATIKA_7" pada direktori Drive Utama (C:).',
+    instruction: 'Buat folder utama bernama "TUGAS_INFORMATIKA_7" di lokasi Drive Utama (C:).',
     points: 4,
     check: (items) => {
       return items.some(
@@ -51,7 +52,7 @@ export const MISSIONS_DEF = [
     category: 'Struktur Folder',
     categoryCode: 'folder',
     title: 'Buat Subfolder "01_DOKUMEN"',
-    instruction: 'Buat subfolder "01_DOKUMEN" (atau "DOKUMEN") di dalam "TUGAS_INFORMATIKA_7".',
+    instruction: 'Masuk ke dalam folder "TUGAS_INFORMATIKA_7", lalu buat subfolder bernama "01_DOKUMEN" (atau "DOKUMEN") di situ. (Lokasi Target: C: > TUGAS_INFORMATIKA_7)',
     points: 4,
     check: (items) => {
       const parent = items.find((it) => it.type === 'folder' && it.parentId === null && norm(it.name) === 'tugasinformatika7');
@@ -66,7 +67,7 @@ export const MISSIONS_DEF = [
     category: 'Struktur Folder',
     categoryCode: 'folder',
     title: 'Buat Subfolder "02_GAMBAR"',
-    instruction: 'Buat subfolder "02_GAMBAR" (atau "GAMBAR") di dalam "TUGAS_INFORMATIKA_7".',
+    instruction: 'Di dalam folder "TUGAS_INFORMATIKA_7", buat subfolder bernama "02_GAMBAR" (atau "GAMBAR"). (Lokasi Target: C: > TUGAS_INFORMATIKA_7)',
     points: 4,
     check: (items) => {
       const parent = items.find((it) => it.type === 'folder' && it.parentId === null && norm(it.name) === 'tugasinformatika7');
@@ -81,7 +82,7 @@ export const MISSIONS_DEF = [
     category: 'Struktur Folder',
     categoryCode: 'folder',
     title: 'Buat Subfolder "03_PROYEK_SCRATCH"',
-    instruction: 'Buat subfolder "03_PROYEK_SCRATCH" (atau "PROYEK_SCRATCH" / "SCRATCH") di dalam "TUGAS_INFORMATIKA_7".',
+    instruction: 'Di dalam folder "TUGAS_INFORMATIKA_7", buat subfolder bernama "03_PROYEK_SCRATCH". (Lokasi Target: C: > TUGAS_INFORMATIKA_7)',
     points: 4,
     check: (items) => {
       const parent = items.find((it) => it.type === 'folder' && it.parentId === null && norm(it.name) === 'tugasinformatika7');
@@ -96,7 +97,7 @@ export const MISSIONS_DEF = [
     category: 'Struktur Folder',
     categoryCode: 'folder',
     title: 'Buat Subfolder "04_AUDIO_VIDEO"',
-    instruction: 'Buat subfolder "04_AUDIO_VIDEO" (atau "AUDIO_VIDEO" / "MEDIA") di dalam "TUGAS_INFORMATIKA_7".',
+    instruction: 'Di dalam folder "TUGAS_INFORMATIKA_7", buat subfolder bernama "04_AUDIO_VIDEO". (Lokasi Target: C: > TUGAS_INFORMATIKA_7)',
     points: 4,
     check: (items) => {
       const parent = items.find((it) => it.type === 'folder' && it.parentId === null && norm(it.name) === 'tugasinformatika7');
@@ -110,8 +111,8 @@ export const MISSIONS_DEF = [
     id: 'm06',
     category: 'Struktur Folder',
     categoryCode: 'folder',
-    title: 'Buat Subfolder "MATERI" di dalam Dokumen',
-    instruction: 'Buka subfolder Dokumen, lalu buat subfolder bertingkat bernama "MATERI".',
+    title: 'Buat Subfolder "MATERI" di dalam DOKUMEN',
+    instruction: 'Buka folder "01_DOKUMEN", lalu buat subfolder baru bernama "MATERI" di dalamnya. (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 01_DOKUMEN)',
     points: 4,
     check: (items) => {
       const docFolder = items.find((it) => it.type === 'folder' && (norm(it.name) === '01dokumen' || norm(it.name) === 'dokumen'));
@@ -126,7 +127,7 @@ export const MISSIONS_DEF = [
     category: 'Struktur Folder',
     categoryCode: 'folder',
     title: 'Buat Subfolder "TUGAS_HARIAN" di dalam Dokumen',
-    instruction: 'Buka subfolder Dokumen, lalu buat subfolder bertingkat bernama "TUGAS_HARIAN".',
+    instruction: 'Buka subfolder Dokumen, lalu buat subfolder bertingkat bernama "TUGAS_HARIAN". (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 01_DOKUMEN)',
     points: 4,
     check: (items) => {
       const docFolder = items.find((it) => it.type === 'folder' && (norm(it.name) === '01dokumen' || norm(it.name) === 'dokumen'));
@@ -139,7 +140,7 @@ export const MISSIONS_DEF = [
     category: 'Struktur Folder',
     categoryCode: 'folder',
     title: 'Buat Subfolder "ASSET_SPRITE" di dalam Gambar',
-    instruction: 'Buka subfolder Gambar, lalu buat subfolder bertingkat bernama "ASSET_SPRITE" (atau "SPRITE").',
+    instruction: 'Buka subfolder Gambar, lalu buat subfolder bertingkat bernama "ASSET_SPRITE" (atau "SPRITE"). (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 02_GAMBAR)',
     points: 4,
     check: (items) => {
       const imgFolder = items.find((it) => it.type === 'folder' && (norm(it.name) === '02gambar' || norm(it.name) === 'gambar'));
@@ -152,7 +153,7 @@ export const MISSIONS_DEF = [
     category: 'Struktur Folder',
     categoryCode: 'folder',
     title: 'Buat Subfolder "DIAGRAM" di dalam Gambar',
-    instruction: 'Buka subfolder Gambar, lalu buat subfolder bertingkat bernama "DIAGRAM" (atau "BAGAN").',
+    instruction: 'Buka subfolder Gambar, lalu buat subfolder bertingkat bernama "DIAGRAM" (atau "BAGAN"). (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 02_GAMBAR)',
     points: 4,
     check: (items) => {
       const imgFolder = items.find((it) => it.type === 'folder' && (norm(it.name) === '02gambar' || norm(it.name) === 'gambar'));
@@ -165,7 +166,7 @@ export const MISSIONS_DEF = [
     category: 'Struktur Folder',
     categoryCode: 'folder',
     title: 'Buat Subfolder "BACKUP" di dalam Proyek Scratch',
-    instruction: 'Buka subfolder Scratch, lalu buat subfolder bertingkat bernama "BACKUP".',
+    instruction: 'Buka subfolder Scratch, lalu buat subfolder bertingkat bernama "BACKUP". (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 03_PROYEK_SCRATCH)',
     points: 4,
     check: (items) => {
       const scratchFolder = items.find((it) => it.type === 'folder' && (norm(it.name).includes('scratch') || norm(it.name).includes('proyek')));
@@ -180,7 +181,7 @@ export const MISSIONS_DEF = [
     category: 'Manajemen Berkas',
     categoryCode: 'file',
     title: 'Pindahkan "laporan_praktik.docx" ke Folder Dokumen',
-    instruction: 'Pindahkan berkas laporan_praktik.docx dari root ke dalam subfolder DOKUMEN atau TUGAS_HARIAN.',
+    instruction: 'Pindahkan berkas laporan_praktik.docx dari LOKASI C: ke dalam subfolder DOKUMEN atau TUGAS_HARIAN. (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 01_DOKUMEN)',
     points: 4,
     check: (items) => {
       const docFolders = items.filter(
@@ -196,7 +197,7 @@ export const MISSIONS_DEF = [
     category: 'Manajemen Berkas',
     categoryCode: 'file',
     title: 'Pindahkan "bagan_flowchart.png" ke Folder Gambar',
-    instruction: 'Pindahkan berkas bagan_flowchart.png dari root ke dalam subfolder GAMBAR atau DIAGRAM.',
+    instruction: 'Pindahkan berkas bagan_flowchart.png dari LOKASI C: ke dalam subfolder GAMBAR atau DIAGRAM. (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 02_GAMBAR)',
     points: 4,
     check: (items) => {
       const imgFolders = items.filter(
@@ -212,7 +213,7 @@ export const MISSIONS_DEF = [
     category: 'Manajemen Berkas',
     categoryCode: 'file',
     title: 'Pindahkan "catatan_algoritma" ke Folder Dokumen',
-    instruction: 'Pindahkan berkas catatan algoritma dari root ke dalam subfolder DOKUMEN atau MATERI.',
+    instruction: 'Pindahkan berkas catatan algoritma dari LOKASI C: ke dalam subfolder DOKUMEN atau MATERI. (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 01_DOKUMEN)',
     points: 4,
     check: (items) => {
       const docFolders = items.filter(
@@ -228,7 +229,7 @@ export const MISSIONS_DEF = [
     category: 'Manajemen Berkas',
     categoryCode: 'file',
     title: 'Hapus Berkas Sampah "berkas_rusak.tmp"',
-    instruction: 'Hapus berkas sementara "berkas_rusak.tmp" yang tidak diperlukan agar sistem bersih.',
+    instruction: 'Hapus berkas sementara "berkas_rusak.tmp" yang tidak diperlukan agar sistem bersih. (Lokasi Target: C: > TUGAS_INFORMATIKA_7)',
     points: 4,
     check: (items) => {
       return !items.some((it) => it.type === 'file' && norm(it.name).includes('rusak'));
@@ -241,7 +242,7 @@ export const MISSIONS_DEF = [
     category: 'Pembuatan Berkas',
     categoryCode: 'create',
     title: 'Buat Berkas Word "rangkuman_hardware.docx"',
-    instruction: 'Gunakan tombol Buat Berkas untuk membuat file Word (.docx) bernama "rangkuman_hardware.docx" di folder Dokumen/Materi.',
+    instruction: 'Gunakan tombol Buat Berkas untuk membuat file Word (.docx) bernama "rangkuman_hardware.docx" di folder Dokumen/Materi. (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 01_DOKUMEN)',
     points: 4,
     check: (items) => {
       return items.some((it) => it.type === 'file' && norm(it.name).includes('hardware') && it.name.endsWith('.docx'));
@@ -252,7 +253,7 @@ export const MISSIONS_DEF = [
     category: 'Pembuatan Berkas',
     categoryCode: 'create',
     title: 'Buat Berkas Spreadsheet "data_nilai.xlsx"',
-    instruction: 'Buat file tabel Excel (.xlsx) bernama "data_nilai.xlsx" (atau "data_nilai_informatika.xlsx") di dalam folder Dokumen.',
+    instruction: 'Buat file tabel Excel (.xlsx) bernama "data_nilai.xlsx" (atau "data_nilai_informatika.xlsx") di dalam folder Dokumen. (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 01_DOKUMEN)',
     points: 4,
     check: (items) => {
       return items.some((it) => it.type === 'file' && norm(it.name).includes('nilai') && it.name.endsWith('.xlsx'));
@@ -263,7 +264,7 @@ export const MISSIONS_DEF = [
     category: 'Pembuatan Berkas',
     categoryCode: 'create',
     title: 'Buat Berkas Slide "presentasi_jaringan.pptx"',
-    instruction: 'Buat file presentasi PowerPoint (.pptx) bernama "presentasi_jaringan.pptx" di dalam folder Dokumen.',
+    instruction: 'Buat file presentasi PowerPoint (.pptx) bernama "presentasi_jaringan.pptx" di dalam folder Dokumen. (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 01_DOKUMEN)',
     points: 4,
     check: (items) => {
       return items.some((it) => it.type === 'file' && norm(it.name).includes('jaringan') && it.name.endsWith('.pptx'));
@@ -274,7 +275,7 @@ export const MISSIONS_DEF = [
     category: 'Pembuatan Berkas',
     categoryCode: 'create',
     title: 'Buat Berkas PDF "panduan_praktik.pdf"',
-    instruction: 'Buat file PDF (.pdf) bernama "panduan_praktik.pdf" di dalam folder Dokumen.',
+    instruction: 'Buat file PDF (.pdf) bernama "panduan_praktik.pdf" di dalam folder Dokumen. (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 01_DOKUMEN)',
     points: 4,
     check: (items) => {
       return items.some((it) => it.type === 'file' && norm(it.name).includes('panduan') && it.name.endsWith('.pdf'));
@@ -285,7 +286,7 @@ export const MISSIONS_DEF = [
     category: 'Pembuatan Berkas',
     categoryCode: 'create',
     title: 'Buat Berkas Sprite "karakter_kucing.png"',
-    instruction: 'Buat file gambar PNG (.png) bernama "karakter_kucing.png" (atau "sprite_kucing.png") di folder Gambar/Asset Sprite.',
+    instruction: 'Buat file gambar PNG (.png) bernama "karakter_kucing.png" (atau "sprite_kucing.png") di folder Gambar/Asset Sprite. (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 02_GAMBAR > ASSET_SPRITE)',
     points: 4,
     check: (items) => {
       return items.some((it) => it.type === 'file' && (norm(it.name).includes('kucing') || norm(it.name).includes('sprite')) && it.name.endsWith('.png'));
@@ -296,7 +297,7 @@ export const MISSIONS_DEF = [
     category: 'Pembuatan Berkas',
     categoryCode: 'create',
     title: 'Buat Berkas Audio "suara_game.mp3"',
-    instruction: 'Buat file musik/audio (.mp3) bernama "suara_game.mp3" (atau "efek_suara.mp3") di folder 04_AUDIO_VIDEO.',
+    instruction: 'Buat file musik/audio (.mp3) bernama "suara_game.mp3" (atau "efek_suara.mp3") di folder 04_AUDIO_VIDEO. (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 04_AUDIO_VIDEO)',
     points: 4,
     check: (items) => {
       return items.some((it) => it.type === 'file' && (norm(it.name).includes('suara') || norm(it.name).includes('audio') || norm(it.name).includes('game')) && it.name.endsWith('.mp3'));
@@ -309,7 +310,7 @@ export const MISSIONS_DEF = [
     category: 'Proyek & Arsip',
     categoryCode: 'special',
     title: 'Buat Berkas Proyek "game_labirin.sb3"',
-    instruction: 'Buat file proyek Scratch (.sb3) bernama "game_labirin.sb3" di folder 03_PROYEK_SCRATCH.',
+    instruction: 'Buat file proyek Scratch (.sb3) bernama "game_labirin.sb3" di folder 03_PROYEK_SCRATCH. (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 03_PROYEK_SCRATCH)',
     points: 4,
     check: (items) => {
       return items.some((it) => it.type === 'file' && norm(it.name).includes('labirin') && it.name.endsWith('.sb3'));
@@ -320,7 +321,7 @@ export const MISSIONS_DEF = [
     category: 'Proyek & Arsip',
     categoryCode: 'special',
     title: 'Buat Berkas Arsip "backup_minggu1.zip"',
-    instruction: 'Buat file arsip terkompresi (.zip) bernama "backup_minggu1.zip" di folder BACKUP.',
+    instruction: 'Buat file arsip terkompresi (.zip) bernama "backup_minggu1.zip" di folder BACKUP. (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 03_PROYEK_SCRATCH > BACKUP)',
     points: 4,
     check: (items) => {
       return items.some((it) => it.type === 'file' && norm(it.name).includes('backup') && it.name.endsWith('.zip'));
@@ -331,7 +332,7 @@ export const MISSIONS_DEF = [
     category: 'Pengorganisasian',
     categoryCode: 'rename',
     title: 'Ganti Nama (Rename) "catatan_algoritma.txt"',
-    instruction: 'Ganti nama file "catatan_algoritma.txt" menjadi "catatan_algoritma_revisi.txt" (atau ada kata "revisi").',
+    instruction: 'Ganti nama file "catatan_algoritma.txt" menjadi "catatan_algoritma_revisi.txt" (atau ada kata "revisi"). (Lokasi Target: C: > TUGAS_INFORMATIKA_7 > 01_DOKUMEN)',
     points: 4,
     check: (items) => {
       return items.some((it) => it.type === 'file' && norm(it.name).includes('revisi') && it.name.endsWith('.txt'));
@@ -342,7 +343,7 @@ export const MISSIONS_DEF = [
     category: 'Kebersihan Direktori',
     categoryCode: 'clean',
     title: 'Kebersihan Drive Root (C:)',
-    instruction: 'Pastikan direktori Drive Utama (C:) bersih dan rapi (hanya berisi folder utama, tidak ada file yang tercecer di luar folder).',
+    instruction: 'Pastikan direktori Drive Utama (C:) bersih dan rapi (hanya berisi folder utama, tidak ada file yang tercecer di luar folder). (Lokasi Target: C:)',
     points: 4,
     check: (items) => {
       const rootFiles = items.filter((it) => it.parentId === null && it.type === 'file');
@@ -354,7 +355,7 @@ export const MISSIONS_DEF = [
     category: 'Struktur Lengkap',
     categoryCode: 'mastery',
     title: 'Penguasaan Struktur Direktori Lengkap',
-    instruction: 'Tuntaskan manajemen struktur dengan minimal memiliki 6 folder teratur dan minimal 8 berkas tersimpan di subfolder yang tepat.',
+    instruction: 'Tuntaskan manajemen struktur dengan minimal memiliki 6 folder teratur dan minimal 8 berkas tersimpan di subfolder yang tepat. (Lokasi Target: C: > TUGAS_INFORMATIKA_7)',
     points: 4,
     check: (items) => {
       const totalFolders = items.filter((it) => it.type === 'folder').length;

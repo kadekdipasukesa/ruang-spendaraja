@@ -17,6 +17,32 @@ import {
 } from 'lucide-react';
 import { playMissionSuccessSound, triggerMissionFireworkAnimation } from '../../../../utils/missionCelebration';
 
+// Helper component untuk mendeteksi dan memberi highlight kuning + tebal pada "(Lokasi Target: ...)"
+function FormatInstruction({ text }) {
+  if (!text) return null;
+
+  const targetRegex = /(\(Lokasi Target:[^)]+\))/g;
+  const parts = text.split(targetRegex);
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (targetRegex.test(part)) {
+          return (
+            <mark
+              key={index}
+              className="bg-yellow-300 text-slate-900 font-extrabold px-1.5 py-0.5 rounded shadow-2xs inline-block my-0.5"
+            >
+              {part}
+            </mark>
+          );
+        }
+        return part;
+      })}
+    </>
+  );
+}
+
 export default function FloatingMissionPanel({
   evalResult,
   isOpen,
@@ -256,7 +282,7 @@ export default function FloatingMissionPanel({
                           {currentActiveMission.title}
                         </h4>
                         <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                          {currentActiveMission.instruction}
+                          <FormatInstruction text={currentActiveMission.instruction} />
                         </p>
                       </div>
                     </div>
@@ -350,7 +376,7 @@ export default function FloatingMissionPanel({
                             {m.title}
                           </div>
                           <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                            {m.instruction}
+                            <FormatInstruction text={m.instruction} />
                           </p>
                         </div>
                       </div>
