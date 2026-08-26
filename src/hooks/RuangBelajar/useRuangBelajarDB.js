@@ -264,18 +264,52 @@ export function useRuangBelajarDB() {
     };
   }, [fetchTasks, fetchSubmissions, fetchLeaderboard, student?.id]);
 
-  // Merge Tasks with Current Student Submission Status
+  // Merge Tasks with Current Student Submission Status & Local Drafts
   const mergedTasks = useMemo(() => {
     const studentId = student?.id;
 
-    // If guest (not logged in and not admin), no personal submission is associated
+    const getLocalDraft = (task) => {
+      try {
+        if (task.tipe_tugas === 'simulasi' || task.urutan === 1 || task.kode_tugas === 'TUGAS-01-SIMULASI-FOLDER') {
+          const key = studentId ? `simulasi_folder_state_user_${studentId}` : 'simulasi_folder_state_guest';
+          const localStr = localStorage.getItem(key);
+          if (localStr) {
+            const parsed = JSON.parse(localStr);
+            if (parsed && typeof parsed.totalScore === 'number' && parsed.totalScore > 0) {
+              return parsed.totalScore;
+            }
+          }
+        } else if (task.tipe_tugas === 'kuis' || task.urutan === 2 || task.kode_tugas === 'TUGAS-02-KUIS-ALGO' || task.id === 'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0') {
+          const key = studentId ? `tugas_bk_state_user_${studentId}` : 'tugas_bk_state_guest';
+          const localStr = localStorage.getItem(key);
+          if (localStr) {
+            const parsed = JSON.parse(localStr);
+            if (parsed?.scores) {
+              const sc = (parsed.scores.m1 || 0) + (parsed.scores.m2 || 0) + (parsed.scores.m3 || 0) + (parsed.scores.m4 || 0);
+              if (sc > 0) {
+                return sc;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+      return null;
+    };
+
+    // If guest (not logged in and not admin), check local draft if any
     if (!studentId && !isAdmin) {
-      return tasks.map((task) => ({
-        ...task,
-        status: 'belum',
-        earnedScore: null,
-        submission: null
-      }));
+      return tasks.map((task) => {
+        const localDraftScore = getLocalDraft(task);
+        return {
+          ...task,
+          status: localDraftScore ? 'sedang' : 'belum',
+          earnedScore: null,
+          localDraftScore,
+          submission: null
+        };
+      });
     }
 
     return tasks.map((task) => {
@@ -285,40 +319,47 @@ export function useRuangBelajarDB() {
             (s) =>
               (s.tugas_id === task.id ||
                 s.tugas_id === task.kode_tugas ||
+                s.id_tugas === task.id ||
+                s.id_tugas === task.kode_tugas ||
                 s.tugas_master?.kode_tugas === task.kode_tugas ||
-                (task.tipe_tugas === 'simulasi' && (s.tugas_master?.tipe_tugas === 'simulasi' || s.tugas_id === 'tugas-inf-01')) ||
-                (task.tipe_tugas === 'kuis' && (s.tugas_master?.tipe_tugas === 'kuis' || s.tugas_id === 'tugas-inf-02'))) &&
-              s.siswa_id === studentId
+                (task.tipe_tugas === 'simulasi' && (s.tugas_master?.tipe_tugas === 'simulasi' || s.tugas_id === 'tugas-inf-01' || s.id_tugas === 'TUGAS-01-SIMULASI-FOLDER')) ||
+                (task.tipe_tugas === 'kuis' && (s.tugas_master?.tipe_tugas === 'kuis' || s.tugas_id === 'tugas-inf-02' || s.tugas_id === 'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0' || s.tugas_id === 'TUGAS-02-KUIS-ALGO' || s.tugas_id === 'TUGAS_BK_01' || s.id_tugas === 'TUGAS-02-KUIS-ALGO' || s.id_tugas === 'TUGAS_BK_01'))) &&
+              (s.siswa_id === studentId || s.nisn_siswa === student?.nisn || s.nisn_siswa === student?.NISN)
           )
         : null;
 
       let status = 'belum';
       let earnedScore = null;
       let submissionData = null;
+      const localDraftScore = getLocalDraft(task);
 
       if (sub) {
-        status = sub.status || (sub.skor !== null ? 'selesai' : 'sedang');
-        earnedScore = sub.skor;
+        const rawScore = sub.skor ?? sub.nilai_akhir ?? sub.score;
+        earnedScore = rawScore !== null && rawScore !== undefined ? Number(rawScore) : null;
+        status = sub.status || (earnedScore !== null ? 'selesai' : 'sedang');
         submissionData = {
           id: sub.id,
           submittedAt: sub.submitted_at || sub.created_at,
           link: sub.tautan_tugas,
           notes: sub.catatan_siswa,
           fileName: sub.nama_berkas,
-          score: sub.skor,
-          feedback: sub.catatan_guru,
+          score: earnedScore,
+          feedback: sub.catatan_guru || sub.feedback_guru,
           detailJawaban: sub.detail_jawaban
         };
+      } else if (localDraftScore) {
+        status = 'sedang';
       }
 
       return {
         ...task,
         status,
         earnedScore,
+        localDraftScore,
         submission: submissionData
       };
     });
-  }, [tasks, submissions, student?.id, isAdmin]);
+  }, [tasks, submissions, student?.id, student?.nisn, student?.NISN, isAdmin]);
 
   // Visible tasks for current view (if student, respect is_active)
   const visibleTasks = useMemo(() => {

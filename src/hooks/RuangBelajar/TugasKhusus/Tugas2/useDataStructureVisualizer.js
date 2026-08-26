@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { soundEffects } from '../../../../utils/gameAudio';
+import { triggerConfetti } from '../../../../utils/confettiHelper';
 
 // Preset contoh daftar belanjaan & daftar nama siswa
 export const INITIAL_SHOPPING_LIST = [
@@ -88,8 +90,16 @@ export function useDataStructureVisualizer({ onComplete, currentScore = 0 }) {
   const [quizSubmitted, setQuizSubmitted] = useState(currentScore > 0);
   const [quizScoreResult, setQuizScoreResult] = useState(Math.round(currentScore / 4));
 
+  useEffect(() => {
+    if (currentScore > 0) {
+      setQuizSubmitted(true);
+      setQuizScoreResult(Math.round(currentScore / 4));
+    }
+  }, [currentScore]);
+
   // Switch list preset
   const handleSwitchListType = (type) => {
+    soundEffects.playStep();
     setListType(type);
     if (type === 'belanja') {
       setItems(INITIAL_SHOPPING_LIST);
@@ -103,6 +113,7 @@ export function useDataStructureVisualizer({ onComplete, currentScore = 0 }) {
   // Add Item to list
   const handleAddItem = () => {
     if (!newItemName.trim()) return;
+    soundEffects.playStep();
     const name = newItemName.trim();
     const firstChar = name.charAt(0).toUpperCase();
     const newItem = {
@@ -120,9 +131,11 @@ export function useDataStructureVisualizer({ onComplete, currentScore = 0 }) {
   // Delete item from list
   const handleDeleteItem = (id) => {
     if (items.length <= 1) {
+      soundEffects.playFail();
       alert('Sisakan minimal 1 elemen di dalam daftar!');
       return;
     }
+    soundEffects.playStep();
     setItems((prev) => prev.filter((it) => it.id !== id));
   };
 
@@ -133,8 +146,11 @@ export function useDataStructureVisualizer({ onComplete, currentScore = 0 }) {
   const handleCheckSecretWord = () => {
     if (!userGuessWord.trim()) return;
     if (userGuessWord.trim().toUpperCase() === actualSecretWord.toUpperCase()) {
+      soundEffects.playSuccess();
+      triggerConfetti();
       setGuessFeedback(`🎉 HEBAT SEKALI! Kata rahasia "${actualSecretWord}" berhasil kamu temukan dengan membaca huruf indeks ke-1 dari setiap urutan!`);
     } else {
+      soundEffects.playFail();
       setGuessFeedback(`🔍 Masih belum tepat. Perhatikan huruf pertama pada setiap urutan [1] sampai [${items.length}] untuk membentuk kata rahasia.`);
     }
   };
@@ -142,6 +158,7 @@ export function useDataStructureVisualizer({ onComplete, currentScore = 0 }) {
   // Handle quiz option select
   const handleSelectQuizOption = (questionId, optionId) => {
     if (quizSubmitted) return;
+    soundEffects.playStep();
     setQuizAnswers((prev) => ({
       ...prev,
       [questionId]: optionId,
@@ -164,12 +181,20 @@ export function useDataStructureVisualizer({ onComplete, currentScore = 0 }) {
     setQuizScoreResult(correctCount);
     setQuizSubmitted(true);
 
+    if (correctCount >= 3) {
+      soundEffects.playSuccess();
+      triggerConfetti();
+    } else {
+      soundEffects.playFail();
+    }
+
     if (onComplete) {
       onComplete('m3', earnedScore);
     }
   };
 
   const handleResetQuiz = () => {
+    soundEffects.playStep();
     setQuizAnswers({});
     setQuizSubmitted(false);
     setQuizScoreResult(0);

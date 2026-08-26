@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { soundEffects } from '../../../../utils/gameAudio';
+import { triggerConfetti } from '../../../../utils/confettiHelper';
 
 // Skenario Pertanyaan 2 Kemungkinan (Ya/Tidak) vs Banyak Kemungkinan
 export const REPRESENTATION_EXAMPLES = [
@@ -113,8 +115,16 @@ export function useBinaryCardGame({ onComplete, currentScore = 0 }) {
   const [quizSubmitted, setQuizSubmitted] = useState(currentScore > 0);
   const [quizScoreResult, setQuizScoreResult] = useState(Math.round(currentScore / 4));
 
+  useEffect(() => {
+    if (currentScore > 0) {
+      setQuizSubmitted(true);
+      setQuizScoreResult(Math.round(currentScore / 4));
+    }
+  }, [currentScore]);
+
   // Toggle switch Ya / Tidak pada contoh interaktif
   const handleToggleState = (id) => {
+    soundEffects.playStep();
     setInteractiveStates((prev) => ({
       ...prev,
       [id]: !prev[id],
@@ -124,6 +134,7 @@ export function useBinaryCardGame({ onComplete, currentScore = 0 }) {
   // Pilih Opsi Kuis
   const handleSelectQuizOption = (questionId, optionId) => {
     if (quizSubmitted) return;
+    soundEffects.playStep();
     setQuizAnswers((prev) => ({
       ...prev,
       [questionId]: optionId,
@@ -145,12 +156,20 @@ export function useBinaryCardGame({ onComplete, currentScore = 0 }) {
     setQuizScoreResult(correctCount);
     setQuizSubmitted(true);
 
+    if (correctCount >= 3) {
+      soundEffects.playSuccess();
+      triggerConfetti();
+    } else {
+      soundEffects.playFail();
+    }
+
     if (onComplete) {
       onComplete('m4', earnedScore);
     }
   };
 
   const handleResetQuiz = () => {
+    soundEffects.playStep();
     setQuizAnswers({});
     setQuizSubmitted(false);
     setQuizScoreResult(0);

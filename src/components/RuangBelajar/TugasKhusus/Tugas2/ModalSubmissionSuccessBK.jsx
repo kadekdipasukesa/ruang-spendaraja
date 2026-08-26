@@ -1,4 +1,4 @@
-import { Award, CheckCircle2, Sparkles, ArrowRight, Zap, Target, X } from 'lucide-react';
+import { Award, CheckCircle2, Sparkles, ArrowRight, Zap, Target, X, ShieldCheck, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ModalSubmissionSuccessBK({
@@ -6,12 +6,18 @@ export default function ModalSubmissionSuccessBK({
   onClose,
   totalScore = 0,
   scores = { m1: 0, m2: 0, m3: 0, m4: 0 },
+  submissionMeta = {},
   student,
   onGoToRuangBelajar,
 }) {
   if (!isOpen) return null;
 
-  const isPerfect = totalScore >= 100;
+  const savedScore = submissionMeta?.savedScore ?? totalScore;
+  const attemptScore = submissionMeta?.attemptScore ?? totalScore;
+  const previousScore = submissionMeta?.previousScore ?? 0;
+  const isRetained = submissionMeta?.isRetained;
+  const isImproved = submissionMeta?.isImproved;
+  const isPerfect = savedScore >= 100;
 
   return (
     <AnimatePresence>
@@ -45,10 +51,16 @@ export default function ModalSubmissionSuccessBK({
 
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-extrabold border border-amber-500/30">
-                <Sparkles className="w-3.5 h-3.5" /> Tugas 2 Berhasil Dikumpulkan & Masuk Log
+                <Sparkles className="w-3.5 h-3.5" /> Tugas 2 Berhasil Tersimpan & Masuk Log
               </div>
               <h3 className="text-xl sm:text-2xl font-extrabold text-white">
-                {isPerfect ? 'Sempurna! 100 Poin Penuh' : 'Nilai Berhasil Tersimpan!'}
+                {isPerfect
+                  ? 'Sempurna! 100 Poin Penuh'
+                  : isRetained
+                  ? 'Nilai Terbaik Tetap Dipertahankan!'
+                  : isImproved
+                  ? 'Rekor Skor Baru Tersimpan!'
+                  : 'Nilai Berhasil Tersimpan!'}
               </h3>
               <p className="text-xs text-slate-400 max-w-sm">
                 Nilai dan audit trail log poin telah disinkronkan langsung ke profilmu dan Log Skor Ruang Belajar.
@@ -58,11 +70,38 @@ export default function ModalSubmissionSuccessBK({
             {/* Score Big Display Card */}
             <div className="w-full p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400">Total Skor Akhir</span>
+                <div>
+                  <span className="text-xs font-bold text-slate-400 block text-left">Skor Resmi Tersimpan</span>
+                  {isRetained && (
+                    <span className="text-[10px] text-amber-400 font-semibold block text-left">
+                      (Nilai tertinggi dari percobaanmu)
+                    </span>
+                  )}
+                </div>
                 <span className="text-2xl font-black text-amber-400 tracking-tight">
-                  {totalScore} <span className="text-sm font-normal text-slate-500">/ 100 Poin</span>
+                  {savedScore} <span className="text-sm font-normal text-slate-500">/ 100 Poin</span>
                 </span>
               </div>
+
+              {/* Notice jika percobaan ke-2 lebih kecil */}
+              {isRetained && (
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-left text-xs text-indigo-200 flex items-start gap-2">
+                  <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                  <span>
+                    Skor percobaan saat ini adalah <strong>{attemptScore} Poin</strong>. Karena kamu pernah meraih <strong>{previousScore} Poin</strong> sebelumnya, maka sistem otomatis menjaga nilai terbesarmu!
+                  </span>
+                </div>
+              )}
+
+              {/* Notice jika skor meningkat */}
+              {isImproved && previousScore > 0 && (
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-left text-xs text-emerald-200 flex items-start gap-2">
+                  <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>
+                    Hebat! Skormu berhasil naik dari <strong>{previousScore} Poin</strong> menjadi <strong>{savedScore} Poin</strong>!
+                  </span>
+                </div>
+              )}
 
               {/* Breakdown 4 Misi */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-800/80 text-[11px]">
@@ -89,7 +128,7 @@ export default function ModalSubmissionSuccessBK({
             <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left text-xs text-amber-200 w-full flex items-start gap-2.5">
               <Zap className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <span>
-                <strong>Catatan Fleksibel:</strong> Kamu bisa mengulang atau menyempurnakan misi kapan saja untuk menaikkan skor menjadi 100 Poin penuh!
+                <strong>Catatan Fleksibel:</strong> Jawabanmu otomatis tersimpan. Kamu bisa lanjut berlatih atau memperbaiki bagian yang belum sempurna kapan saja untuk mencapai 100 Poin!
               </span>
             </div>
 
@@ -117,3 +156,4 @@ export default function ModalSubmissionSuccessBK({
     </AnimatePresence>
   );
 }
+

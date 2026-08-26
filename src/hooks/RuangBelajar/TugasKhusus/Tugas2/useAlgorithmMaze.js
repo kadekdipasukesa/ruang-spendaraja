@@ -1,4 +1,6 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { soundEffects } from '../../../../utils/gameAudio';
+import { triggerConfetti } from '../../../../utils/confettiHelper';
 
 // Level 1: Grid 4x4 (Pemula) - 15 Poin
 export const LEVEL_1_GRID = [
@@ -118,6 +120,21 @@ export function useAlgorithmMaze({ onComplete, currentScore = 0 }) {
     return { 1: 0, 2: 0, 3: 0 };
   });
 
+  // Sinkronkan levelScores jika currentScore dimuat dari penyimpanan
+  useEffect(() => {
+    if (currentScore > 0) {
+      setLevelScores((prev) => {
+        const prevTotal = (prev[1] || 0) + (prev[2] || 0) + (prev[3] || 0);
+        if (prevTotal === 0) {
+          if (currentScore >= 50) return { 1: 15, 2: 15, 3: 20 };
+          if (currentScore >= 30) return { 1: 15, 2: 15, 3: 0 };
+          if (currentScore >= 15) return { 1: 15, 2: 0, 3: 0 };
+        }
+        return prev;
+      });
+    }
+  }, [currentScore]);
+
   const [commands, setCommands] = useState([]);
   const [playerPos, setPlayerPos] = useState({ r: 0, c: 0 });
   const [isRunning, setIsRunning] = useState(false);
@@ -143,6 +160,14 @@ export function useAlgorithmMaze({ onComplete, currentScore = 0 }) {
     setMessage('');
   }, [isRunning, levelScores]);
 
+  // Go to Next Level (Level 1 -> 2, Level 2 -> 3)
+  const nextLevel = useCallback(() => {
+    if (isRunning) return;
+    if (currentLevel < 3) {
+      selectLevel(currentLevel + 1);
+    }
+  }, [isRunning, currentLevel, selectLevel]);
+
   // Reset robot ke start
   const resetPlayer = useCallback(() => {
     setPlayerPos({ r: 0, c: 0 });
@@ -154,17 +179,25 @@ export function useAlgorithmMaze({ onComplete, currentScore = 0 }) {
 
   const addCommand = useCallback((dir) => {
     if (isRunning) return;
-    const maxCmd = currentLevel === 3 ? 35 : 18;
-    setCommands((prev) => (prev.length < maxCmd ? [...prev, dir] : prev));
-  }, [isRunning, currentLevel]);
+    const maxCmd = 40; // Kapasitas instruksi fleksibel hingga 40 langkah untuk arena 10x10
+    setCommands((prev) => {
+      if (prev.length < maxCmd) {
+        soundEffects.playStep();
+        return [...prev, dir];
+      }
+      return prev;
+    });
+  }, [isRunning]);
 
   const removeCommand = useCallback((idx) => {
     if (isRunning) return;
+    soundEffects.playStep();
     setCommands((prev) => prev.filter((_, i) => i !== idx));
   }, [isRunning]);
 
   const clearCommands = useCallback(() => {
     if (isRunning) return;
+    soundEffects.playStep();
     setCommands([]);
     resetPlayer();
   }, [isRunning, resetPlayer]);
@@ -181,7 +214,7 @@ export function useAlgorithmMaze({ onComplete, currentScore = 0 }) {
     let curC = 0;
     const rows = activeGrid.length;
     const cols = activeGrid[0].length;
-    const stepDelay = currentLevel === 3 ? 200 : 350;
+    const stepDelay = currentLevel === 3 ? 180 : 300;
 
     for (let i = 0; i < commands.length; i++) {
       setActiveStep(i);
@@ -199,6 +232,7 @@ export function useAlgorithmMaze({ onComplete, currentScore = 0 }) {
       if (curR < 0 || curR >= rows || curC < 0 || curC >= cols) {
         setIsRunning(false);
         setStatus('failed');
+        soundEffects.playFail();
         setMessage('💥 Robot keluar dari area lintasan labirin! Perbaiki urutan instruksimu.');
         return;
       }
@@ -208,7 +242,8 @@ export function useAlgorithmMaze({ onComplete, currentScore = 0 }) {
         setPlayerPos({ r: curR, c: curC });
         setIsRunning(false);
         setStatus('failed');
-        setMessage('💥 Robot menabrak dinding tembok! Periksa kembali jalur algoritma agar tidak menabrak rintangan.');
+        soundEffects.playFail();
+        setMessage('💥 Robot menabrak dinding bata! Periksa kembali jalur algoritma agar tidak menabrak rintangan.');
         return;
       }
 
@@ -220,41 +255,43 @@ export function useAlgorithmMaze({ onComplete, currentScore = 0 }) {
         const totalSteps = i + 1;
         setIsRunning(false);
 
-        let earned = activeMaxPoints;
+        // Aturan ketat: Hanya jika tepat jumlah langkah optimal baru dapat poin penuh
         if (totalSteps === activeOptimalSteps && commands.length === activeOptimalSteps) {
-          earned = activeMaxPoints;
+          const earned = activeMaxPoints;
           setStatus('success');
+          soundEffects.playLevelUp();
+          triggerConfetti();
           setMessage(`🎉 LUAR BIASA! Robot berhasil menemukan JALUR TERCEPAT & PALING EFISIEN (${activeOptimalSteps} langkah)! (+${earned} Poin).`);
-        } else if (commands.length > activeOptimalSteps) {
-          earned = Math.max(5, activeMaxPoints - 5);
-          setStatus('suboptimal');
-          setMessage(`⚠️ Robot sampai di FINISH dengan ${commands.length} langkah (+${earned} Poin). Jalur tercepat membutuhkan tepat ${activeOptimalSteps} langkah untuk poin penuh (+${activeMaxPoints})!`);
+
+          const updatedScores = {
+            ...levelScores,
+            [currentLevel]: earned
+          };
+          setLevelScores(updatedScores);
+
+          const newTotal = (updatedScores[1] || 0) + (updatedScores[2] || 0) + (updatedScores[3] || 0);
+          if (onComplete) onComplete('m1', newTotal);
+          return;
         } else {
-          earned = activeMaxPoints;
-          setStatus('success');
-          setMessage(`🎉 Robot berhasil mencapai FINISH! (${totalSteps} langkah).`);
+          // Bukan jumlah langkah optimal -> 0 Poin
+          setStatus('suboptimal');
+          soundEffects.playFail();
+          setMessage(`⚠️ Robot sampai di FINISH dengan ${commands.length} langkah, tetapi jalur belum efisien! Target tercepat adalah TEPAT ${activeOptimalSteps} langkah untuk mendapat (+${activeMaxPoints} Poin). Saat ini: 0 Poin.`);
+          return;
         }
-
-        const updatedScores = {
-          ...levelScores,
-          [currentLevel]: Math.max(levelScores[currentLevel] || 0, earned)
-        };
-        setLevelScores(updatedScores);
-
-        const newTotal = (updatedScores[1] || 0) + (updatedScores[2] || 0) + (updatedScores[3] || 0);
-        if (onComplete) onComplete('m1', newTotal);
-        return;
       }
     }
 
     setIsRunning(false);
     setStatus('failed');
+    soundEffects.playFail();
     setMessage('⚠️ Instruksi habis namun robot belum mencapai bendera FINISH. Tambahkan langkah yang tepat!');
   };
 
   return {
     currentLevel,
     selectLevel,
+    nextLevel,
     levelScores,
     totalM1Score,
     activeGrid,

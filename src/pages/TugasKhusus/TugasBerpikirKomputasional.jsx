@@ -25,6 +25,7 @@ export default function TugasBerpikirKomputasional() {
     loading,
     showSuccessModal,
     setShowSuccessModal,
+    submissionMeta,
     handleOpenLogin,
     handleMissionComplete,
     handleResetAll,
@@ -107,6 +108,7 @@ export default function TugasBerpikirKomputasional() {
         onClose={() => setShowSuccessModal(false)}
         totalScore={totalScore}
         scores={scores}
+        submissionMeta={submissionMeta}
         student={user}
         onGoToRuangBelajar={() => navigate('/ruang-belajar')}
       />

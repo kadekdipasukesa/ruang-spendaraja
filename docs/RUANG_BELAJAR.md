@@ -94,8 +94,13 @@ src/
 ```
 
 ### 1. Tab Timeline (`TimelineTugas.jsx`)
-* Menampilkan daftar modul pelajaran.
-* Jika tugas memiliki `custom_route` (misal `/tugas/simulasi-folder`), tombol aksi akan mengarahkan siswa langsung ke rute simulator khusus.
+* Menampilkan daftar modul pelajaran dan alur roadmap pembelajaran.
+* **Indikator Visual & Kartu Interaktif**:
+  - **Tuntas Sempurna (100%)**: Badge hijau emerald (`Tuntas: 100/100 Poin`) + banner nilai resmi lengkap dengan ikon piala & tombol *"Lihat / Ulangi Praktik"*.
+  - **Tersimpan Sebagian / Lanjutan (Skor < Maksimal)**: Badge amber (`Tersimpan: X/100 Poin`) + status strip berisi *progress bar* animasi & tombol *"Lanjutkan & Sempurnakan Skor (X/100 Poin)"*.
+  - **Draft Pengerjaan Lokal**: Badge indigo (`Draft: X/100 Poin`) + progress bar & tombol *"Lanjutkan Draft"*.
+  - **Belum Mulai**: Badge bobot tugas + tombol *"Mulai Praktik"* / *"Mulai Petualangan BK"*.
+* Jika tugas memiliki `custom_route` (misal `/tugas/simulasi-folder` atau `/tugas/berpikir-komputasional`), tombol aksi akan mengarahkan siswa langsung ke modul tugas terkait.
 * Jika tugas tipe upload file / link, membuka `ModalSubmitProyek.jsx`.
 
 ### 2. Tab Log Nilai (`LogScoreTugas.jsx`)

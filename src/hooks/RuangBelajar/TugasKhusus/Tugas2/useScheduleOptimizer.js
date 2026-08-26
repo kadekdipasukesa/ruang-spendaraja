@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BookOpen, Shirt, FileCode, Utensils, Sparkles } from 'lucide-react';
+import { soundEffects } from '../../../../utils/gameAudio';
+import { triggerConfetti } from '../../../../utils/confettiHelper';
 
 export const INITIAL_SCHEDULE_TASKS = [
   {
@@ -84,8 +86,15 @@ export function useScheduleOptimizer({ onComplete, currentScore = 0 }) {
   const [message, setMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(currentScore >= 10);
 
+  useEffect(() => {
+    if (currentScore >= 10) {
+      setIsSuccess(true);
+    }
+  }, [currentScore]);
+
   const handleSelectTask = (task) => {
     if (placedTaskIds.includes(task.id)) return;
+    soundEffects.playStep();
     if (selectedTask?.id === task.id) {
       setSelectedTask(null);
     } else {
@@ -99,6 +108,7 @@ export function useScheduleOptimizer({ onComplete, currentScore = 0 }) {
   };
 
   const removeTask = (taskId) => {
+    soundEffects.playStep();
     const newSchedule = schedule.map((slot) => {
       const primary = slot.primary?.id === taskId ? null : slot.primary;
       const parallel = slot.parallel?.id === taskId ? null : slot.parallel;
@@ -117,6 +127,7 @@ export function useScheduleOptimizer({ onComplete, currentScore = 0 }) {
 
     // Cek batas slot
     if (slotIdx + task.duration > SCHEDULE_SLOTS.length) {
+      soundEffects.playFail();
       setMessage(`⚠️ Slot waktu tidak cukup! Durasi "${task.name}" butuh ${task.duration} jam, tetapi waktu berakhir pada jam 13:00.`);
       return;
     }
@@ -125,20 +136,25 @@ export function useScheduleOptimizer({ onComplete, currentScore = 0 }) {
     for (let i = slotIdx; i < slotIdx + task.duration; i++) {
       if (!isParallel) {
         if (schedule[i].primary) {
+          soundEffects.playFail();
           setMessage(`⚠️ Jam ${SCHEDULE_SLOTS[i].hour} sudah terisi aktivitas utama: "${schedule[i].primary.name}".`);
           return;
         }
       } else {
         if (schedule[i].parallel) {
+          soundEffects.playFail();
           setMessage(`⚠️ Jam ${SCHEDULE_SLOTS[i].hour} sudah terisi aktivitas paralel lain!`);
           return;
         }
         if (!schedule[i].primary || schedule[i].primary.id !== 't2') {
+          soundEffects.playFail();
           setMessage(`⚠️ Aktivitas membaca buku hanya bisa dilakukan bersamaan saat "Mencuci Baju di Mesin Cuci" sedang berlangsung di slot tersebut.`);
           return;
         }
       }
     }
+
+    soundEffects.playStep();
 
     // Update schedule
     const newSchedule = schedule.map((slot, idx) => {
@@ -163,9 +179,12 @@ export function useScheduleOptimizer({ onComplete, currentScore = 0 }) {
       );
       if (hasParallelOptimal) {
         setIsSuccess(true);
+        soundEffects.playSuccess();
+        triggerConfetti();
         setMessage('🎉 LUAR BIASA! Kamu berhasil menyusun jadwal optimal dengan teknik paralel multitasking (selesai sebelum 13:00)! Misi Selesai (10 Poin).');
         if (onComplete) onComplete('m2', 10);
       } else {
+        soundEffects.playFail();
         setMessage('⚠️ Seluruh aktivitas telah terpasang, namun optimasi paralel belum tepat (6 Poin). Pasang membaca di jalur paralel mesin cuci agar mendapat 10 Poin penuh!');
         if (onComplete) onComplete('m2', 6);
       }
@@ -177,6 +196,7 @@ export function useScheduleOptimizer({ onComplete, currentScore = 0 }) {
   };
 
   const resetSchedule = () => {
+    soundEffects.playStep();
     setSchedule(Array(SCHEDULE_SLOTS.length).fill(null).map(() => ({ primary: null, parallel: null })));
     setPlacedTaskIds([]);
     setSelectedTask(null);

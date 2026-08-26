@@ -95,6 +95,7 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
   - Controller: `src/pages/TugasKhusus/TugasBerpikirKomputasional.jsx`
   - Sub-komponen: `BKHeader.jsx`, `BKMissionTabs.jsx`, `BKFooterNav.jsx`, `ModalSubmissionSuccessBK.jsx`, `AlgorithmMaze.jsx` (`learning/M1LearningMaterial.jsx`, `maze/MazeGrid.jsx`, `maze/CommandPanel.jsx`), `ScheduleOptimizer.jsx` (`learning/M2LearningMaterial.jsx`, `schedule/TaskList.jsx`, `schedule/TimelineGrid.jsx`), `DataStructureVisualizer.jsx` (`learning/M3LearningMaterial.jsx`, `data-structure/ListVisualizer.jsx`, `data-structure/StructureQuizPanel.jsx`), `BinaryCardGame.jsx` (`learning/M4LearningMaterial.jsx`, `binary/RepresentationVisualizer.jsx`, `binary/RepresentationQuizPanel.jsx`).
   - Custom Hooks: `src/hooks/RuangBelajar/TugasKhusus/Tugas2/` (`useTugasBKState.js`, `useAlgorithmMaze.js`, `useScheduleOptimizer.js`, `useDataStructureVisualizer.js`, `useBinaryCardGame.js`).
+  - Fitur Persistensi & Skor: Menyimpan draft jawaban per akun siswa ke `localStorage` agar progres dapat dilanjutkan kapan saja, serta otomatis mempertahankan nilai terbesar/tertinggi (`Math.max`) jika pengumpulan berikutnya menghasilkan skor yang lebih rendah.
 
 ---
 

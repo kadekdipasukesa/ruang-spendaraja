@@ -52,10 +52,20 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
           <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100">
             Tugas #{task.urutan || 1} • {task.kategori || task.category || 'Informatika'}
           </span>
-          {isCompleted ? (
-            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1">
+          {task.earnedScore !== null && task.earnedScore !== undefined && task.earnedScore >= points ? (
+            <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1 border border-emerald-300">
               <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-              Tuntas ({task.earnedScore ?? points}/{points} Poin)
+              Tuntas Sempurna ({task.earnedScore}/{points} Poin)
+            </span>
+          ) : task.earnedScore !== null && task.earnedScore !== undefined && task.earnedScore > 0 ? (
+            <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 flex items-center gap-1 border border-amber-300">
+              <Award className="w-3 h-3 text-amber-600" />
+              Tersimpan ({task.earnedScore}/{points} Poin)
+            </span>
+          ) : task.localDraftScore ? (
+            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 flex items-center gap-1 border border-indigo-200">
+              <Clock className="w-3 h-3 text-indigo-600" />
+              Draft ({task.localDraftScore}/{points} Poin)
             </span>
           ) : (
             <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
@@ -71,6 +81,29 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
         <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
           {task.deskripsi || task.description}
         </p>
+
+        {/* Status Score Progress Banner */}
+        {task.earnedScore !== null && task.earnedScore !== undefined && (
+          <div className={`mt-4 p-3.5 rounded-2xl border text-xs flex items-center justify-between gap-3 ${
+            task.earnedScore >= points
+              ? 'bg-emerald-50/90 border-emerald-200 text-emerald-950'
+              : 'bg-amber-50/90 border-amber-200 text-amber-950'
+          }`}>
+            <div className="flex items-center gap-2.5">
+              <Award className={`w-4 h-4 shrink-0 ${task.earnedScore >= points ? 'text-emerald-600' : 'text-amber-600'}`} />
+              <div>
+                <strong className="block">
+                  {task.earnedScore >= points ? 'Nilai Resmi Tercatat' : 'Skor Terbaik Tersimpan'}: {task.earnedScore} / {points} Poin
+                </strong>
+                <span className="text-[11px] opacity-80">
+                  {task.earnedScore >= points
+                    ? 'Nilai sempurna 100% sudah masuk ke database & Papan Peringkat.'
+                    : 'Nilai sudah tersimpan. Kamu dapat mengulang misi untuk meraih poin maksimal.'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Petunjuk Langkah Pengerjaan */}
         {task.petunjuk && task.petunjuk.length > 0 && (
@@ -149,7 +182,7 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
                 type="button"
                 onClick={() => {
                   onClose();
-                  navigate(task.custom_route || '/ruang-belajar/tugas/simulasi-folder');
+                  navigate(task.custom_route || '/tugas/simulasi-folder');
                 }}
                 className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-xl shadow-2xs transition ${
                   isCompleted && (task.earnedScore ?? 0) >= points
@@ -175,11 +208,11 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
                 type="button"
                 onClick={() => {
                   onClose();
-                  navigate(task.custom_route || '/ruang-belajar/tugas/kuis-algoritma');
+                  navigate(task.custom_route || '/tugas/berpikir-komputasional');
                 }}
                 className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-xl shadow-2xs transition ${
                   isCompleted && (task.earnedScore ?? 0) >= points
-                    ? 'bg-slate-800 hover:bg-slate-900'
+                    ? 'bg-emerald-700 hover:bg-emerald-800'
                     : (task.earnedScore ?? 0) > 0 || task.status === 'sedang'
                     ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'
                     : 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/20'
@@ -188,10 +221,10 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
                 <Play className="w-3.5 h-3.5 fill-current" />
                 <span>
                   {isCompleted && (task.earnedScore ?? 0) >= points
-                    ? 'Lihat Ulang Kuis'
+                    ? 'Lihat / Ulangi Petualangan BK (100 Poin)'
                     : (task.earnedScore ?? 0) > 0 || task.status === 'sedang'
-                    ? 'Lanjutkan Kuis Interaktif'
-                    : 'Mulai Kuis Interaktif'}
+                    ? `Lanjutkan Petualangan BK (${task.earnedScore || task.localDraftScore || 0}/${points} Poin)`
+                    : 'Mulai Petualangan BK (4 Misi)'}
                 </span>
               </button>
             )}

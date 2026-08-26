@@ -79,26 +79,35 @@ export default function TimelineTugas({
 
   // Compute action button label & style based on student progress
   const getTaskActionButton = (task) => {
-    const isCompleted = task.status === 'selesai' || task.status === 'dinilai';
-    const earnedScore = task.earnedScore;
     const maxPoints = task.poin_maksimal || task.points || 100;
-    const isPerfect = earnedScore !== null && earnedScore !== undefined && earnedScore >= maxPoints;
-    const hasStarted = (earnedScore !== null && earnedScore !== undefined) || task.status === 'sedang';
+    const hasSubmitted = task.earnedScore !== null && task.earnedScore !== undefined;
+    const earnedScore = hasSubmitted ? Number(task.earnedScore) : null;
+    const localDraftScore = task.localDraftScore !== null && task.localDraftScore !== undefined ? Number(task.localDraftScore) : null;
+
+    const isPerfect = hasSubmitted && earnedScore >= maxPoints;
+    const isPartial = hasSubmitted && earnedScore > 0 && earnedScore < maxPoints;
+    const isDraft = !hasSubmitted && localDraftScore !== null && localDraftScore > 0;
 
     if (isPerfect) {
       return {
-        label: `Lihat Hasil Praktik (${earnedScore}/${maxPoints} Poin)`,
-        btnClass: 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300/80',
-        icon: Award
+        label: `Lihat / Ulangi Praktik (${earnedScore}/${maxPoints} Poin)`,
+        btnClass: 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold shadow-2xs',
+        icon: CheckCircle2
       };
     }
 
-    if (hasStarted && (!earnedScore || earnedScore < maxPoints)) {
+    if (isPartial) {
       return {
-        label: earnedScore !== null && earnedScore !== undefined
-          ? `Lanjutkan Pengerjaan (Skor Saat Ini: ${earnedScore}/${maxPoints})`
-          : 'Lanjutkan Pengerjaan yang Belum Selesai',
-        btnClass: 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm shadow-amber-600/20',
+        label: `Lanjutkan & Sempurnakan Skor (${earnedScore}/${maxPoints} Poin)`,
+        btnClass: 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm shadow-amber-600/20 font-bold',
+        icon: Play
+      };
+    }
+
+    if (isDraft) {
+      return {
+        label: `Lanjutkan Draft (${localDraftScore}/${maxPoints} Poin)`,
+        btnClass: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20 font-bold',
         icon: Play
       };
     }
@@ -107,20 +116,20 @@ export default function TimelineTugas({
     if (task.tipe_tugas === 'simulasi') {
       return {
         label: 'Mulai Praktik Simulasi Lab',
-        btnClass: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20',
+        btnClass: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20 font-bold',
         icon: Play
       };
     }
     if (task.tipe_tugas === 'kuis') {
       return {
-        label: 'Mulai Kuis Interaktif',
-        btnClass: 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm shadow-purple-600/20',
+        label: 'Mulai Petualangan BK (4 Misi)',
+        btnClass: 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-sm shadow-purple-600/20 font-bold',
         icon: Play
       };
     }
     return {
       label: 'Kirim / Kumpulkan Tugas',
-      btnClass: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20',
+      btnClass: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20 font-bold',
       icon: Send
     };
   };
@@ -143,10 +152,17 @@ export default function TimelineTugas({
       <div className="relative pl-6 sm:pl-10 space-y-8 before:absolute before:left-3 sm:before:left-5 before:top-4 before:bottom-4 before:w-0.5 before:bg-slate-200">
         {tasks.map((task, idx) => {
           const typeInfo = getTypeBadge(task.tipe_tugas);
-          const isCompleted = task.status === 'selesai' || task.status === 'dinilai';
-          const isInProgress = task.status === 'sedang';
-          const isDisabled = task.is_active === false;
           const points = task.poin_maksimal || task.points || 100;
+          const hasSubmitted = task.earnedScore !== null && task.earnedScore !== undefined;
+          const earnedScore = hasSubmitted ? Number(task.earnedScore) : null;
+          const localDraftScore = task.localDraftScore !== null && task.localDraftScore !== undefined ? Number(task.localDraftScore) : null;
+
+          const isPerfect = hasSubmitted && earnedScore >= points;
+          const isPartial = hasSubmitted && earnedScore > 0 && earnedScore < points;
+          const isDraft = !hasSubmitted && localDraftScore !== null && localDraftScore > 0;
+          const isCompleted = isPerfect || (hasSubmitted && (task.status === 'selesai' || task.status === 'dinilai'));
+          const isInProgress = isPartial || isDraft || task.status === 'sedang';
+          const isDisabled = task.is_active === false;
           const isEditingThisWeight = editingWeightId === task.id;
 
           return (
@@ -162,14 +178,16 @@ export default function TimelineTugas({
                 className={`absolute -left-6 sm:-left-10 top-5 w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 flex items-center justify-center font-bold text-xs shadow-xs transition-all z-10 ${
                   isDisabled
                     ? 'bg-slate-100 border-slate-300 text-slate-400'
-                    : isCompleted
+                    : isPerfect
                     ? 'bg-emerald-500 border-emerald-600 text-white'
+                    : isPartial
+                    ? 'bg-amber-500 border-amber-600 text-white ring-4 ring-amber-100'
                     : isInProgress
                     ? 'bg-indigo-600 border-indigo-700 text-white ring-4 ring-indigo-100'
                     : 'bg-white border-indigo-400 text-indigo-700'
                 }`}
               >
-                {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : idx + 1}
+                {isPerfect ? <CheckCircle2 className="w-3.5 h-3.5" /> : idx + 1}
               </div>
 
               {/* Task Card Box */}
@@ -177,8 +195,12 @@ export default function TimelineTugas({
                 className={`rounded-3xl border transition-all p-5 sm:p-6 ${
                   isDisabled
                     ? 'bg-slate-50/70 border-slate-200/80 opacity-75'
-                    : isCompleted
-                    ? 'bg-white border-emerald-200/90 shadow-2xs'
+                    : isPerfect
+                    ? 'bg-white border-emerald-200 shadow-2xs hover:border-emerald-300'
+                    : isPartial
+                    ? 'bg-white border-amber-200 shadow-2xs hover:border-amber-300 ring-1 ring-amber-100'
+                    : isInProgress
+                    ? 'bg-white border-indigo-200 shadow-2xs hover:border-indigo-300'
                     : 'bg-white border-slate-200/90 shadow-2xs hover:border-indigo-300'
                 }`}
               >
@@ -206,14 +228,24 @@ export default function TimelineTugas({
                       <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600 flex items-center gap-1">
                         <EyeOff className="w-3 h-3" /> Nonaktif
                       </span>
-                    ) : isCompleted ? (
-                      <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1.5 shadow-2xs">
+                    ) : isPerfect ? (
+                      <span className="text-xs font-black px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1.5 shadow-2xs border border-emerald-300">
                         <Award className="w-3.5 h-3.5 text-emerald-600" />
-                        Tuntas: {task.earnedScore ?? points}/{points} Poin
+                        Tuntas: {earnedScore}/{points} Poin
+                      </span>
+                    ) : isPartial ? (
+                      <span className="text-xs font-black px-3 py-1 rounded-full bg-amber-100 text-amber-900 flex items-center gap-1.5 shadow-2xs border border-amber-300">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                        Tersimpan: {earnedScore}/{points} Poin
+                      </span>
+                    ) : isDraft ? (
+                      <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 flex items-center gap-1 border border-indigo-200">
+                        <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                        Draft: {localDraftScore}/{points} Poin
                       </span>
                     ) : isInProgress ? (
                       <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-amber-600" /> Menunggu Penilaian
+                        <Clock className="w-3 h-3 text-amber-600" /> Sedang Dikerjakan
                       </span>
                     ) : (
                       <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
@@ -230,6 +262,92 @@ export default function TimelineTugas({
                 <p className="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
                   {task.deskripsi || task.description}
                 </p>
+
+                {/* --- PROMINENT STATUS & SCORE PROGRESS STRIP --- */}
+                {isPerfect && (
+                  <div className="mt-4 p-3.5 rounded-2xl bg-emerald-50/90 border border-emerald-200 flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black shrink-0 shadow-xs">
+                        <Award className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-emerald-950">
+                            Nilai Resmi: {earnedScore} / {points} Poin
+                          </span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-800">
+                            100% Selesai Sempurna
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-emerald-700 mt-0.5">
+                          Tugas telah tuntas dan tersinkronisasi di profil serta Papan Peringkat Ruang Belajar.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {isPartial && (
+                  <div className="mt-4 p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200 space-y-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black shrink-0 shadow-xs">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-black text-amber-950 block">
+                            Skor Terbaik Tersimpan: {earnedScore} / {points} Poin
+                          </span>
+                          <span className="text-[11px] text-amber-700">
+                            Nilai sudah masuk database. Lanjutkan untuk mencapai 100 poin penuh (nilai tertinggi otomatis terjaga).
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-xs font-black text-amber-800 bg-amber-200/80 px-2.5 py-1 rounded-lg border border-amber-300">
+                        {Math.round((earnedScore / points) * 100)}% Selesai
+                      </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-amber-200/60 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, Math.max(5, (earnedScore / points) * 100))}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {isDraft && (
+                  <div className="mt-4 p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-200 space-y-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black shrink-0 shadow-xs">
+                          <Clock className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-black text-indigo-950 block">
+                            Draft Pengerjaan Lokal: {localDraftScore} / {points} Poin
+                          </span>
+                          <span className="text-[11px] text-indigo-700">
+                            Progres tersimpan di peramban ini. Lanjutkan pengerjaan dan kumpulkan nilai ke guru.
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold text-indigo-800 bg-indigo-100 px-2.5 py-1 rounded-lg border border-indigo-200">
+                        Sedang Berjalan
+                      </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-indigo-200/60 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, Math.max(5, (localDraftScore / points) * 100))}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Instructions preview if any */}
                 {task.petunjuk && task.petunjuk.length > 0 && (
