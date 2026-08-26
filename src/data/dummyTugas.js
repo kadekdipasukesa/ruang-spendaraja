@@ -42,11 +42,11 @@ export const DUMMY_TUGAS = [
     submission: null
   },
   {
-    id: "tugas-inf-02",
+    id: "c2243c08-ce28-4fe7-8ff7-86f9b546ecd0",
     kode_tugas: "TUGAS-02-KUIS-ALGO",
     urutan: 2,
-    title: "Kuis Interaktif: Logika Berpikir Komputasional",
-    judul: "Kuis Interaktif: Logika Berpikir Komputasional",
+    title: "Tugas 2: Petualangan Berpikir Komputasional",
+    judul: "Tugas 2: Petualangan Berpikir Komputasional",
     subject: "Informatika",
     category: "Berpikir Komputasional",
     kategori: "Berpikir Komputasional",
@@ -55,26 +55,30 @@ export const DUMMY_TUGAS = [
     custom_route: "/ruang-belajar/tugas/kuis-algoritma",
     points: 100,
     poin_maksimal: 100,
-    deadline: "2026-08-28T23:59:59",
-    priority: "Sedang",
+    deadline: "2026-09-15T23:59:59",
+    priority: "Tinggi",
     status: "belum",
     is_active: true,
     target_kelas: "SEMUA",
     teacher: "Pak Dipa, S.Kom.",
     estimatedTime: "25 Menit",
-    description: "Uji pemahaman 4 pilar Computational Thinking (Dekomposisi, Pengenalan Pola, Abstraksi, Algoritma) melalui 10 soal skenario interaktif berdurasi 15 menit dengan penilaian instan.",
-    deskripsi: "Uji pemahaman 4 pilar Computational Thinking (Dekomposisi, Pengenalan Pola, Abstraksi, Algoritma) melalui 10 soal skenario interaktif berdurasi 15 menit dengan penilaian instan.",
+    description: "Selesaikan 4 misi logika interaktif Bab 1: (1) Algoritma Labirin Jalur Tercepat 3 Level (50p), (2) Optimalisasi Penjadwalan Waktu Gantt (10p), (3) Struktur Data Daftar & Kata Rahasia (20p), dan (4) Representasi Data Logika 2 Kemungkinan (20p).",
+    deskripsi: "Selesaikan 4 misi logika interaktif Bab 1: (1) Algoritma Labirin Jalur Tercepat 3 Level (50p), (2) Optimalisasi Penjadwalan Waktu Gantt (10p), (3) Struktur Data Daftar & Kata Rahasia (20p), dan (4) Representasi Data Logika 2 Kemungkinan (20p).",
     petunjuk: [
-      "Pastikan Anda siap sebelum menekan tombol Mulai Kuis.",
-      "Kuis berdurasi maksimal 15 menit.",
-      "Jawab semua 10 pertanyaan studi kasus bergambar.",
-      "Skor akan otomatis terhitung dan tercatat di Log Skor & Leaderboard."
+      "Pelajari materi pada tab 'Belajar Materi' di setiap misi sebelum memulai tantangan.",
+      "Misi 1: Susun blok algoritma arah untuk memandu robot mencapai FINISH dalam langkah paling efisien (Level 1: 4x4, Level 2: 5x5, Level 3: 10x10).",
+      "Misi 2: Susun 5 jadwal kegiatan hari Minggu dan manfaatkan jalur multitasking agar selesai sebelum pukul 13:00.",
+      "Misi 3: Eksplorasi manipulasi daftar belanja, tebak kata rahasia, dan selesaikan 5 soal kuis struktur data.",
+      "Misi 4: Pahami logika sinyal biner Ya/Tidak dan selesaikan 5 soal cerita representasi data.",
+      "Klik tombol 'Cek & Kumpulkan' di kanan atas untuk menyimpan nilai. Nilai dapat diperbaiki kapan saja hingga mencapai 100 poin penuh!"
     ],
     instructions: [
-      "Pastikan Anda siap sebelum menekan tombol Mulai Kuis.",
-      "Kuis berdurasi maksimal 15 menit.",
-      "Jawab semua 10 pertanyaan studi kasus bergambar.",
-      "Skor akan otomatis terhitung dan tercatat di Log Skor & Leaderboard."
+      "Pelajari materi pada tab 'Belajar Materi' di setiap misi sebelum memulai tantangan.",
+      "Misi 1: Susun blok algoritma arah untuk memandu robot mencapai FINISH dalam langkah paling efisien (Level 1: 4x4, Level 2: 5x5, Level 3: 10x10).",
+      "Misi 2: Susun 5 jadwal kegiatan hari Minggu dan manfaatkan jalur multitasking agar selesai sebelum pukul 13:00.",
+      "Misi 3: Eksplorasi manipulasi daftar belanja, tebak kata rahasia, dan selesaikan 5 soal kuis struktur data.",
+      "Misi 4: Pahami logika sinyal biner Ya/Tidak dan selesaikan 5 soal cerita representasi data.",
+      "Klik tombol 'Cek & Kumpulkan' di kanan atas untuk menyimpan nilai. Nilai dapat diperbaiki kapan saja hingga mencapai 100 poin penuh!"
     ],
     attachments: [
       { name: "Rangkuman_Computational_Thinking.pdf", type: "pdf", size: "1.1 MB", url: "#" }

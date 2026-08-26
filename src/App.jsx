@@ -36,6 +36,7 @@ import JurnalLabPage from './pages/JurnalLabPage';      // Halaman Jurnal Lab Ba
 // 📂 IMPOR HALAMAN TUGAS KHUSUS RUANG BELAJAR
 import TugasSimulasiFolder from './pages/TugasKhusus/TugasSimulasiFolder';
 import TugasKuisAlgoritma from './pages/TugasKhusus/TugasKuisAlgoritma';
+import TugasBerpikirKomputasional from './pages/TugasKhusus/TugasBerpikirKomputasional';
 
 
 function AppContent() {
@@ -149,7 +150,10 @@ function AppContent() {
 
         {/* ─── 📚 RUTE TUGAS KHUSUS RUANG BELAJAR ─── */}
         <Route path="/ruang-belajar/tugas/simulasi-folder" element={<TugasSimulasiFolder />} />
-        <Route path="/ruang-belajar/tugas/kuis-algoritma" element={<TugasKuisAlgoritma />} />
+        <Route path="/ruang-belajar/tugas/kuis-algoritma" element={<TugasBerpikirKomputasional />} />
+        <Route path="/tugas/simulasi-folder" element={<TugasSimulasiFolder />} />
+        <Route path="/tugas/kuis-algoritma" element={<TugasBerpikirKomputasional />} />
+        <Route path="/tugas/berpikir-komputasional" element={<TugasBerpikirKomputasional />} />
 
       </Routes>
     </div>
