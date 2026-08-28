@@ -18,10 +18,13 @@ export default function TimelineContainer({
     const scrollRef = useRef(null);
 
     const getLocalDateString = (d) => {
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Makassar',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        return formatter.format(d);
     };
 
     const todayDayKey = useMemo(() => getLocalDateString(new Date()), []);
@@ -37,7 +40,7 @@ export default function TimelineContainer({
                 second: '2-digit',
                 hour12: false
             };
-            setTimeWITA(new Intl.DateTimeFormat('id-ID', options).format(now));
+            setTimeWITA(new Intl.DateTimeFormat('id-ID', options).format(now).replace('.', ':'));
         };
 
         updateClock();
@@ -59,7 +62,7 @@ export default function TimelineContainer({
             if (!months[monthKey]) {
                 months[monthKey] = {
                     monthKey,
-                    label: dateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
+                    label: dateObj.toLocaleDateString('id-ID', { timeZone: 'Asia/Makassar', month: 'long', year: 'numeric' }),
                     days: {},
                     totalItems: 0
                 };
@@ -68,7 +71,7 @@ export default function TimelineContainer({
             if (!months[monthKey].days[dayKey]) {
                 months[monthKey].days[dayKey] = {
                     dayKey,
-                    label: dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }),
+                    label: dateObj.toLocaleDateString('id-ID', { timeZone: 'Asia/Makassar', weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }),
                     items: []
                 };
             }
@@ -109,7 +112,7 @@ export default function TimelineContainer({
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Jadwal Praktikum Lab</span>
+                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Jurnal Kegiatan Lab</span>
                 </div>
                 <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-950 border border-slate-800 rounded-full text-xs font-mono font-bold text-emerald-400 shadow-inner">
                     <Clock className="w-3.5 h-3.5 text-emerald-500" />
@@ -131,6 +134,11 @@ export default function TimelineContainer({
                         const isMonthOpen = Boolean(openGroups[`month_${mKey}`]);
                         const dayKeys = Object.keys(monthGroup.days).sort().reverse();
 
+                        const monthPendingCount = Object.values(monthGroup.days).reduce(
+                            (acc, day) => acc + day.items.filter((item) => item.status_pengajuan === 'pending').length,
+                            0
+                        );
+
                         return (
                             <div key={mKey} className="border border-slate-800/80 rounded-xl bg-slate-950/40 overflow-hidden">
                                 <button
@@ -138,9 +146,18 @@ export default function TimelineContainer({
                                     onClick={() => toggleGroup(`month_${mKey}`)}
                                     className="w-full flex items-center justify-between p-3 bg-slate-900/90 hover:bg-slate-800/80 transition-colors text-left cursor-pointer select-none"
                                 >
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         <Calendar className="w-4 h-4 text-indigo-400" />
                                         <span className="text-xs font-bold text-white capitalize">{monthGroup.label}</span>
+                                        {monthPendingCount > 0 && (
+                                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30 text-[10px] font-bold">
+                                                <span className="relative flex h-2 w-2">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)]"></span>
+                                                </span>
+                                                <span>{monthPendingCount} Belum di-ACC</span>
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-semibold">
@@ -156,6 +173,7 @@ export default function TimelineContainer({
                                             const dayGroup = monthGroup.days[dKey];
                                             const isDayOpen = Boolean(openGroups[`day_${dKey}`]);
                                             const isToday = dKey === todayDayKey;
+                                            const dayPendingCount = dayGroup.items.filter((item) => item.status_pengajuan === 'pending').length;
 
                                             return (
                                                 <div
@@ -168,13 +186,22 @@ export default function TimelineContainer({
                                                         onClick={() => toggleGroup(`day_${dKey}`)}
                                                         className="w-full flex items-center justify-between p-2.5 hover:bg-slate-800/50 transition-colors text-left cursor-pointer select-none"
                                                     >
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-2 flex-wrap">
                                                             <span className={`text-xs font-semibold ${isToday ? 'text-emerald-400 font-bold' : 'text-slate-200'}`}>
                                                                 {dayGroup.label}
                                                             </span>
                                                             {isToday && (
                                                                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold uppercase border border-emerald-500/30">
                                                                     Hari Ini
+                                                                </span>
+                                                            )}
+                                                            {dayPendingCount > 0 && (
+                                                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px] font-bold">
+                                                                    <span className="relative flex h-1.5 w-1.5">
+                                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.9)]"></span>
+                                                                    </span>
+                                                                    <span>{dayPendingCount} Belum di-ACC</span>
                                                                 </span>
                                                             )}
                                                         </div>
@@ -192,10 +219,12 @@ export default function TimelineContainer({
                                                                 <TimelineCard
                                                                     key={item.id}
                                                                     item={item}
-                                                                    role={role}
-                                                                    role_2={role_2}
+                                                                    role={user?.role || role}
+                                                                    role_2={user?.role_2 || role_2}
                                                                     isPengurusLab={isPengurusLab}
+                                                                    currentUser={user}
                                                                     currentUserId={user?.id}
+                                                                    currentUserNama={user?.NAMA || user?.nama}
                                                                     onApprove={onApprove}
                                                                     onComplete={onComplete}
                                                                     onEdit={onEdit} // <-- 2. Operkan ke TimelineCard

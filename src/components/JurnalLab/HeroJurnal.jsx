@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, Monitor, Film, FlaskConical } from 'lucide-react';
 
-export default function HeroJurnal({ selectedLab, setSelectedLab }) {
+export default function HeroJurnal({ selectedLab, setSelectedLab, pendingCounts = {} }) {
     const labs = [
         { id: 'LAB Komputer', name: 'LAB Komputer', icon: <Monitor className="w-5 h-5" />, desc: 'Komputer & IT' },
         { id: 'LAB Multimedia', name: 'LAB Multimedia', icon: <Film className="w-5 h-5" />, desc: 'Audio, Video & Grafis' },
@@ -25,20 +25,32 @@ export default function HeroJurnal({ selectedLab, setSelectedLab }) {
 
                 {/* Tab Switcher Lab */}
                 <div className="flex bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800 shadow-inner w-full md:w-auto">
-                    {labs.map((lab) => (
-                        <button
-                            key={lab.id}
-                            onClick={() => setSelectedLab(lab.id)}
-                            className={`flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 ${
-                                selectedLab === lab.id
-                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-indigo-500/25'
-                                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                            }`}
-                        >
-                            {lab.icon}
-                            <span>{lab.name}</span>
-                        </button>
-                    ))}
+                    {labs.map((lab) => {
+                        const hasPending = Boolean(pendingCounts?.[lab.id] && pendingCounts[lab.id] > 0);
+                        const count = pendingCounts?.[lab.id] || 0;
+
+                        return (
+                            <button
+                                key={lab.id}
+                                onClick={() => setSelectedLab(lab.id)}
+                                title={hasPending ? `${count} pengajuan di ${lab.name} belum di-ACC` : lab.name}
+                                className={`relative flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 cursor-pointer ${
+                                    selectedLab === lab.id
+                                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-indigo-500/25'
+                                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                                }`}
+                            >
+                                {lab.icon}
+                                <span>{lab.name}</span>
+                                {hasPending && (
+                                    <span className="relative flex h-2 w-2 ml-0.5 shrink-0" aria-label="Belum di-ACC">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)]"></span>
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
         </div>

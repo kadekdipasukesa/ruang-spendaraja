@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 export function useJurnalLab(defaultLab = 'LAB Komputer') {
     const [selectedLab, setSelectedLab] = useState(defaultLab);
     const [jurnalList, setJurnalList] = useState([]);
+    const [pendingCountsPerLab, setPendingCountsPerLab] = useState({});
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
 
@@ -18,6 +19,27 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') {
             }
         }
     }, []);
+
+    const fetchPendingCounts = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('jurnal_lab')
+                .select('nama_lab')
+                .eq('status_pengajuan', 'pending');
+
+            if (!error && data) {
+                const counts = {};
+                data.forEach((row) => {
+                    if (row.nama_lab) {
+                        counts[row.nama_lab] = (counts[row.nama_lab] || 0) + 1;
+                    }
+                });
+                setPendingCountsPerLab(counts);
+            }
+        } catch (e) {
+            console.error('Error fetching pending counts:', e);
+        }
+    };
 
     const fetchJurnal = async () => {
         setLoading(true);
@@ -42,6 +64,7 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') {
 
     useEffect(() => {
         fetchJurnal();
+        fetchPendingCounts();
 
         // Realtime Subscription
         const channelId = `realtime_jurnal_lab_${Math.random().toString(36).substring(2, 7)}`;
@@ -52,6 +75,7 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') {
                 { event: '*', schema: 'public', table: 'jurnal_lab' },
                 () => {
                     fetchJurnal();
+                    fetchPendingCounts();
                 }
             )
             .subscribe();
@@ -66,7 +90,7 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') {
         try {
             // Data yang dikirim ke database
             const payload = {
-                nama_lab: selectedLab,
+                nama_lab: formData.nama_lab || selectedLab,
                 waktu_mulai: formData.waktu_mulai,
                 waktu_selesai: formData.waktu_selesai,
                 guru_pengajar: formData.guru_pengajar,
@@ -77,6 +101,46 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') {
                 materi_kegiatan: formData.materi_kegiatan,
                 kondisi_awal: formData.kondisi_awal || 'Baik'
             };
+
+            // Validasi tabrakan jadwal langsung ke Supabase
+            const { data: existingRows, error: checkError } = await supabase
+                .from('jurnal_lab')
+                .select('id, nama_lab, waktu_mulai, waktu_selesai, guru_pengajar, mata_pelajaran, status_pengajuan')
+                .eq('nama_lab', payload.nama_lab)
+                .neq('status_pengajuan', 'rejected');
+
+            if (!checkError && existingRows && existingRows.length > 0) {
+                const targetStart = new Date(payload.waktu_mulai).getTime();
+                const targetEnd = new Date(payload.waktu_selesai).getTime();
+                const targetDate = formData.tanggal;
+
+                const conflict = existingRows.find(item => {
+                    if (formData.id && String(item.id) === String(formData.id)) return false;
+                    
+                    // Cek tanggal yang sama (WITA)
+                    const itemDateObj = new Date(item.waktu_mulai);
+                    if (!isNaN(itemDateObj.getTime())) {
+                        const itemDateStr = new Intl.DateTimeFormat('en-CA', {
+                            timeZone: 'Asia/Makassar',
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit'
+                        }).format(itemDateObj);
+                        if (itemDateStr !== targetDate) return false;
+                    }
+
+                    const itemStart = new Date(item.waktu_mulai).getTime();
+                    const itemEnd = new Date(item.waktu_selesai).getTime();
+                    return targetStart < itemEnd && targetEnd > itemStart;
+                });
+
+                if (conflict) {
+                    return {
+                        success: false,
+                        message: `Jadwal bertabrakan dengan kegiatan "${conflict.mata_pelajaran || 'Kegiatan'}" oleh ${conflict.guru_pengajar}!`
+                    };
+                }
+            }
 
             let error;
 
@@ -98,7 +162,7 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') {
                     .from('jurnal_lab')
                     .insert([{
                         ...payload,
-                        pemohon_id: user?.id || null,
+                        pemohon_id: formData.pemohon_id || user?.id || null,
                         status_pengajuan: 'pending'
                     }]);
 
@@ -114,12 +178,12 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') {
         }
     };
 
-    // ACC atau Tolak Pengajuan (Admin/Guru)
-    const handleApproval = async (id, status, alasan = '') => {
+    // ACC atau Tolak Pengajuan (Hanya Admin / Pengurus Lab)
+    const handleApproval = async (id, status, alasan = '', approverName = '') => {
         try {
             const updatePayload = {
                 status_pengajuan: status,
-                acc_by: user?.NAMA || 'Admin',
+                acc_by: approverName || user?.NAMA || 'Pengurus Lab',
                 acc_at: new Date().toISOString()
             };
 
@@ -140,16 +204,22 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') {
         }
     };
 
-    // Selesaikan Penggunaan Lab (Update Kondisi Akhir & Catatan Kendala)
+    // Selesaikan Penggunaan Lab (Update Kondisi Awal, Kondisi Akhir & Catatan Kendala)
     const handleComplete = async (id, dataSelesai) => {
         try {
+            const updatePayload = {
+                status_pengajuan: 'completed',
+                kondisi_akhir: dataSelesai.kondisi_akhir,
+                catatan_kendala: dataSelesai.catatan_kendala
+            };
+
+            if (dataSelesai.kondisi_awal !== undefined) {
+                updatePayload.kondisi_awal = dataSelesai.kondisi_awal;
+            }
+
             const { error } = await supabase
                 .from('jurnal_lab')
-                .update({
-                    status_pengajuan: 'completed',
-                    kondisi_akhir: dataSelesai.kondisi_akhir,
-                    catatan_kendala: dataSelesai.catatan_kendala
-                })
+                .update(updatePayload)
                 .eq('id', id);
 
             if (error) throw error;
@@ -181,6 +251,7 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') {
         selectedLab,
         setSelectedLab,
         jurnalList,
+        pendingCountsPerLab,
         loading,
         user,
         role: user?.role || 'tamu',

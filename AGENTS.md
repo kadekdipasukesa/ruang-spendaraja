@@ -125,4 +125,5 @@ Untuk memahami alur kerja lebih spesifik dan mendalam pada setiap modul, silakan
 4. **[`/docs/tugas/TUGAS_1_SIMULATOR_FOLDER.md`](/docs/tugas/TUGAS_1_SIMULATOR_FOLDER.md)**: Rincian teknis virtual file system & 25 misi Tugas 1.
 5. **[`/docs/tugas/TUGAS_2_BERPIKIR_KOMPUTASIONAL.md`](/docs/tugas/TUGAS_2_BERPIKIR_KOMPUTASIONAL.md)**: Rincian teknis 4 misi terpadu Bab 1 (Algoritma, Jadwal, Struktur Data, Biner).
 6. **[`/docs/DATABASE_TRIGGERS.md`](/docs/DATABASE_TRIGGERS.md)**: Dokumentasi fungsi & trigger PostgreSQL aktif di Supabase.
+7. **[`/docs/JURNAL_LAB.md`](/docs/JURNAL_LAB.md)**: Dokumentasi arsitektur, algoritma penjadwalan, validasi waktu WITA, dan skema database Jurnal Laboratorium.
 

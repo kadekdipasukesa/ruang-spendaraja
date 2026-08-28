@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react'; // Tambahkan useMemo di sini
+import React, { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import Hero from '../components/Home/Hero';
 import ShortcutCard from '../components/Home/ShortcutCard';
 import FeedbackForm from '../components/Home/FeedbackForm';
-import { Monitor, Globe, BookOpen, UserCheck, ShieldAlert, Keyboard, Sparkles, Cpu} from 'lucide-react';
+import { Monitor, Globe, BookOpen, UserCheck, ShieldAlert, Keyboard, Sparkles, Cpu, FlaskConical } from 'lucide-react';
 import { checkAppAccess } from '../utils/appPermissions'; // Pastikan helper ini sudah dibuat
 import Footer from '../components/Home/Footer'; // Sesuaikan path
 
@@ -31,6 +31,20 @@ const HomeRoot = () => {
       path: '/ruang-belajar',
       desc: 'Materi, Tugas, & Ulangan interaktif.',
       isLocked: true // Default state, akan diproses di processedApps
+    },
+    {
+      id: 'jurnallab',
+      tag: 'Fasilitas',
+      title: 'Jurnal Lab',
+      subtitle: 'Reservasi & Praktikum',
+      icon: <FlaskConical size={28} />,
+      color: 'from-cyan-400/30 to-transparent',
+      glow: 'group-hover:border-cyan-400',
+      shadow: 'hover:shadow-[0_0_30px_-5px_rgba(6,182,212,0.5)]',
+      glowColor: 'text-cyan-400',
+      path: '/jurnal-lab',
+      desc: 'Jurnal pemakaian lab komputer, multimedia, & IPA.',
+      isLocked: false
     },
     {
       id: 'typing7',
@@ -171,7 +185,7 @@ const HomeRoot = () => {
             {processedApps
               .filter(app => activeTab === 'Semua' || app.tag === activeTab)
               .map((app, index) => (
-                <ShortcutCard key={app.id} app={app} index={index} />
+                <ShortcutCard key={app.id} app={app} index={index} student={student} />
               ))}
           </AnimatePresence>
         </div>

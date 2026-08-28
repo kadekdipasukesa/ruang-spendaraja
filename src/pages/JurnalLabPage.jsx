@@ -10,6 +10,7 @@ export default function JurnalLabPage({ user: propsUser }) {
         selectedLab,
         setSelectedLab,
         jurnalList,
+        pendingCountsPerLab,
         loading,
         role,
         submitPengajuan,
@@ -69,12 +70,11 @@ export default function JurnalLabPage({ user: propsUser }) {
     const isLoggedIn = Boolean(currentUser);
 
     // ==========================================
-    // LOGIKA PENYESUAIAN ROLE & PENGERUS LAB
+    // LOGIKA PENYESUAIAN ROLE & PENGURUS LAB
     // ==========================================
     const isPengurusLab = Boolean(
         currentUser?.role === 'admin' || 
-        currentUser?.role_2 === 'pengurus_lab' ||
-        role === 'admin'
+        currentUser?.role_2 === 'pengurus_lab'
     );
 
     // 2. Handler untuk membuka modal saat tombol Edit diklik di timeline card
@@ -83,11 +83,26 @@ export default function JurnalLabPage({ user: propsUser }) {
         setIsModalOpen(true);
     };
 
+    const handleApprovalWithUser = (id, status, alasan) => {
+        return handleApproval(id, status, alasan, currentUser?.NAMA || 'Pengurus Lab');
+    };
+
+    const handleSubmitPengajuanWithUser = (payload, isEdit) => {
+        return submitPengajuan({
+            ...payload,
+            pemohon_id: payload.pemohon_id || currentUser?.id || null
+        }, isEdit);
+    };
+
     return (
         <div className="min-h-screen bg-[#0f172a] text-slate-200 pt-20 pb-24 px-4 md:px-8">
             <div className="max-w-4xl mx-auto">
                 {/* Hero / Header Switcher */}
-                <HeroJurnal selectedLab={selectedLab} setSelectedLab={setSelectedLab} />
+                <HeroJurnal 
+                    selectedLab={selectedLab} 
+                    setSelectedLab={setSelectedLab} 
+                    pendingCounts={pendingCountsPerLab}
+                />
 
                 {/* Toolbar / Action Bar */}
                 <div className="flex items-center justify-between gap-4 mb-8">
@@ -131,10 +146,11 @@ export default function JurnalLabPage({ user: propsUser }) {
                     /* KONTAINER TIMELINE GROUPED PER BULAN & HARI */
                     <TimelineContainer
                         items={jurnalList}
-                        role={role}
+                        role={currentUser?.role || role}
+                        role_2={currentUser?.role_2}
                         isPengurusLab={isPengurusLab}
                         user={currentUser}
-                        onApprove={handleApproval}
+                        onApprove={handleApprovalWithUser}
                         onComplete={handleComplete}
                         onEdit={handleOpenEdit} // <-- 3. Oper handler edit di sini
                         onDelete={handleDelete}
@@ -148,9 +164,11 @@ export default function JurnalLabPage({ user: propsUser }) {
                         setIsModalOpen(false);
                         setEditItem(null);
                     }}
-                    onSubmit={submitPengajuan}
+                    onSubmit={handleSubmitPengajuanWithUser}
                     selectedLab={selectedLab}
                     editData={editItem} // <-- 4. Oper data yang mau diedit ke Form Modal
+                    currentUser={currentUser}
+                    existingJurnals={jurnalList}
                 />
             </div>
         </div>
