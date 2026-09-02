@@ -121,9 +121,12 @@ export default function TimelineTugas({
       };
     }
     if (task.tipe_tugas === 'kuis') {
+      const isSK = task.custom_route?.includes('sistem-komputer') || task.kode_tugas?.includes('SISTEM-KOMPUTER');
       return {
-        label: 'Mulai Petualangan BK (4 Misi)',
-        btnClass: 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-sm shadow-purple-600/20 font-bold',
+        label: isSK ? 'Mulai Petualangan Sistem Komputer (4 Misi)' : 'Mulai Petualangan BK (4 Misi)',
+        btnClass: isSK
+          ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white shadow-sm shadow-amber-600/20 font-bold'
+          : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-sm shadow-purple-600/20 font-bold',
         icon: Play
       };
     }

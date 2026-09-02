@@ -17,6 +17,7 @@ export default function ModalSubmissionSuccessBK({
   const previousScore = submissionMeta?.previousScore ?? 0;
   const isRetained = submissionMeta?.isRetained;
   const isImproved = submissionMeta?.isImproved;
+  const skippedDbSave = submissionMeta?.skippedDbSave;
   const isPerfect = savedScore >= 100;
 
   return (
@@ -51,19 +52,21 @@ export default function ModalSubmissionSuccessBK({
 
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-extrabold border border-amber-500/30">
-                <Sparkles className="w-3.5 h-3.5" /> Tugas 2 Berhasil Tersimpan & Masuk Log
+                <Sparkles className="w-3.5 h-3.5" /> {skippedDbSave ? 'Proteksi Nilai Database Aktif' : 'Tugas 2 Berhasil Tersimpan & Masuk Log'}
               </div>
               <h3 className="text-xl sm:text-2xl font-extrabold text-white">
                 {isPerfect
                   ? 'Sempurna! 100 Poin Penuh'
                   : isRetained
-                  ? 'Nilai Terbaik Tetap Dipertahankan!'
+                  ? 'Nilai Terbaik di Database Tetap Aman!'
                   : isImproved
                   ? 'Rekor Skor Baru Tersimpan!'
                   : 'Nilai Berhasil Tersimpan!'}
               </h3>
               <p className="text-xs text-slate-400 max-w-sm">
-                Nilai dan audit trail log poin telah disinkronkan langsung ke profilmu dan Log Skor Ruang Belajar.
+                {skippedDbSave
+                  ? 'Nilai database lebih tinggi dari skor saat ini, data baru tidak menimpa database dan skor terbaikmu tetap terjaga.'
+                  : 'Nilai dan audit trail log poin telah disinkronkan langsung ke profilmu dan Log Skor Ruang Belajar.'}
               </p>
             </div>
 

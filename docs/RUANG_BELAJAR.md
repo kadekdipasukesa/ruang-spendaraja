@@ -104,8 +104,10 @@ src/
 * Jika tugas tipe upload file / link, membuka `ModalSubmitProyek.jsx`.
 
 ### 2. Tab Log Nilai (`LogScoreTugas.jsx`)
-* Menampilkan seluruh aktivitas perolehan poin dari tabel `point_logs`.
-* Dilengkapi filter pencarian teks dan filter kategori (*Tugas Selesai*, *Bonus Kecepatan*, dll.).
+* Menampilkan seluruh aktivitas perolehan poin dari tabel `point_logs` dengan multi-layer fallback & sintesis audit dari `tugas_pengumpulan`.
+* **Sistem Pencocokan Identitas Fleksibel**: Mendukung pencocokan multi-atribut (`id`, `NISN`, dan nama lengkap siswa) untuk memastikan riwayat perolehan poin siswa yang sedang login selalu tampil akurat pada mode *"Poin Saya"*.
+* **Realtime Synchronization**: Terhubung langsung ke channel realtime Supabase untuk mendeteksi perubahan pada `point_logs` maupun `tugas_pengumpulan`.
+* Dilengkapi filter mode tampilan (*Poin Saya* vs *Semua Log Siswa / Aktivitas Kelas*), filter pencarian teks instan, dan filter kategori chip (*Tugas*, *Game*, *Ujian*, *Bonus*).
 
 ### 3. Tab Leaderboard (`LeaderboardKelas.jsx`)
 * Membagi leaderboard menjadi tombol pill per kelas: **7A, 7B, 7C, 7D, 7E, 7F, 7G, 7H, 7I, 7J, 7K**.
@@ -159,3 +161,5 @@ Untuk menjaga performa dan keterbacaan, setiap modul **Tugas Khusus / Simulator 
 1. **Skor Siswa**: Jangan pernah mengkalkulasi ulang `total_points` manual di frontend — selalu biarkan database Supabase mengeksekusi trigger dan baca kolom `total_points` langsung dari `master_siswa`.
 2. **Navigasi Bawah**: Fixed bottom navigation bar di `RuangBelajarHeader.jsx` dirender melalui `createPortal` ke `document.body` dengan safe-area inset agar tetap berada di posisi terbawah layar perangkat mobile tanpa tertutup keyboard/browser bar.
 3. **Padding Container**: Pastikan `src/pages/RuangBelajar.jsx` mempertahankan bottom padding `pb-32 sm:pb-36` agar elemen paling bawah tidak terpotong oleh bottom bar.
+4. **Modal Layering (Highest Priority Z-Index)**: Seluruh modal interaksi (`TaskDetailModal.jsx` dan `ModalSubmitProyek.jsx`) dirender menggunakan `createPortal` ke `document.body` dengan `z-[99999]`, memastikan modal detail tugas dan tombol aksi (seperti *"Lanjutkan Petualangan"*) selalu tampil di lapisan paling depan tanpa tertutupi oleh navbar atas, floating online presence, maupun bar navigasi bawah (Timeline, Log, Peringkat).
+

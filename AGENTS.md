@@ -21,6 +21,7 @@ Dokumen ini adalah referensi utama untuk pengembang dan AI Agent agar memahami s
 | `/ruang-belajar` | `src/pages/RuangBelajar.jsx` | Pusat tugas TIK siswa, timeline modul, log skor, dan leaderboard kelas |
 | `/tugas/simulasi-folder` | `src/pages/TugasKhusus/TugasSimulasiFolder.jsx` | Praktik interaktif simulator file system (C: drive, folder tree, create/move/rename/delete) |
 | `/tugas/berpikir-komputasional` | `src/pages/TugasKhusus/TugasBerpikirKomputasional.jsx` | Petualangan 4 misi berpikir komputasional terpadu (Algoritma, Jadwal, Struktur Data, Biner) |
+| `/tugas/sistem-komputer` | `src/pages/TugasKhusus/TugasSistemKomputer.jsx` | Petualangan 4 misi sistem komputer & perkakas digital (Hardware, Data/Aplikasi, Software, Etika Digital) |
 | `/bee-2026` | `src/pages/bee-2026.jsx` | Expo Buleleng Education Expo 2026 (Referensi desain utama UI cerah/amber) |
 | `/jurnal-lab` | `src/pages/JurnalLabPage.jsx` | Log pemakaian laboratorium komputer, cetak rekap & filter sesi |
 | `/agenda-guru` | `src/pages/AgendaGuruPage.jsx` | Jurnal kerja & agenda pembelajaran harian guru |
@@ -85,6 +86,7 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
     - 📖 **Log** (`activeTab = 'log_score'`)
     - 🔥 **Peringkat** (`activeTab = 'leaderboard'`)
 * `src/components/RuangBelajar/TimelineTugas.jsx`: Daftar modul materi & tugas dengan filter kategori.
+* `src/components/RuangBelajar/TaskDetailModal.jsx` & `ModalSubmitProyek.jsx`: Modal rincian tugas & form submit yang dirender via `createPortal` langsung ke `document.body` dengan `z-[99999]` agar selalu berada di lapisan terdepan dan tidak tertutupi navbar atas maupun floating bottom navigation bar.
 * `src/components/RuangBelajar/LogScoreTugas.jsx`: Riwayat poin dari tabel `point_logs`.
 * `src/components/RuangBelajar/LeaderboardKelas.jsx`: Peringkat siswa per kelas 7A-7K dengan filter siswa yang memiliki poin > 0.
 * `src/components/RuangBelajar/TugasKhusus/Tugas1/`: Simulator Manajemen File & Folder:
@@ -93,9 +95,15 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
   - `ModalMove.jsx`: Modal pemindahan file dengan visualisasi direktori pohon (*folder tree hierarchy*).
 * `src/components/RuangBelajar/TugasKhusus/Tugas2/`: Petualangan 4 Misi Berpikir Komputasional:
   - Controller: `src/pages/TugasKhusus/TugasBerpikirKomputasional.jsx`
-  - Sub-komponen: `BKHeader.jsx`, `BKMissionTabs.jsx`, `BKFooterNav.jsx`, `ModalSubmissionSuccessBK.jsx`, `AlgorithmMaze.jsx` (`learning/M1LearningMaterial.jsx`, `maze/MazeGrid.jsx`, `maze/CommandPanel.jsx`), `ScheduleOptimizer.jsx` (`learning/M2LearningMaterial.jsx`, `schedule/TaskList.jsx`, `schedule/TimelineGrid.jsx`), `DataStructureVisualizer.jsx` (`learning/M3LearningMaterial.jsx`, `data-structure/ListVisualizer.jsx`, `data-structure/StructureQuizPanel.jsx`), `BinaryCardGame.jsx` (`learning/M4LearningMaterial.jsx`, `binary/RepresentationVisualizer.jsx`, `binary/RepresentationQuizPanel.jsx`).
-  - Custom Hooks: `src/hooks/RuangBelajar/TugasKhusus/Tugas2/` (`useTugasBKState.js`, `useAlgorithmMaze.js`, `useScheduleOptimizer.js`, `useDataStructureVisualizer.js`, `useBinaryCardGame.js`).
-  - Fitur Persistensi & Skor: Menyimpan draft jawaban per akun siswa ke `localStorage` agar progres dapat dilanjutkan kapan saja, serta otomatis mempertahankan nilai terbesar/tertinggi (`Math.max`) jika pengumpulan berikutnya menghasilkan skor yang lebih rendah.
+  - Sub-komponen: `BKHeader.jsx`, `BKMissionTabs.jsx`, `BKFooterNav.jsx`, `ModalSubmissionSuccessBK.jsx`, `AlgorithmMaze.jsx`, `ScheduleOptimizer.jsx`, `DataStructureVisualizer.jsx`, `BinaryCardGame.jsx`.
+  - Custom Hooks: `src/hooks/RuangBelajar/TugasKhusus/Tugas2/` (`useTugasBKState.js`, dll.).
+  - Fitur Persistensi & Skor: Kebijakan **Database-First Priority** (mengutamakan snapshot data dari database Supabase saat membuka tugas / klik lanjutkan sehingga sinkron saat pindah komputer). `localStorage` digunakan sebagai cache/scratchpad sesi aktif. Proteksi nilai database (`Math.max`) menjamin nilai tertinggi tidak pernah ditimpa jika percobaan baru bernilai lebih kecil.
+* `src/components/RuangBelajar/TugasKhusus/Tugas3/`: Petualangan 4 Misi Sistem Komputer & Perkakas Digital:
+  - Controller: `src/pages/TugasKhusus/TugasSistemKomputer.jsx`
+  - Sub-komponen: `SKHeader.jsx`, `SKMissionTabs.jsx`, `SKFooterNav.jsx`, `ModalSubmissionSuccessSK.jsx`, `HardwareExplorer.jsx` (Misi 1: Materi Sistem Komputer + Drag & Drop 20 Komponen Hardware + Drag & Drop 20 Software OS vs Aplikasi + Kuis), `DataAppPipeline.jsx` (Misi 2: Materi Transformasi Data + Simulator 3 Pipeline Data Mentah/Aplikasi/Informasi + Kuis Data), `DigitalToolbox.jsx` (Misi 3: Materi 5 Kelompok Perkakas + Drag & Drop 20 Aplikasi ke Kelompoknya + Kuis Software), `DigitalEthicsDetective.jsx` (Misi 4: Materi Netiket + Detektif 5 Studi Kasus Etika + Kuis Keamanan).
+  - Custom Hooks: `src/hooks/RuangBelajar/TugasKhusus/Tugas3/useTugasSKState.js`.
+  - Fitur UI & Evaluasi: Layout berdampingan (*side-by-side single viewport*) untuk bank komponen kiri scrollable dan dropzones kanan pada Misi 1 & 3, urutan acak komponen (*randomized shuffle*), evaluasi komprehensif saat klik "Cek Hasil" (petasan selebrasi jika ≥ 70% dan efek suara gagal jika < 70%), serta perlindungan nilai tertinggi (`Math.max`).
+  - Fitur Persistensi & Sinkronisasi: Kebijakan **Database-First Priority** dengan sinkronisasi ke tabel `tugas_pengumpulan`, `point_logs`, dan `master_siswa.total_points`.
 
 ---
 
@@ -124,6 +132,7 @@ Untuk memahami alur kerja lebih spesifik dan mendalam pada setiap modul, silakan
 3. **[`/docs/RUANG_BELAJAR.md`](/docs/RUANG_BELAJAR.md)**: Master Hub modul Ruang Belajar, Timeline, Log Skor, dan Leaderboard Kelas.
 4. **[`/docs/tugas/TUGAS_1_SIMULATOR_FOLDER.md`](/docs/tugas/TUGAS_1_SIMULATOR_FOLDER.md)**: Rincian teknis virtual file system & 25 misi Tugas 1.
 5. **[`/docs/tugas/TUGAS_2_BERPIKIR_KOMPUTASIONAL.md`](/docs/tugas/TUGAS_2_BERPIKIR_KOMPUTASIONAL.md)**: Rincian teknis 4 misi terpadu Bab 1 (Algoritma, Jadwal, Struktur Data, Biner).
-6. **[`/docs/DATABASE_TRIGGERS.md`](/docs/DATABASE_TRIGGERS.md)**: Dokumentasi fungsi & trigger PostgreSQL aktif di Supabase.
-7. **[`/docs/JURNAL_LAB.md`](/docs/JURNAL_LAB.md)**: Dokumentasi arsitektur, algoritma penjadwalan, validasi waktu WITA, dan skema database Jurnal Laboratorium.
+6. **[`/docs/tugas/TUGAS_3_SISTEM_KOMPUTER.md`](/docs/tugas/TUGAS_3_SISTEM_KOMPUTER.md)**: Rincian teknis 4 misi terpadu Bab 2 (Hardware Komputer, Data & Aplikasi, Perkakas Digital, Dampak & Etika TIK).
+7. **[`/docs/DATABASE_TRIGGERS.md`](/docs/DATABASE_TRIGGERS.md)**: Dokumentasi fungsi & trigger PostgreSQL aktif di Supabase.
+8. **[`/docs/JURNAL_LAB.md`](/docs/JURNAL_LAB.md)**: Dokumentasi arsitektur, algoritma penjadwalan, validasi waktu WITA, dan skema database Jurnal Laboratorium.
 

@@ -94,19 +94,25 @@ Dokumen ini merangkum arsitektur, alur data, komponen interaktif, custom hooks, 
   - Tombol Kembali ke Ruang Belajar.
   - Badge breadcrumb `Tugas 2 • Berpikir Komputasional`.
   - Informasi identitas siswa / badge mode tamu.
-  - Badge Skor Terkumpul (`{totalScore} / 100 Poin`).
+  - Badge Skor Database & Skor Percobaan Saat Ini (`{prevBestScore} Poin` vs `{totalScore} / 100 Poin`).
   - Tombol Reset Awal dengan modal konfirmasi.
   - Tombol Cek & Kumpulkan (aktif fleksibel untuk mengumpulkan kapan saja dan memperbaiki skor).
+* **Proteksi Database Saat Pengumpulan (*Strict Database Protection*)**:
+  - Saat siswa menekan **"Cek & Kumpulkan"**, sistem memeriksa nilai yang sudah ada di database (`tugas_pengumpulan` & `point_logs`).
+  - **Jika nilai di database lebih besar atau sama** dengan percobaan saat ini: sistem **TIDAK menyimpan atau menimpa data di database**. Nilai tertinggi di database tetap aman dan dipertahankan.
+  - **Hanya jika nilai baru LEBIH BESAR**: sistem melakukan update / upsert ke database (`tugas_pengumpulan`, `point_logs`, dan `master_siswa.total_points`).
 * **ModalSubmissionSuccessBK.jsx**:
+  - Menampilkan umpan balik interaktif: *Sempurna 100 Poin*, *Rekor Baru Tersimpan* (jika skor naik), atau *Nilai Terbaik di Database Tetap Aman* (jika skor percobaan saat ini lebih kecil dari nilai database).
+  - Menampilkan rincian perolehan 4 misi, audio selebrasi, dan tombol navigasi kembali ke Ruang Belajar.
   - Modal perayaan dengan rincian perolehan poin tiap misi dan tombol langsung ke Ruang Belajar / Log Skor.
 
 ---
 
 ## 4. Alur Pengumpulan & Sinkronisasi Skor Database
 
-1. **Penyimpanan Draft Jawaban (Persistensi Progres)**:
-   - Setiap kali siswa menyelesaikan atau memodifikasi misi, status progres disimpan secara lokal ke `localStorage` berbasis akun siswa (`tugas_bk_state_user_{id}`).
-   - Ketika siswa membuka kembali halaman atau me-refresh peramban, jawaban dan skor misi terakhir langsung dimuat otomatis sehingga siswa dapat melanjutkan atau memperbaiki latihannya.
+1. **Penyimpanan Draft Jawaban (Persistensi Progres & Kebijakan Database-First)**:
+   - **Database-First Priority**: Setiap kali halaman dibuka atau siswa menekan "Lanjutkan & Sempurnakan", sistem **mengutamakan snapshot data resmi dari database Supabase (`tugas_pengumpulan.detail_jawaban`)** dan menimpanya ke memori peramban. Hal ini memastikan jika siswa berpindah dari komputer Lab ke rumah (atau sebaliknya), progres resmi selalu sinkron dan konsisten.
+   - `localStorage` berfungsi sebagai *buffer/scratchpad* sesi aktif saat pengerjaan berlangsung untuk menjaga performa (tanpa spam kueri jaringan) dan mencegah kehilangan data bila terjadi *refresh/crash* sebelum klik simpan.
 
 2. **Kebijakan Nilai Tertinggi (Highest Score Retention - `Math.max`)**:
    - Sistem menerapkan aturan keselamatan nilai siswa: Jika siswa mengumpulkan tugas untuk kedua kalinya atau seterusnya, dan nilai percobaan saat ini ternyata lebih kecil dari nilai yang pernah diperoleh sebelumnya, sistem **tidak akan menurunkan nilai**, melainkan tetap mempertahankan dan mencatat **nilai tertinggi (terbesar)** di Supabase (`tugas_pengumpulan`, `point_logs`, dan `master_siswa`).

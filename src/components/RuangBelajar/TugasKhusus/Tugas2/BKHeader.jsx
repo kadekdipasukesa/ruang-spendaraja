@@ -28,6 +28,8 @@ export default function BKHeader({
   const [showConfirmReset, setShowConfirmReset] = useState(false);
 
   const percentage = Math.min(100, Math.max(0, totalScore));
+  const prevBestScore = previousSubmission ? Number(previousSubmission.nilai_akhir ?? previousSubmission.skor ?? 0) : 0;
+  const isDbScoreHigher = prevBestScore > totalScore;
 
   const onConfirmReset = () => {
     if (onResetAll) onResetAll();
@@ -93,13 +95,27 @@ export default function BKHeader({
 
           {/* Action Buttons Group */}
           <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap sm:flex-nowrap">
-            {/* Total Skor Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-2xl shadow-2xs select-none">
-              <Target className="w-4 h-4 text-amber-400 flex-shrink-0" />
-              <div className="text-left">
-                <div className="text-[10px] text-amber-400/80 font-medium leading-none">Skor Saat Ini</div>
-                <div className="text-xs font-extrabold leading-tight text-white">
-                  {totalScore} <span className="text-amber-400 font-normal">/ 100 Poin</span>
+            {/* Total Skor Badges */}
+            <div className="flex items-center gap-2">
+              {prevBestScore > 0 && (
+                <div className="inline-flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl shadow-2xs select-none">
+                  <Award className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="text-[9px] text-emerald-400/80 font-medium leading-none">Di Database</div>
+                    <div className="text-xs font-extrabold leading-tight text-white">
+                      {prevBestScore} <span className="text-emerald-400 font-normal">Poin</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-2xl shadow-2xs select-none">
+                <Target className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                <div className="text-left">
+                  <div className="text-[10px] text-amber-400/80 font-medium leading-none">Skor Saat Ini</div>
+                  <div className="text-xs font-extrabold leading-tight text-white">
+                    {totalScore} <span className="text-amber-400 font-normal">/ 100 Poin</span>
+                  </div>
                 </div>
               </div>
             </div>

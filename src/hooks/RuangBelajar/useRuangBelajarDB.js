@@ -120,6 +120,11 @@ export function useRuangBelajarDB() {
           deadline: t.deadline || new Date().toISOString()
         }));
         setTasks(mapped);
+        try {
+          localStorage.setItem(LOCAL_STORAGE_TASKS_KEY, JSON.stringify(mapped));
+        } catch (e) {
+          // ignore
+        }
       }
     } catch (err) {
       console.warn("Koneksi Supabase tugas_master fallback ke lokal:", err);
@@ -279,6 +284,22 @@ export function useRuangBelajarDB() {
               return parsed.totalScore;
             }
           }
+        } else if (
+          task.urutan === 3 ||
+          task.kode_tugas === 'TUGAS-03-SISTEM-KOMPUTER' ||
+          task.custom_route?.includes('sistem-komputer')
+        ) {
+          const key = studentId ? `tugas_sk_state_user_${studentId}` : 'tugas_sk_state_guest';
+          const localStr = localStorage.getItem(key);
+          if (localStr) {
+            const parsed = JSON.parse(localStr);
+            if (parsed?.scores) {
+              const sc = (parsed.scores.m1 || 0) + (parsed.scores.m2 || 0) + (parsed.scores.m3 || 0) + (parsed.scores.m4 || 0);
+              if (sc > 0) {
+                return sc;
+              }
+            }
+          }
         } else if (task.tipe_tugas === 'kuis' || task.urutan === 2 || task.kode_tugas === 'TUGAS-02-KUIS-ALGO' || task.id === 'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0') {
           const key = studentId ? `tugas_bk_state_user_${studentId}` : 'tugas_bk_state_guest';
           const localStr = localStorage.getItem(key);
@@ -313,19 +334,49 @@ export function useRuangBelajarDB() {
     }
 
     return tasks.map((task) => {
-      // Find submission for this task by this specific student
+      // Find submission for this task by this specific student strictly
       const sub = studentId
-        ? submissions.find(
-            (s) =>
-              (s.tugas_id === task.id ||
-                s.tugas_id === task.kode_tugas ||
-                s.id_tugas === task.id ||
+        ? submissions.find((s) => {
+            const isStudentMatch =
+              String(s.siswa_id) === String(studentId) ||
+              (student?.nisn && String(s.nisn_siswa) === String(student.nisn)) ||
+              (student?.NISN && String(s.nisn_siswa) === String(student.NISN));
+
+            if (!isStudentMatch) return false;
+
+            // 1. Exact ID or foreign key match
+            if (s.tugas_id === task.id || s.id_tugas === task.id) return true;
+
+            // 2. Exact kode_tugas match
+            if (
+              task.kode_tugas &&
+              (s.tugas_id === task.kode_tugas ||
                 s.id_tugas === task.kode_tugas ||
-                s.tugas_master?.kode_tugas === task.kode_tugas ||
-                (task.tipe_tugas === 'simulasi' && (s.tugas_master?.tipe_tugas === 'simulasi' || s.tugas_id === 'tugas-inf-01' || s.id_tugas === 'TUGAS-01-SIMULASI-FOLDER')) ||
-                (task.tipe_tugas === 'kuis' && (s.tugas_master?.tipe_tugas === 'kuis' || s.tugas_id === 'tugas-inf-02' || s.tugas_id === 'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0' || s.tugas_id === 'TUGAS-02-KUIS-ALGO' || s.tugas_id === 'TUGAS_BK_01' || s.id_tugas === 'TUGAS-02-KUIS-ALGO' || s.id_tugas === 'TUGAS_BK_01'))) &&
-              (s.siswa_id === studentId || s.nisn_siswa === student?.nisn || s.nisn_siswa === student?.NISN)
-          )
+                s.tugas_master?.kode_tugas === task.kode_tugas)
+            ) {
+              return true;
+            }
+
+            // 3. Known Aliases for Tugas 1 (Simulasi Folder)
+            const isTugas1 =
+              (task.urutan === 1 || task.kode_tugas === 'TUGAS-01-SIMULASI-FOLDER' || task.id === 'tugas-inf-01' || task.id === 'cdaa57b1-b206-4a7e-92e8-4e1422c180b0') &&
+              (s.tugas_id === 'cdaa57b1-b206-4a7e-92e8-4e1422c180b0' || s.tugas_id === 'tugas-inf-01' || s.tugas_id === 'TUGAS-01-SIMULASI-FOLDER' || s.id_tugas === 'TUGAS-01-SIMULASI-FOLDER');
+            if (isTugas1) return true;
+
+            // 4. Known Aliases for Tugas 2 (Berpikir Komputasional)
+            const isTugas2 =
+              (task.urutan === 2 || task.kode_tugas === 'TUGAS-02-KUIS-ALGO' || task.id === 'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0' || task.id === 'tugas-inf-02') &&
+              (s.tugas_id === 'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0' || s.tugas_id === 'tugas-inf-02' || s.tugas_id === 'TUGAS-02-KUIS-ALGO' || s.tugas_id === 'TUGAS_BK_01' || s.id_tugas === 'TUGAS-02-KUIS-ALGO' || s.id_tugas === 'TUGAS_BK_01');
+            if (isTugas2) return true;
+
+            // 5. Known Aliases for Tugas 3 (Sistem Komputer)
+            const isTugas3 =
+              (task.urutan === 3 || task.kode_tugas === 'TUGAS-03-SISTEM-KOMPUTER' || task.id === '595d2d95-d16f-4582-9be5-93d9db451f47' || task.id === 'tugas-inf-03') &&
+              (s.tugas_id === '595d2d95-d16f-4582-9be5-93d9db451f47' || s.tugas_id === 'tugas-inf-03' || s.tugas_id === 'TUGAS-03-SISTEM-KOMPUTER' || s.tugas_id === 'TUGAS_SK_01' || s.id_tugas === 'TUGAS-03-SISTEM-KOMPUTER' || s.id_tugas === 'TUGAS_SK_01');
+            if (isTugas3) return true;
+
+            return false;
+          })
         : null;
 
       let status = 'belum';
@@ -359,7 +410,7 @@ export function useRuangBelajarDB() {
         submission: submissionData
       };
     });
-  }, [tasks, submissions, student?.id, student?.nisn, student?.NISN, isAdmin]);
+  }, [tasks, submissions, student, isAdmin]);
 
   // Visible tasks for current view (if student, respect is_active)
   const visibleTasks = useMemo(() => {

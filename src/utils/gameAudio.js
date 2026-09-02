@@ -109,6 +109,85 @@ class SoundSynthesizer {
     }
   }
 
+  // Nada dapat poin koin ceria (Mario/Sonic style Coin Pickup Chime)
+  playPointGain() {
+    try {
+      const ctx = this.getAudioContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      // Dual high bright chime (B5 -> E6)
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(987.77, now); // B5
+      osc1.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(1975.53, now + 0.08); // B6 overtone sparkle
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.28, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now);
+      osc1.stop(now + 0.4);
+      osc2.start(now + 0.08);
+      osc2.stop(now + 0.4);
+    } catch {
+      // Audio failed silently
+    }
+  }
+
+  // Efek Suara Petasan / Fireworks Explosion Pop
+  playCelebrationFirework() {
+    try {
+      const ctx = this.getAudioContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      // Burst white noise + low punch
+      const bufferSize = ctx.sampleRate * 0.4;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const whiteNoise = ctx.createBufferSource();
+      whiteNoise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(800, now);
+      filter.frequency.exponentialRampToValueAtTime(80, now + 0.35);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+
+      whiteNoise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      whiteNoise.start(now);
+      whiteNoise.stop(now + 0.4);
+
+      // Play joyful chime right after pop
+      setTimeout(() => {
+        this.playPointGain();
+      }, 100);
+    } catch {
+      // Audio failed silently
+    }
+  }
+
   // Nada ketukan arah / klik ringan (Soft blip)
   playStep() {
     try {

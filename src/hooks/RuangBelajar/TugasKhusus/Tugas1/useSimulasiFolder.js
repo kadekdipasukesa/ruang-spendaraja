@@ -138,8 +138,16 @@ export function useSimulasiFolder() {
 
         if (subData) {
           setPreviousSubmission(subData);
-          if (subData.detail_jawaban?.treeSnapshot && !localStorage.getItem(storageKey)) {
+          // UTAMAKAN DATABASE: Pulihkan snapshot struktur folder dari database
+          if (subData.detail_jawaban?.treeSnapshot) {
             setItems(subData.detail_jawaban.treeSnapshot);
+            if (storageKey) {
+              try {
+                localStorage.setItem(storageKey, JSON.stringify(subData.detail_jawaban.treeSnapshot));
+              } catch (err) {
+                console.warn("Gagal update local storage dari db:", err);
+              }
+            }
           }
         } else {
           setPreviousSubmission(null);
