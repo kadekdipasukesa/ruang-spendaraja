@@ -26,23 +26,23 @@ const PIPELINE_CASES = [
     icon: GraduationCap,
     title: 'Kasus 1: Pengolahan Nilai & Rapor Sekolah',
     description: 'Sekolah mengolah data mentah kumpulan nilai tugas, ulangan harian, dan absensi kehadiran siswa menjadi lembar rapor resmi semester.',
-    correctInput: 'Daftar angka nilai harian & presensi kehadiran siswa',
+    correctInput: 'Daftar angka nilai harian & presensi absensi siswa',
     correctApp: 'Aplikasi Spreadsheet / Sistem Informasi Akademik',
-    correctOutput: 'Buku Rapor Digital & Grafik Peringkat Siswa',
+    correctOutput: 'Buku Rapor Digital & Rekap Peringkat Prestasi Siswa',
     inputs: [
-      'Daftar angka nilai harian & presensi kehadiran siswa',
-      'Foto pemandangan pantai saat liburan',
-      'Lagu rekaman MP3 paduan suara',
+      'Daftar angka nilai harian & presensi absensi siswa',
+      'Daftar buku paket bacaan & denah tata ruang kelas',
+      'Jadwal giliran piket harian & menu makanan kantin',
     ],
     apps: [
-      'Aplikasi Pemutar Musik MP3',
+      'Aplikasi Desain Grafis / Editor Ilustrasi Digital',
       'Aplikasi Spreadsheet / Sistem Informasi Akademik',
-      'Software Edit Video Animasi 3D',
+      'Aplikasi Peramban Web / Pengunduh Dokumen Online',
     ],
     outputs: [
-      'Buku Rapor Digital & Grafik Peringkat Siswa',
-      'File audio rekaman suara paduan',
-      'Suhu udara ruangan laboratorium',
+      'Buku Rapor Digital & Rekap Peringkat Prestasi Siswa',
+      'Kuitansi Pembayaran Kain Seragam Olahraga Sekolah',
+      'Lembar Denah Jalur Evakuasi Kebakaran Gedung Guru',
     ],
   },
   {
@@ -50,23 +50,23 @@ const PIPELINE_CASES = [
     icon: ShoppingCart,
     title: 'Kasus 2: Mesin Kasir & Transaksi Minimarket',
     description: 'Kasir memindai kode barcode belanjaan pembeli untuk menghitung total harga pembayaran dan mencetak struk belanja.',
-    correctInput: 'Kode barcode barang & jumlah kuantitas item belanja',
-    correctApp: 'Aplikasi Point of Sales / Kasir Komputer',
-    correctOutput: 'Struk Total Belanja & Pengurangan Stok Barang Otomatis',
+    correctInput: 'Kode barcode produk & kuantitas jumlah belanjaan',
+    correctApp: 'Aplikasi Point of Sales / Kasir Komputer Toko',
+    correctOutput: 'Struk Total Belanja & Pembaruan Stok Barang Kasir',
     inputs: [
-      'Kode barcode barang & jumlah kuantitas item belanja',
-      'Nama-nama planet tata surya',
-      'Lukisan kanvas manual',
+      'Kode barcode produk & kuantitas jumlah belanjaan',
+      'Nomor rekening supplier & kuitansi tagihan listrik',
+      'Riwayat panggilan nomor toko & jadwal kirim gudang',
     ],
     apps: [
-      'Game Balap Mobil 3D',
-      'Aplikasi Point of Sales / Kasir Komputer',
-      'Software Perekam Layar Komputer',
+      'Aplikasi Pengolah Kata / Pengetikan Naskah Buku',
+      'Aplikasi Point of Sales / Kasir Komputer Toko',
+      'Aplikasi Editor Rekaman Suara / Podcast Digital',
     ],
     outputs: [
-      'Struk Total Belanja & Pengurangan Stok Barang Otomatis',
-      'File naskah cerpen',
-      'Lagu MP3 pop akustik',
+      'Struk Total Belanja & Pembaruan Stok Barang Kasir',
+      'Surat Izin Edar Produk Makanan Dari Badan POM',
+      'Buku Panduan Petunjuk Servis Mesin Pendingin Es',
     ],
   },
   {
@@ -74,23 +74,23 @@ const PIPELINE_CASES = [
     icon: Activity,
     title: 'Kasus 3: Jam Tangan Pintar (Smartwatch Kesehatan)',
     description: 'Sensor pada smartwatch merekam denyut nadi dan jumlah getaran langkah kaki pengguna sepanjang hari.',
-    correctInput: 'Sinyal sensor detak jantung & hitungan getaran langkah kaki',
-    correctApp: 'Aplikasi Health Tracker & Analisis Kebugaran Tubuh',
-    correctOutput: 'Laporan Kalori Terbakar, Kualitas Tidur & Rekomendasi Olahraga',
+    correctInput: 'Sinyal sensor detak jantung & jumlah langkah kaki',
+    correctApp: 'Aplikasi Health Tracker & Pemantau Kebugaran Raga',
+    correctOutput: 'Laporan Kalori Terbakar & Ringkasan Kebugaran Tubuh',
     inputs: [
-      'Sinyal sensor detak jantung & hitungan getaran langkah kaki',
-      'Teks naskah drama teater',
-      'Daftar resep masakan kue',
+      'Sinyal sensor detak jantung & jumlah langkah kaki',
+      'Daftar nama kontak darurat & agenda janji dokter',
+      'Rekaman suara perintah memo & nada alarm pengingat',
     ],
     apps: [
-      'Aplikasi Health Tracker & Analisis Kebugaran Tubuh',
-      'Software Kompresi Berkas ZIP',
-      'Aplikasi Desain Denah Rumah',
+      'Aplikasi Health Tracker & Pemantau Kebugaran Raga',
+      'Aplikasi Pemutar Musik Digital & Pembuat Nada Dering',
+      'Aplikasi Navigasi Maritim & Pengukur Kedalaman Laut',
     ],
     outputs: [
-      'Laporan Kalori Terbakar, Kualitas Tidur & Rekomendasi Olahraga',
-      'Video film dokumenter',
-      'Berkas sertifikat tanah',
+      'Laporan Kalori Terbakar & Ringkasan Kebugaran Tubuh',
+      'Sertifikat Kelayakan Garansi Baterai Arloji Pintar',
+      'Arsip Berkas Manual Petunjuk Pemakaian Gadget Jam',
     ],
   },
 ];
@@ -98,71 +98,90 @@ const PIPELINE_CASES = [
 const QUIZ_QUESTIONS = [
   {
     id: 1,
-    question: 'Perbedaan mendasar antara DATA MENTAH dan INFORMASI dalam ilmu informatika adalah...',
+    question: 'Perbedaan mendasar antara konsep DATA MENTAH dan INFORMASI dalam pemrosesan komputer adalah...',
     options: [
-      { id: 'a', text: 'Data sudah matang dan siap pakai, sedangkan informasi masih mentah' },
-      { id: 'b', text: 'Data adalah fakta/angka mentah yang belum diolah, sedangkan Informasi adalah hasil olahan data yang memiliki makna, konteks, dan bermanfaat untuk pengambilan keputusan' },
-      { id: 'c', text: 'Data hanya berupa file gambar, sedangkan informasi hanya berupa suara' },
-      { id: 'd', text: 'Data selalu tersimpan di internet, sedangkan informasi hanya di atas kertas' },
+      { id: 'a', text: 'Data mentah berupa file video, sedangkan informasi berupa sinyal suara' },
+      { id: 'b', text: 'Data sudah tersusun rapi, sedangkan informasi merupakan catatan acak' },
+      { id: 'c', text: 'Data adalah fakta mentah acak, sedangkan Informasi olahan bermakna' },
+      { id: 'd', text: 'Data tersimpan di flashdisk, sedangkan informasi ada di layar kaca' },
     ],
-    correct: 'b',
+    correct: 'c',
   },
   {
     id: 2,
-    question: 'Dalam siklus transformasi data, posisi APLIKASI (Software) berfungsi sebagai...',
+    question: 'Dalam siklus pengolahan data komputer, posisi dan fungsi utama APLIKASI (Software) adalah...',
     options: [
-      { id: 'a', text: 'Penyedia arus listrik baterai' },
-      { id: 'b', text: 'Mesin pemroses yang menerima Input Data Mentah, mengolahnya dengan formula/algoritma logika, lalu menghasilkan Output Informasi' },
-      { id: 'c', text: 'Kabel penghubung monitor ke stopkontak' },
-      { id: 'd', text: 'Pembersih debu fisik pada kipas processor' },
+      { id: 'a', text: 'Penyedia daya listrik baterai cadangan penopang motherboard' },
+      { id: 'b', text: 'Mesin pengolah yang memproses input menjadi output informasi' },
+      { id: 'c', text: 'Perangkat fisik penyambung koneksi kabel layar monitor' },
+      { id: 'd', text: 'Penyaring partikel debu halus pada ventilasi kipas prosesor' },
     ],
     correct: 'b',
   },
   {
     id: 3,
-    question: 'Budi memasukkan angka: "80, 90, 75, 85, 95" ke aplikasi spreadsheet. Setelah dihitung, muncul teks "Rata-rata: 85 (Predikat: Sangat Baik)". Manakah yang merupakan INFORMASI?',
+    question: 'Siswa memasukkan angka nilai "80, 90, 75, 85" ke program spreadsheet, lalu muncul teks "Rata-rata: 82.5 (Tuntas)". Manakah yang merupakan INFORMASI?',
     options: [
-      { id: 'a', text: 'Kumpulan angka mentah 80, 90, 75, 85, 95' },
-      { id: 'b', text: 'Papan ketik keyboard yang dipakai Budi' },
-      { id: 'c', text: 'Hasil olahan "Rata-rata: 85 (Predikat: Sangat Baik)"' },
-      { id: 'd', text: 'Kabel charger laptop' },
+      { id: 'a', text: 'Papan ketik keyboard mekanik yang diketik oleh siswa' },
+      { id: 'b', text: 'Kabel stopkontak penghubung arus listrik komputer' },
+      { id: 'c', text: 'Kumpulan deretan angka acak nilai mentah 80, 90, 75, 85' },
+      { id: 'd', text: 'Teks hasil perhitungan akhir "Rata-rata: 82.5 (Tuntas)"' },
     ],
-    correct: 'c',
+    correct: 'd',
   },
   {
     id: 4,
-    question: 'Contoh nyata pemrosesan data menjadi informasi pada aplikasi Navigasi Peta (Google Maps / GPS) adalah...',
+    question: 'Manakah ilustrasi yang tepat menggambarkan perubahan dari data mentah menjadi informasi pada aplikasi Navigasi GPS?',
     options: [
-      { id: 'a', text: 'Sinyal koordinat satelit GPS dan data kepadatan jalan (Data Mentah) diolah menjadi petunjuk rute tercepat dan estimasi waktu sampai (Informasi)' },
-      { id: 'b', text: 'Musik radio diubah menjadi lukisan cat minyak' },
-      { id: 'c', text: 'Baterai smartphone diubah menjadi kuota data' },
-      { id: 'd', text: 'Kamera memotret kertas langsung berubah menjadi uang tunai' },
+      { id: 'a', text: 'Koordinat satelit & volume jalan diolah menjadi petunjuk rute tercepat' },
+      { id: 'b', text: 'Suhu baterai ponsel diubah menjadi nada dering musik telepon pemanggil' },
+      { id: 'c', text: 'Foto pemandangan kota diubah menjadi kuota data internet berkecepatan' },
+      { id: 'd', text: 'Suara klakson kendaraan diubah menjadi saldo uang tunai elektronik' },
     ],
     correct: 'a',
   },
   {
     id: 5,
-    question: 'Mengapa dalam pengolahan data berlaku prinsip GIGO (Garbage In, Garbage Out)?',
+    question: 'Mengapa dalam pengolahan data sistem informatika berlaku hukum prinsip GIGO (Garbage In, Garbage Out)?',
     options: [
-      { id: 'a', text: 'Karena jika data masukan (Input) salah atau tidak akurat, aplikasi akan menghasilkan informasi keluaran (Output) yang salah dan menyesatkan juga' },
-      { id: 'b', text: 'Komputer akan otomatis meledak jika diberi data salah' },
-      { id: 'c', text: 'Supaya komputer tidak memerlukan memori penyimpanan' },
-      { id: 'd', text: 'Agar keyboard komputer tidak cepat kotor' },
+      { id: 'a', text: 'Komputer butuh pembersihan fisik agar tidak menimbun berkas lama' },
+      { id: 'b', text: 'Input data yang keliru akan menghasilkan informasi yang salah pula' },
+      { id: 'c', text: 'Komputer akan mematikan diri secara otomatis jika data tidak lengkap' },
+      { id: 'd', text: 'Program aplikasi hanya dapat bekerja jika memori komputer dikosongkan' },
     ],
-    correct: 'a',
+    correct: 'b',
   },
 ];
 
-export default function DataAppPipeline({ currentScore, onComplete }) {
+export default function DataAppPipeline({ currentScore, onComplete, onNextMission }) {
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'pipeline' | 'kuis'
-  const [pipelineAnswers, setPipelineAnswers] = useState({
-    case_school: { input: '', app: '', output: '' },
-    case_supermarket: { input: '', app: '', output: '' },
-    case_smartwatch: { input: '', app: '', output: '' },
+  const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
+  const [pipelineAnswers, setPipelineAnswers] = useState(() => {
+    if (Number(currentScore) >= 10) {
+      const initP = {};
+      PIPELINE_CASES.forEach((c) => {
+        initP[c.id] = { input: c.correctInput, app: c.correctApp, output: c.correctOutput };
+      });
+      return initP;
+    }
+    return {
+      case_school: { input: '', app: '', output: '' },
+      case_supermarket: { input: '', app: '', output: '' },
+      case_smartwatch: { input: '', app: '', output: '' },
+    };
   });
-  const [pipelineChecked, setPipelineChecked] = useState(false);
-  const [quizAnswers, setQuizAnswers] = useState({});
-  const [quizChecked, setQuizChecked] = useState(false);
+  const [pipelineChecked, setPipelineChecked] = useState(() => Number(currentScore) >= 10);
+  const [quizAnswers, setQuizAnswers] = useState(() => {
+    if (Number(currentScore) >= 10) {
+      const initQ = {};
+      QUIZ_QUESTIONS.forEach((q) => {
+        initQ[q.id] = q.correct;
+      });
+      return initQ;
+    }
+    return {};
+  });
+  const [quizChecked, setQuizChecked] = useState(() => Number(currentScore) >= 10);
 
   // ====================================================
   // PERHITUNGAN SKOR MISI 2 (Total 20 Poin):
@@ -190,7 +209,7 @@ export default function DataAppPipeline({ currentScore, onComplete }) {
   ).length;
   const quizScore = quizChecked ? quizCorrectCount * 2 : 0; // 10 Poin
 
-  const totalM2Score = Math.min(20, labScore + quizScore);
+  const totalM2Score = Math.min(20, Math.max(Number(currentScore) || 0, labScore + quizScore));
 
   // Sync skor ke controller
   const onCompleteRef = useRef(onComplete);
@@ -199,7 +218,7 @@ export default function DataAppPipeline({ currentScore, onComplete }) {
   }, [onComplete]);
 
   useEffect(() => {
-    if (onCompleteRef.current) {
+    if (onCompleteRef.current && totalM2Score > 0) {
       onCompleteRef.current('m2', totalM2Score);
     }
   }, [totalM2Score]);
@@ -217,9 +236,7 @@ export default function DataAppPipeline({ currentScore, onComplete }) {
 
   const handleCheckPipeline = () => {
     setPipelineChecked(true);
-    if (labScore > 0) {
-      celebratePointGain(labScore >= 9);
-    }
+    celebratePointGain(true);
   };
 
   const handleEvaluateQuiz = () => {
@@ -256,7 +273,10 @@ export default function DataAppPipeline({ currentScore, onComplete }) {
         {/* Tab Switcher */}
         <div className="flex flex-wrap items-center gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 shrink-0">
           <button
-            onClick={() => setActiveTab('materi')}
+            onClick={() => {
+              setActiveTab('materi');
+              setMateriRead(true);
+            }}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeTab === 'materi'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
@@ -265,6 +285,9 @@ export default function DataAppPipeline({ currentScore, onComplete }) {
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>1. Materi Siklus</span>
+            {materiRead && (
+              <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'materi' ? 'text-slate-950' : 'text-emerald-400'}`} />
+            )}
           </button>
 
           <button
@@ -277,6 +300,16 @@ export default function DataAppPipeline({ currentScore, onComplete }) {
           >
             <Database className="w-3.5 h-3.5" />
             <span>2. Lab Pipeline (10p)</span>
+            {(pipelineChecked || labScore > 0) && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                activeTab === 'pipeline'
+                  ? 'bg-slate-950/20 text-slate-950'
+                  : 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
+              }`}>
+                <CheckCircle2 className="w-3 h-3" />
+                <span>{labScore}/10p</span>
+              </span>
+            )}
           </button>
 
           <button
@@ -289,6 +322,16 @@ export default function DataAppPipeline({ currentScore, onComplete }) {
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>3. Kuis Data (10p)</span>
+            {(quizChecked || quizScore > 0) && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                activeTab === 'kuis'
+                  ? 'bg-slate-950/20 text-slate-950'
+                  : 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
+              }`}>
+                <CheckCircle2 className="w-3 h-3" />
+                <span>{quizScore}/10p</span>
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -367,7 +410,10 @@ export default function DataAppPipeline({ currentScore, onComplete }) {
 
           <div className="flex justify-end pt-2">
             <button
-              onClick={() => setActiveTab('pipeline')}
+              onClick={() => {
+                setMateriRead(true);
+                setActiveTab('pipeline');
+              }}
               className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20"
             >
               <span>Lanjut ke Praktikum 3 Pipeline</span>
@@ -639,11 +685,21 @@ export default function DataAppPipeline({ currentScore, onComplete }) {
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-slate-900 border border-amber-500/30 flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
-              <ShieldCheck className="w-4 h-4" />
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>Total Poin Misi 2 yang Didapat: {totalM2Score} / 20 Poin</span>
             </div>
+            {onNextMission && (
+              <button
+                type="button"
+                onClick={onNextMission}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition"
+              >
+                <span>Lanjut ke Misi 3 (Perkakas Digital)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -102,8 +102,8 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
   - Controller: `src/pages/TugasKhusus/TugasSistemKomputer.jsx`
   - Sub-komponen: `SKHeader.jsx`, `SKMissionTabs.jsx`, `SKFooterNav.jsx`, `ModalSubmissionSuccessSK.jsx`, `HardwareExplorer.jsx` (Misi 1: Materi Sistem Komputer + Drag & Drop 20 Komponen Hardware + Drag & Drop 20 Software OS vs Aplikasi + Kuis), `DataAppPipeline.jsx` (Misi 2: Materi Transformasi Data + Simulator 3 Pipeline Data Mentah/Aplikasi/Informasi + Kuis Data), `DigitalToolbox.jsx` (Misi 3: Materi 5 Kelompok Perkakas + Drag & Drop 20 Aplikasi ke Kelompoknya + Kuis Software), `DigitalEthicsDetective.jsx` (Misi 4: Materi Netiket + Detektif 5 Studi Kasus Etika + Kuis Keamanan).
   - Custom Hooks: `src/hooks/RuangBelajar/TugasKhusus/Tugas3/useTugasSKState.js`.
-  - Fitur UI & Evaluasi: Layout berdampingan (*side-by-side single viewport*) untuk bank komponen kiri scrollable dan dropzones kanan pada Misi 1 & 3, urutan acak komponen (*randomized shuffle*), evaluasi komprehensif saat klik "Cek Hasil" (petasan selebrasi jika ≥ 70% dan efek suara gagal jika < 70%), serta perlindungan nilai tertinggi (`Math.max`).
-  - Fitur Persistensi & Sinkronisasi: Kebijakan **Database-First Priority** dengan sinkronisasi ke tabel `tugas_pengumpulan`, `point_logs`, dan `master_siswa.total_points`.
+  - Fitur UI & Evaluasi: Layout berdampingan (*side-by-side single viewport*) untuk bank komponen kiri scrollable dan dropzones kanan pada Misi 1 & 3, urutan acak komponen (*randomized shuffle*), evaluasi agregat saat klik "Cek Hasil" dengan animasi petasan selebrasi tanpa bocoran warna merah/hijau pada item, opsi kuis & alur data berpanjang seimbang (*anti-pattern*), serta perlindungan nilai tertinggi (`Math.max`).
+  - Fitur Persistensi & Sinkronisasi: Kebijakan **Database-First Priority** dengan sinkronisasi ke tabel `tugas_pengumpulan`, `point_logs`, dan `master_siswa.total_points`. Posisi draft penempatan komponen dicadangkan ke `localStorage` agar tidak hilang saat reload tanpa membebani database Supabase.
 
 ---
 

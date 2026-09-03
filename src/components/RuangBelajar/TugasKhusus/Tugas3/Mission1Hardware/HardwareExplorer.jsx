@@ -115,66 +115,81 @@ export const SW_CATEGORIES = [
 const QUIZ_QUESTIONS = [
   {
     id: 1,
-    question: 'Jika komputer tiba-tiba mati mendadak saat listrik padam, data yang tersimpan di RAM akan hilang seketika. Sifat memori ini disebut...',
+    question: 'Jika komputer tiba-tiba padam karena pemadaman listrik, data yang sedang aktif di RAM seketika hilang. Karakteristik memori tersebut disebut...',
     options: [
-      { id: 'a', text: 'Non-Volatile (Permanen & Tetap Tersimpan)' },
-      { id: 'b', text: 'Volatile (Sementara / Bergantung Aliran Listrik)' },
-      { id: 'c', text: 'Read-Only Memory (ROM)' },
-      { id: 'd', text: 'Cloud Storage Server' },
+      { id: 'a', text: 'Non-volatile yang menyimpan berkas secara permanen' },
+      { id: 'b', text: 'Read-only memory yang hanya dapat dibaca prosesor' },
+      { id: 'c', text: 'Volatile yang memerlukan daya listrik konstan aktif' },
+      { id: 'd', text: 'Virtual storage yang tersinkronisasi server awan' },
     ],
-    correct: 'b',
+    correct: 'c',
   },
   {
     id: 2,
-    question: 'Komponen perangkat keras yang sering diibaratkan sebagai "Otak Utama" karena bertugas mengeksekusi instruksi dan mengontrol lalu lintas data adalah...',
+    question: 'Komponen perangkat keras yang bertindak sebagai pusat pemrosesan logika, kontrol instruksi, dan perhitungan matematis adalah...',
     options: [
-      { id: 'a', text: 'Central Processing Unit (CPU)' },
-      { id: 'b', text: 'Power Supply Unit (PSU)' },
-      { id: 'c', text: 'Heatsink Fan Cooler' },
-      { id: 'd', text: 'Casing Komputer' },
+      { id: 'a', text: 'Central Processing Unit sebagai otak utama pemroses' },
+      { id: 'b', text: 'Power Supply Unit sebagai penyuplai arus daya listrik' },
+      { id: 'c', text: 'Heatsink Fan Cooler pendingin temperatur sirkuit' },
+      { id: 'd', text: 'Solid State Drive penyimpan berkas sistem digital' },
     ],
     correct: 'a',
   },
   {
     id: 3,
-    question: 'Di antara pilihan berikut, kelompok manakah yang seluruhnya merupakan PERANGKAT MASUKAN (Input Device)?',
+    question: 'Di antara kelompok perangkat berikut, manakah deretan yang seluruhnya berfungsi mengirimkan data masukan ke sistem komputer?',
     options: [
-      { id: 'a', text: 'Monitor, Printer, Proyektor' },
-      { id: 'b', text: 'Keyboard, Mouse, Mikrofon, Scanner' },
-      { id: 'c', text: 'Speaker, SSD, Flashdisk' },
-      { id: 'd', text: 'RAM, Processor, Motherboard' },
+      { id: 'a', text: 'Monitor LCD, Proyektor Digital, dan Speaker Stereo' },
+      { id: 'b', text: 'Printer Laser, Plotter Grafis, dan Monitor Layar' },
+      { id: 'c', text: 'Solid State Drive, Flashdisk USB, dan Random RAM' },
+      { id: 'd', text: 'Keyboard USB, Mouse Optik, Scanner, dan Mikrofon' },
     ],
-    correct: 'b',
+    correct: 'd',
   },
   {
     id: 4,
-    question: 'Manakah pernyataan yang paling tepat mengenai perbedaan Sistem Operasi (OS) dan Aplikasi?',
+    question: 'Manakah pernyataan yang paling tepat dalam membedakan peran Sistem Operasi dengan Perangkat Lunak Aplikasi?',
     options: [
-      { id: 'a', text: 'OS adalah perangkat keras, sedangkan aplikasi adalah kabel' },
-      { id: 'b', text: 'OS mengelola sumber daya perangkat keras dan menjalankan komputer, sedangkan Aplikasi membantu pengguna mengerjakan tugas tertentu (mengetik, edit video, dll)' },
-      { id: 'c', text: 'Aplikasi bisa berjalan lancar di komputer tanpa memerlukan Sistem Operasi' },
-      { id: 'd', text: 'OS hanya dipakai untuk bermain game saja' },
+      { id: 'a', text: 'Aplikasi mengontrol sirkuit fisik, sedangkan Sistem Operasi mengetik naskah' },
+      { id: 'b', text: 'Sistem Operasi mengelola sumber daya dasar, sedangkan Aplikasi melayani tugas spesifik' },
+      { id: 'c', text: 'Aplikasi bekerja mandiri tanpa OS, sedangkan Sistem Operasi butuh browser' },
+      { id: 'd', text: 'Sistem Operasi berupa kabel jaringan, sedangkan Aplikasi berupa papan ketik' },
     ],
     correct: 'b',
   },
   {
     id: 5,
-    question: 'Papan sirkuit elektronik utama tempat terhubungnya CPU, RAM, kartu grafis, dan media penyimpanan agar dapat saling bertukar data disebut...',
+    question: 'Papan sirkuit utama terintegrasi yang menjadi jalur komunikasi dan penghubung antara CPU, RAM, GPU, dan storage adalah...',
     options: [
-      { id: 'a', text: 'Motherboard (Mainboard)' },
-      { id: 'b', text: 'Sound Card' },
-      { id: 'c', text: 'Optical Drive' },
-      { id: 'd', text: 'Modem Jaringan' },
+      { id: 'a', text: 'Sound Card audio kontroler' },
+      { id: 'b', text: 'Network Interface Card LAN' },
+      { id: 'c', text: 'Motherboard papan sirkuit induk' },
+      { id: 'd', text: 'Power Distribution Unit PSU' },
     ],
-    correct: 'a',
+    correct: 'c',
   },
 ];
 
-export default function HardwareExplorer({ currentScore, onComplete }) {
+export default function HardwareExplorer({ currentScore, onComplete, onNextMission }) {
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'hw_drag' | 'sw_drag' | 'kuis'
+  const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
 
   // State Penempatan 20 Komponen Hardware
   const [hwPlacements, setHwPlacements] = useState(() => {
+    if (Number(currentScore) >= 15) {
+      const init = {};
+      HARDWARE_20_ITEMS.forEach((item) => {
+        init[item.id] = item.category;
+      });
+      return init;
+    }
+    try {
+      const saved = localStorage.getItem('tugas_sk_m1_hw_placements');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {}
     const init = {};
     HARDWARE_20_ITEMS.forEach((item) => {
       init[item.id] = '';
@@ -185,10 +200,24 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
     [...HARDWARE_20_ITEMS].sort(() => Math.random() - 0.5)
   );
   const [selectedHwItem, setSelectedHwItem] = useState(null);
-  const [hwChecked, setHwChecked] = useState(false);
+  const [hwChecked, setHwChecked] = useState(() => Number(currentScore) >= 15);
 
   // State Penempatan 20 Perangkat Lunak
   const [swPlacements, setSwPlacements] = useState(() => {
+    if (Number(currentScore) >= 25) {
+      const init = {};
+      SOFTWARE_20_ITEMS.forEach((item) => {
+        init[item.id] = item.type;
+      });
+      return init;
+    }
+    try {
+      const saved = localStorage.getItem('tugas_sk_m1_sw_placements');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {}
     const init = {};
     SOFTWARE_20_ITEMS.forEach((item) => {
       init[item.id] = '';
@@ -199,11 +228,34 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
     [...SOFTWARE_20_ITEMS].sort(() => Math.random() - 0.5)
   );
   const [selectedSwItem, setSelectedSwItem] = useState(null);
-  const [swChecked, setSwChecked] = useState(false);
+  const [swChecked, setSwChecked] = useState(() => Number(currentScore) >= 25);
+
+  // Simpan draft penempatan ke localStorage agar tidak hilang jika tidak sengaja ter-refresh
+  useEffect(() => {
+    try {
+      localStorage.setItem('tugas_sk_m1_hw_placements', JSON.stringify(hwPlacements));
+    } catch (e) {}
+  }, [hwPlacements]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('tugas_sk_m1_sw_placements', JSON.stringify(swPlacements));
+    } catch (e) {}
+  }, [swPlacements]);
 
   // State Kuis (No individual answer reveal, full reset required)
-  const [quizAnswers, setQuizAnswers] = useState({});
-  const [quizChecked, setQuizChecked] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState(() => {
+    // Jika ada skor tersimpan (>=10, misal kuis tuntas atau total >=10), pulihkan kunci jawaban
+    if (Number(currentScore) >= 10) {
+      const initQ = {};
+      QUIZ_QUESTIONS.forEach((q) => {
+        initQ[q.id] = q.correct;
+      });
+      return initQ;
+    }
+    return {};
+  });
+  const [quizChecked, setQuizChecked] = useState(() => Number(currentScore) >= 10);
 
   // ====================================================
   // PERHITUNGAN SKOR BARU (Total 35 Poin untuk Misi 1):
@@ -227,16 +279,17 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
   ).length;
   const quizScore = quizChecked ? quizCorrectCount * 2 : 0; // 10 Poin max
 
-  const totalM1Score = Math.min(35, Math.round(hwScore + swScore + quizScore));
+  const calculatedScore = Math.round(hwScore + swScore + quizScore);
+  const totalM1Score = Math.min(35, Math.max(Number(currentScore) || 0, calculatedScore));
 
-  // Sync skor ke controller
+  // Sync skor ke controller HANYA jika nilainya lebih besar atau sama
   const onCompleteRef = useRef(onComplete);
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
 
   useEffect(() => {
-    if (onCompleteRef.current) {
+    if (onCompleteRef.current && totalM1Score > 0) {
       onCompleteRef.current('m1', totalM1Score);
     }
   }, [totalM1Score]);
@@ -297,24 +350,16 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
     e.preventDefault();
   };
 
-  // Check hardware with sound/confetti or fail tone
+  // Check hardware with sound & petasan/confetti
   const handleCheckHw = () => {
     setHwChecked(true);
-    if (hwCorrectCount >= 14) {
-      celebratePointGain(hwCorrectCount >= 18);
-    } else {
-      soundEffects.playFail();
-    }
+    celebratePointGain(true);
   };
 
-  // Check software with sound/confetti or fail tone
+  // Check software with sound & petasan/confetti
   const handleCheckSw = () => {
     setSwChecked(true);
-    if (swCorrectCount >= 14) {
-      celebratePointGain(swCorrectCount >= 18);
-    } else {
-      soundEffects.playFail();
-    }
+    celebratePointGain(true);
   };
 
   // Evaluate quiz with sound/confetti
@@ -352,7 +397,10 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
         {/* Tab Navigation Pill */}
         <div className="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 shrink-0 self-start sm:self-auto overflow-x-auto max-w-full">
           <button
-            onClick={() => setActiveTab('materi')}
+            onClick={() => {
+              setActiveTab('materi');
+              setMateriRead(true);
+            }}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
               activeTab === 'materi'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
@@ -361,6 +409,9 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>1. Materi Visual</span>
+            {materiRead && (
+              <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'materi' ? 'text-slate-950' : 'text-emerald-400'}`} />
+            )}
           </button>
 
           <button
@@ -373,6 +424,16 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
           >
             <Cpu className="w-3.5 h-3.5" />
             <span>2. Lab Hardware (15p)</span>
+            {(hwChecked || hwScore > 0) && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                activeTab === 'hw_drag'
+                  ? 'bg-slate-950/20 text-slate-950'
+                  : 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
+              }`}>
+                <CheckCircle2 className="w-3 h-3" />
+                <span>{hwScore}/15p</span>
+              </span>
+            )}
           </button>
 
           <button
@@ -385,6 +446,16 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
           >
             <Layers className="w-3.5 h-3.5" />
             <span>3. Lab Software (10p)</span>
+            {(swChecked || swScore > 0) && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                activeTab === 'sw_drag'
+                  ? 'bg-slate-950/20 text-slate-950'
+                  : 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
+              }`}>
+                <CheckCircle2 className="w-3 h-3" />
+                <span>{swScore}/10p</span>
+              </span>
+            )}
           </button>
 
           <button
@@ -397,6 +468,16 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>4. Kuis (10p)</span>
+            {(quizChecked || quizScore > 0) && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                activeTab === 'kuis'
+                  ? 'bg-slate-950/20 text-slate-950'
+                  : 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
+              }`}>
+                <CheckCircle2 className="w-3 h-3" />
+                <span>{quizScore}/10p</span>
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -585,7 +666,10 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
 
           <div className="flex justify-end pt-2">
             <button
-              onClick={() => setActiveTab('hw_drag')}
+              onClick={() => {
+                setMateriRead(true);
+                setActiveTab('hw_drag');
+              }}
               className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20"
             >
               <span>Lanjut ke Praktikum 20 Komponen Hardware</span>
@@ -775,13 +859,7 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
                                   e.stopPropagation();
                                   handleAssignHw(item.id, cat.id);
                                 }}
-                                className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-xl text-[11px] font-semibold border cursor-pointer hover:opacity-80 transition ${
-                                  hwChecked
-                                    ? isCorrect
-                                      ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
-                                      : 'bg-rose-950 text-rose-300 border-rose-700'
-                                    : 'bg-slate-900 text-slate-200 border-slate-700'
-                                }`}
+                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xl text-[11px] font-semibold border border-slate-700 bg-slate-900 text-slate-200 cursor-pointer hover:border-slate-500 hover:bg-slate-800 transition"
                                 title="Klik untuk menghapus dari kategori"
                               >
                                 <RealAssetThumbnail
@@ -812,15 +890,17 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
           <div className="flex justify-between items-center pt-2">
             <div className="text-xs text-slate-400">
               {hwChecked && (
-                hwCorrectCount >= 14 ? (
-                  <span className="font-bold text-emerald-400 flex items-center gap-1.5 animate-in fade-in">
-                    <span>🎉 Hebat! {hwCorrectCount} / 20 Komponen Benar (+{hwScore}/15 Poin)</span>
-                  </span>
-                ) : (
-                  <span className="font-bold text-rose-400 flex items-center gap-1.5 animate-pulse">
-                    <span>⚠️ Masih ada yang keliru ({hwCorrectCount} / 20 Benar). Susun ulang posisi komponen merah lalu cek lagi!</span>
-                  </span>
-                )
+                <div className="font-bold flex items-center gap-2 animate-in fade-in">
+                  {hwCorrectCount === 20 ? (
+                    <span className="text-emerald-400">
+                      🎉 Luar Biasa! Sempurna 20 / 20 Komponen Hardware Tepat (+{hwScore}/15 Poin)
+                    </span>
+                  ) : (
+                    <span className="text-amber-300">
+                      📊 Hasil Evaluasi: {hwCorrectCount} dari 20 komponen tepat pada posisinya (+{hwScore}/15 Poin). Periksa kembali penempatanmu jika ingin menyempurnakan!
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
@@ -1014,13 +1094,7 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
                                   e.stopPropagation();
                                   handleAssignSw(item.id, cat.id);
                                 }}
-                                className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-xl text-xs font-semibold border cursor-pointer hover:opacity-80 transition ${
-                                  swChecked
-                                    ? isCorrect
-                                      ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
-                                      : 'bg-rose-950 text-rose-300 border-rose-700'
-                                    : 'bg-slate-900 text-slate-200 border-slate-700'
-                                }`}
+                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-900 text-slate-200 cursor-pointer hover:border-slate-500 hover:bg-slate-800 transition"
                                 title="Klik untuk menghapus dari zona"
                               >
                                 <RealAssetThumbnail
@@ -1047,15 +1121,17 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
           <div className="flex justify-between items-center pt-2">
             <div className="text-xs text-slate-400">
               {swChecked && (
-                swCorrectCount >= 14 ? (
-                  <span className="font-bold text-emerald-400 flex items-center gap-1.5 animate-in fade-in">
-                    <span>🎉 Hebat! {swCorrectCount} / 20 Software Benar (+{swScore}/10 Poin)</span>
-                  </span>
-                ) : (
-                  <span className="font-bold text-rose-400 flex items-center gap-1.5 animate-pulse">
-                    <span>⚠️ Masih ada yang keliru ({swCorrectCount} / 20 Benar). Susun ulang posisi software merah lalu cek lagi!</span>
-                  </span>
-                )
+                <div className="font-bold flex items-center gap-2 animate-in fade-in">
+                  {swCorrectCount === 20 ? (
+                    <span className="text-emerald-400">
+                      🎉 Luar Biasa! Sempurna 20 / 20 Software Berhasil Dikelompokkan (+{swScore}/10 Poin)
+                    </span>
+                  ) : (
+                    <span className="text-amber-300">
+                      📊 Hasil Evaluasi: {swCorrectCount} dari 20 software tepat pada posisinya (+{swScore}/10 Poin). Periksa kembali penempatanmu jika ingin menyempurnakan!
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
@@ -1193,11 +1269,21 @@ export default function HardwareExplorer({ currentScore, onComplete }) {
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-slate-900 border border-amber-500/30 flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
-              <ShieldCheck className="w-4 h-4" />
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>Total Poin Misi 1 yang Didapat: {totalM1Score} / 35 Poin</span>
             </div>
+            {onNextMission && (
+              <button
+                type="button"
+                onClick={onNextMission}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition"
+              >
+                <span>Lanjut ke Misi 2 (Data & Aplikasi)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}

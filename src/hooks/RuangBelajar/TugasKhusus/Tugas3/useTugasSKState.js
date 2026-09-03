@@ -56,82 +56,116 @@ export function useTugasSKState() {
     }
 
     try {
-      // 1. Dapatkan Task ID spesifik untuk Tugas 3 (Sistem Komputer)
-      let targetTaskId = explicitTaskId || dbTaskId;
-      if (!targetTaskId) {
-        const { data: masterTask } = await supabase
-          .from('tugas_master')
-          .select('id')
-          .or('kode_tugas.eq.TUGAS-03-SISTEM-KOMPUTER,kode_tugas.eq.TUGAS_SK_01,kode_tugas.eq.tugas-inf-03,kategori.ilike.%Sistem Komputer%,judul.ilike.%Sistem Komputer%,urutan.eq.3')
-          .limit(1)
-          .maybeSingle();
+      // 1. Dapatkan Task ID spesifik untuk Tugas 3 (Sistem Komputer & Perkakas Digital)
+      const candidateTaskIds = [
+        explicitTaskId,
+        dbTaskId,
+        '489b0d1e-8fd0-4bfa-9759-3996773347f3',
+        'TUGAS-03-SISTEM-KOMPUTER',
+        'tugas-inf-03',
+        'TUGAS_SK_01'
+      ].filter(Boolean);
 
-        if (masterTask?.id) {
-          targetTaskId = masterTask.id;
-          setDbTaskId(masterTask.id);
-        } else {
-          targetTaskId = '489b0d1e-8fd0-4bfa-9759-3996773347f3';
+      try {
+        const { data: masterTasks } = await supabase
+          .from('tugas_master')
+          .select('id, kode_tugas, judul, custom_route')
+          .or('kode_tugas.eq.TUGAS-03-SISTEM-KOMPUTER,kode_tugas.eq.TUGAS_SK_01,kode_tugas.eq.tugas-inf-03,custom_route.ilike.%sistem-komputer%,judul.ilike.%Sistem Komputer & Perkakas Digital%');
+
+        if (masterTasks && masterTasks.length > 0) {
+          masterTasks.forEach((m) => {
+            // Lindungi agar ID tugas 1 dan tugas 2 tidak pernah masuk ke Tugas 3
+            if (
+              m?.id &&
+              m.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
+              m.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
+              m.kode_tugas !== 'TUGAS-02-KUIS-ALGO' &&
+              m.kode_tugas !== 'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0' &&
+              !candidateTaskIds.includes(m.id)
+            ) {
+              candidateTaskIds.push(m.id);
+            }
+          });
+          const validMaster = masterTasks.find(m => 
+            m.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
+            m.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
+            m.kode_tugas !== 'TUGAS-02-KUIS-ALGO'
+          );
+          if (validMaster?.id && !dbTaskId) {
+            setDbTaskId(validMaster.id);
+          }
         }
+      } catch (err) {
+        console.warn('Cari candidate task master SK:', err);
       }
 
-      // 2. Kueri ke tugas_pengumpulan WAJIB menyertakan filter tugas_id spesifik
-      const { data: subData } = await supabase
+      // 2. Kueri ke tugas_pengumpulan khusus Tugas 3
+      const { data: subDataList } = await supabase
         .from('tugas_pengumpulan')
-        .select('id, tugas_id, siswa_id, status, skor, persentase_skor, detail_jawaban, catatan_guru, submitted_at, graded_at')
+        .select('id, tugas_id, siswa_id, status, skor, nilai_akhir, persentase_skor, detail_jawaban, catatan_guru, submitted_at, graded_at')
         .eq('siswa_id', numStudentId)
-        .eq('tugas_id', targetTaskId)
+        .in('tugas_id', candidateTaskIds)
         .order('submitted_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
+
+      const subData = subDataList && subDataList.length > 0 ? subDataList[0] : null;
 
       if (subData) {
-        setExistingSubmission(subData);
-        setSubmitted(true);
+        // Parse detail_jawaban dengan aman jika bertipe string
+        let parsedDetail = null;
+        if (subData.detail_jawaban) {
+          if (typeof subData.detail_jawaban === 'string') {
+            try {
+              parsedDetail = JSON.parse(subData.detail_jawaban);
+            } catch (e) {
+              console.warn('Gagal JSON.parse detail_jawaban SK:', e);
+            }
+          } else if (typeof subData.detail_jawaban === 'object') {
+            parsedDetail = subData.detail_jawaban;
+          }
+        }
+
+        const officialScore = Number(subData.nilai_akhir ?? subData.skor) || 0;
 
         // UTAMAKAN DATABASE: Pulihkan progres resmi dari snapshot database
-        if (subData.detail_jawaban?.scores) {
-          setScores(subData.detail_jawaban.scores);
-        }
-        if (subData.detail_jawaban?.completed) {
-          setCompleted(subData.detail_jawaban.completed);
+        if (parsedDetail?.scores) {
+          setScores(parsedDetail.scores);
+        } else if (officialScore > 0) {
+          setScores({
+            m1: officialScore,
+            m2: 0,
+            m3: 0,
+            m4: 0
+          });
         }
 
-        // Sinkronkan balik snapshot database ke localStorage agar cache lokal ter-update
-        if (currentKey && subData.detail_jawaban) {
+        if (parsedDetail?.completed) {
+          setCompleted(parsedDetail.completed);
+        }
+
+        setExistingSubmission({
+          ...subData,
+          skor: officialScore,
+          nilai_akhir: officialScore,
+          detail_jawaban: parsedDetail || subData.detail_jawaban
+        });
+        setSubmitted(true);
+
+        // Sinkronkan balik snapshot database ke localStorage agar cache lokal ter-update sesuai database
+        if (currentKey) {
           try {
             localStorage.setItem(currentKey, JSON.stringify({
-              scores: subData.detail_jawaban.scores || {},
-              completed: subData.detail_jawaban.completed || {}
+              scores: parsedDetail?.scores || { m1: officialScore, m2: 0, m3: 0, m4: 0 },
+              completed: parsedDetail?.completed || {}
             }));
           } catch (e) {
             console.warn('Gagal sinkron database ke local storage:', e);
           }
         }
       } else {
-        // Fallback: periksa apakah ada log nilai Tugas 3 di point_logs
-        const { data: logData } = await supabase
-          .from('point_logs')
-          .select('id, amount, description, created_at')
-          .eq('siswa_id', numStudentId)
-          .ilike('description', '%Tugas 3%')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (logData && logData.amount !== undefined) {
-          setExistingSubmission({
-            tugas_id: targetTaskId,
-            siswa_id: numStudentId,
-            skor: logData.amount,
-            persentase_skor: logData.amount,
-            status: 'selesai',
-            submitted_at: logData.created_at,
-          });
-          setSubmitted(true);
-        } else {
-          setExistingSubmission(null);
-          setSubmitted(false);
-        }
+        // Database tugas 3 bersih / belum ada pengumpulan resmi
+        setExistingSubmission(null);
+        setSubmitted(false);
       }
     } catch (err) {
       console.error('Error cek tugas_pengumpulan SK:', err);
@@ -202,12 +236,17 @@ export function useTugasSKState() {
       try {
         const { data } = await supabase
           .from('tugas_master')
-          .select('id, kode_tugas, judul')
-          .or('kode_tugas.eq.TUGAS-03-SISTEM-KOMPUTER,kode_tugas.eq.TUGAS-03-SCRATCH-ANIMASI,kode_tugas.eq.tugas-inf-03,kategori.ilike.%Sistem Komputer%,judul.ilike.%Perkakas Digital%,urutan.eq.3')
+          .select('id, kode_tugas, judul, custom_route')
+          .or('kode_tugas.eq.TUGAS-03-SISTEM-KOMPUTER,kode_tugas.eq.tugas-inf-03,kode_tugas.eq.TUGAS_SK_01,custom_route.ilike.%sistem-komputer%,judul.ilike.%Sistem Komputer & Perkakas Digital%')
           .limit(1)
           .maybeSingle();
 
-        if (data?.id) {
+        if (
+          data?.id &&
+          data.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
+          data.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
+          data.kode_tugas !== 'TUGAS-02-KUIS-ALGO'
+        ) {
           setDbTaskId(data.id);
           if (user?.id) {
             const currentKey = `tugas_sk_state_user_${user.id}`;
@@ -282,12 +321,17 @@ export function useTugasSKState() {
       try {
         const { data: tData } = await supabase
           .from('tugas_master')
-          .select('id')
-          .or('kode_tugas.eq.TUGAS-03-SISTEM-KOMPUTER,kode_tugas.eq.TUGAS-03-SCRATCH-ANIMASI,kode_tugas.eq.tugas-inf-03,kategori.ilike.%Sistem Komputer%,judul.ilike.%Perkakas Digital%,urutan.eq.3')
+          .select('id, kode_tugas')
+          .or('kode_tugas.eq.TUGAS-03-SISTEM-KOMPUTER,kode_tugas.eq.TUGAS_SK_01,kode_tugas.eq.tugas-inf-03,custom_route.ilike.%sistem-komputer%,judul.ilike.%Sistem Komputer & Perkakas Digital%')
           .limit(1)
           .maybeSingle();
 
-        if (tData?.id) {
+        if (
+          tData?.id &&
+          tData.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
+          tData.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
+          tData.kode_tugas !== 'TUGAS-02-KUIS-ALGO'
+        ) {
           resolvedTaskId = tData.id;
           setDbTaskId(tData.id);
         }
@@ -302,47 +346,32 @@ export function useTugasSKState() {
     try {
       const currentAttemptScore = totalScore;
 
-      // 1. Cek skor terbaik sebelumnya dari state dan database tugas_pengumpulan
+      // 1. Cek skor terbaik sebelumnya HANYA dari tugas_pengumpulan untuk tugas ini
       let previousBestScore = 0;
-      if (existingSubmission) {
-        previousBestScore = Number(existingSubmission.skor ?? 0) || 0;
+      if (existingSubmission && (existingSubmission.tugas_id === resolvedTaskId || !existingSubmission.tugas_id)) {
+        previousBestScore = Number(existingSubmission.skor ?? existingSubmission.nilai_akhir ?? 0) || 0;
       }
 
       try {
         const { data: dbSub } = await supabase
           .from('tugas_pengumpulan')
-          .select('id, skor')
+          .select('id, skor, nilai_akhir')
           .eq('siswa_id', studentIdInt)
           .eq('tugas_id', resolvedTaskId)
           .maybeSingle();
 
         if (dbSub) {
-          const dbScore = Number(dbSub.skor ?? 0) || 0;
+          const dbScore = Number(dbSub.nilai_akhir ?? dbSub.skor ?? 0) || 0;
           previousBestScore = Math.max(previousBestScore, dbScore);
-        } else {
-          // Periksa jika ada riwayat tercatat di point_logs
-          const { data: pLog } = await supabase
-            .from('point_logs')
-            .select('amount')
-            .eq('siswa_id', studentIdInt)
-            .ilike('description', '%Tugas 3%')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          if (pLog && pLog.amount !== undefined) {
-            previousBestScore = Math.max(previousBestScore, Number(pLog.amount) || 0);
-          }
         }
       } catch (e) {
         console.warn('Kueri previous submission tugas_pengumpulan error:', e);
       }
 
       // ATURAN UTAMA: Proteksi Database
-      // Jika nilai di database LEBIH BESAR atau SAMA dengan skor yang akan dikumpulkan saat ini,
-      // JANGAN simpan data baru ke database (database tidak ditimpa).
-      // Data baru hanya disimpan ke database jika nilainya LEBIH BESAR dari database!
-      const isImproved = previousBestScore === 0 ? true : currentAttemptScore > previousBestScore;
+      // Jika tugas_pengumpulan masih kosong (previousBestScore === 0), SELALU simpan skor percobaan saat ini
+      // Jika sudah pernah ada nilai sebelumnya, hanya timpa database jika nilainya LEBIH BESAR
+      const isImproved = previousBestScore === 0 || currentAttemptScore > previousBestScore;
       const isRetained = previousBestScore > 0 && currentAttemptScore <= previousBestScore;
       const finalScoreToSave = Math.max(previousBestScore, currentAttemptScore);
 

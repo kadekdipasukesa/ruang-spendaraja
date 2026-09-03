@@ -79,64 +79,79 @@ const QUIZ_QUESTIONS = [
     id: 1,
     question: 'Perangkat lunak yang dikategorikan sebagai "Perkakas Produktivitas" memiliki fungsi utama untuk...',
     options: [
-      { id: 'a', text: 'Menghabiskan kuota internet tanpa tujuan' },
-      { id: 'b', text: 'Membantu pengguna menghasilkan karya, menyelesaikan tugas sekolah/pekerjaan, dan mengolah data secara efisien' },
-      { id: 'c', text: 'Mengubah warna fisik casing laptop' },
-      { id: 'd', text: 'Membuat suara kipas laptop menjadi berisik' },
+      { id: 'a', text: 'Menguras bandwidth kuota data internet saat tidak digunakan' },
+      { id: 'b', text: 'Membantu penyelesaian tugas dokumen dan pengolahan data' },
+      { id: 'c', text: 'Mengubah warna fisik luar sirkuit casing perangkat laptop' },
+      { id: 'd', text: 'Meningkatkan putaran desibel suara kipas pendingin mesin' },
     ],
     correct: 'b',
   },
   {
     id: 2,
-    question: 'Jika kamu bersama 3 teman sekelas ingin menyusun makalah kelompok secara bersamaan dalam satu dokumen secara langsung (real-time kolaborasi), perkakas yang paling tepat adalah...',
+    question: 'Jika kamu bersama teman ingin menyusun naskah tugas kelompok bersamaan dalam satu dokumen secara langsung (live online), perkakas yang paling tepat adalah...',
     options: [
-      { id: 'a', text: 'Aplikasi Google Docs / Word Online berbasis Cloud' },
-      { id: 'b', text: 'Notepad teks biasa tanpa jaringan' },
-      { id: 'c', text: 'Game Balap Mobil' },
-      { id: 'd', text: 'Kalkulator bawaan Windows' },
+      { id: 'a', text: 'Aplikasi pemutar rekaman video resolusi tinggi offline' },
+      { id: 'b', text: 'Program kalkulator standar bawaan sistem operasi komputer' },
+      { id: 'c', text: 'Notepad teks sederhana tanpa sambungan jaringan internet' },
+      { id: 'd', text: 'Dokumen berbasis cloud dengan fitur kolaborasi real-time' },
     ],
-    correct: 'a',
+    correct: 'd',
   },
   {
     id: 3,
-    question: 'Perangkat lunak dengan lisensi "Open Source" (seperti Linux Ubuntu atau LibreOffice) memiliki karakteristik utama, yaitu...',
+    question: 'Perangkat lunak dengan lisensi "Open Source" (seperti Linux OS atau LibreOffice) memiliki karakteristik utama, yaitu...',
     options: [
-      { id: 'a', text: 'Kode sumbernya terbuka untuk dipelajari, dimodifikasi, dan disebarluaskan secara legal dan gratis' },
-      { id: 'b', text: 'Pasti disusupi virus berbahaya' },
-      { id: 'c', text: 'Hanya bisa dibuka saat tengah malam' },
-      { id: 'd', text: 'Wajib membayar biaya langganan bulanan mahal' },
+      { id: 'a', text: 'Kode sumber bebas ditelaah, dimodifikasi, dan dibagikan' },
+      { id: 'b', text: 'Wajib membayar lisensi tagihan berlangganan setiap bulan' },
+      { id: 'c', text: 'Hanya diizinkan dibuka pada komputer berspesifikasi server' },
+      { id: 'd', text: 'Dilarang keras disebarluaskan untuk kegiatan pendidikan' },
     ],
     correct: 'a',
   },
   {
     id: 4,
-    question: 'Manakah pasangan yang TEPAT antara kebutuhan pengguna dan kelompok perkakas digital pengolahnya?',
+    question: 'Manakah padanan yang TEPAT antara kebutuhan komputasi pengguna dan kelompok perkakas digital pengolahnya?',
     options: [
-      { id: 'a', text: 'Menghitung laporan kas kelas mingguan ➔ Microsoft Excel (Perkakas Produktivitas Pengolah Lembar Kerja)' },
-      { id: 'b', text: 'Mencadangkan foto ke awan ➔ Game Petualangan' },
-      { id: 'c', text: 'Menghapus virus komputer ➔ Aplikasi Pemutar MP3' },
-      { id: 'd', text: 'Belajar koding animasi ➔ Aplikasi Kalkulator Dagang' },
+      { id: 'a', text: 'Mencadangkan arsip foto ➔ Perangkat lunak editor audio radio' },
+      { id: 'b', text: 'Menghapus malware jahat ➔ Perangkat lunak pemutar lagu MP3' },
+      { id: 'c', text: 'Menghitung kas mingguan ➔ Aplikasi pengolah lembar sebar' },
+      { id: 'd', text: 'Belajar animasi visual ➔ Kalkulator konversi mata uang' },
     ],
-    correct: 'a',
+    correct: 'c',
   },
   {
     id: 5,
     question: 'Aplikasi yang bertugas sebagai pelindung laptop saat dicolokkan flashdisk asing agar sistem terhindar dari file berbahaya/malware tergolong dalam kelompok...',
     options: [
-      { id: 'a', text: 'Perkakas Hiburan Musik' },
-      { id: 'b', text: 'Perkakas Utilitas & Keamanan Sistem (Antivirus / Security Tool)' },
-      { id: 'c', text: 'Perkakas Desain Spanduk' },
-      { id: 'd', text: 'Perkakas Pemutar Film' },
+      { id: 'a', text: 'Perkakas Pemutar Musik Digital' },
+      { id: 'b', text: 'Perkakas Utilitas & Proteksi Keamanan' },
+      { id: 'c', text: 'Perkakas Desain Banner Spanduk' },
+      { id: 'd', text: 'Perkakas Penjelajah Peramban Web' },
     ],
     correct: 'b',
   },
 ];
 
-export default function DigitalToolbox({ currentScore, onComplete }) {
+export default function DigitalToolbox({ currentScore, onComplete, onNextMission }) {
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'tools_drag' | 'kuis'
+  const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
 
   // Penempatan 20 Aplikasi
   const [appPlacements, setAppPlacements] = useState(() => {
+    if (Number(currentScore) >= 20) {
+      const init = {};
+      APP_20_TOOLS.forEach((item) => {
+        init[item.id] = item.group;
+      });
+      return init;
+    }
+    try {
+      const saved = localStorage.getItem('tugas_sk_m3_app_placements');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {}
     const init = {};
     APP_20_TOOLS.forEach((item) => {
       init[item.id] = '';
@@ -147,11 +162,27 @@ export default function DigitalToolbox({ currentScore, onComplete }) {
     [...APP_20_TOOLS].sort(() => Math.random() - 0.5)
   );
   const [selectedAppItem, setSelectedAppItem] = useState(null);
-  const [appChecked, setAppChecked] = useState(false);
+  const [appChecked, setAppChecked] = useState(() => Number(currentScore) >= 20);
+
+  // Simpan draft penempatan ke localStorage agar tidak hilang
+  useEffect(() => {
+    try {
+      localStorage.setItem('tugas_sk_m3_app_placements', JSON.stringify(appPlacements));
+    } catch (e) {}
+  }, [appPlacements]);
 
   // Kuis State (No individual answer reveal, reset required)
-  const [quizAnswers, setQuizAnswers] = useState({});
-  const [quizChecked, setQuizChecked] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState(() => {
+    if (Number(currentScore) >= 10) {
+      const initQ = {};
+      QUIZ_QUESTIONS.forEach((q) => {
+        initQ[q.id] = q.correct;
+      });
+      return initQ;
+    }
+    return {};
+  });
+  const [quizChecked, setQuizChecked] = useState(() => Number(currentScore) >= 10);
 
   // ====================================================
   // PERHITUNGAN SKOR MISI 3 (Total 30 Poin):
@@ -169,7 +200,7 @@ export default function DigitalToolbox({ currentScore, onComplete }) {
   ).length;
   const quizScore = quizChecked ? quizCorrectCount * 2 : 0; // 10 Poin
 
-  const totalM3Score = Math.min(30, Math.round(labScore + quizScore));
+  const totalM3Score = Math.min(30, Math.max(Number(currentScore) || 0, Math.round(labScore + quizScore)));
 
   // Sync skor ke controller
   const onCompleteRef = useRef(onComplete);
@@ -178,7 +209,7 @@ export default function DigitalToolbox({ currentScore, onComplete }) {
   }, [onComplete]);
 
   useEffect(() => {
-    if (onCompleteRef.current) {
+    if (onCompleteRef.current && totalM3Score > 0) {
       onCompleteRef.current('m3', totalM3Score);
     }
   }, [totalM3Score]);
@@ -212,14 +243,10 @@ export default function DigitalToolbox({ currentScore, onComplete }) {
     e.preventDefault();
   };
 
-  // Check apps with sound/confetti or fail tone
+  // Check apps with sound & petasan/confetti
   const handleCheckApps = () => {
     setAppChecked(true);
-    if (appCorrectCount >= 14) {
-      celebratePointGain(appCorrectCount >= 18);
-    } else {
-      soundEffects.playFail();
-    }
+    celebratePointGain(true);
   };
 
   const handleEvaluateQuiz = () => {
@@ -256,7 +283,10 @@ export default function DigitalToolbox({ currentScore, onComplete }) {
         {/* Tab Switcher */}
         <div className="flex flex-wrap items-center gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 shrink-0">
           <button
-            onClick={() => setActiveTab('materi')}
+            onClick={() => {
+              setActiveTab('materi');
+              setMateriRead(true);
+            }}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeTab === 'materi'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
@@ -265,6 +295,9 @@ export default function DigitalToolbox({ currentScore, onComplete }) {
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>1. Materi 5 Kelompok</span>
+            {materiRead && (
+              <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'materi' ? 'text-slate-950' : 'text-emerald-400'}`} />
+            )}
           </button>
 
           <button
@@ -277,6 +310,16 @@ export default function DigitalToolbox({ currentScore, onComplete }) {
           >
             <LayoutGrid className="w-3.5 h-3.5" />
             <span>2. Lab 20 Aplikasi (20p)</span>
+            {(appChecked || labScore > 0) && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                activeTab === 'tools_drag'
+                  ? 'bg-slate-950/20 text-slate-950'
+                  : 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
+              }`}>
+                <CheckCircle2 className="w-3 h-3" />
+                <span>{labScore}/20p</span>
+              </span>
+            )}
           </button>
 
           <button
@@ -289,6 +332,16 @@ export default function DigitalToolbox({ currentScore, onComplete }) {
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>3. Kuis Software (10p)</span>
+            {(quizChecked || quizScore > 0) && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                activeTab === 'kuis'
+                  ? 'bg-slate-950/20 text-slate-950'
+                  : 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
+              }`}>
+                <CheckCircle2 className="w-3 h-3" />
+                <span>{quizScore}/10p</span>
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -393,7 +446,10 @@ export default function DigitalToolbox({ currentScore, onComplete }) {
 
           <div className="flex justify-end pt-2">
             <button
-              onClick={() => setActiveTab('tools_drag')}
+              onClick={() => {
+                setMateriRead(true);
+                setActiveTab('tools_drag');
+              }}
               className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20"
             >
               <span>Lanjut ke Praktikum 20 Aplikasi</span>
@@ -583,13 +639,7 @@ export default function DigitalToolbox({ currentScore, onComplete }) {
                                   e.stopPropagation();
                                   handleAssignApp(item.id, grp.id);
                                 }}
-                                className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-xl text-[11px] font-semibold border cursor-pointer hover:opacity-80 transition ${
-                                  appChecked
-                                    ? isCorrect
-                                      ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
-                                      : 'bg-rose-950 text-rose-300 border-rose-700'
-                                    : 'bg-slate-900 text-slate-200 border-slate-700'
-                                }`}
+                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xl text-[11px] font-semibold border border-slate-700 bg-slate-900 text-slate-200 cursor-pointer hover:border-slate-500 hover:bg-slate-800 transition"
                                 title="Klik untuk menghapus dari kelompok"
                               >
                                 <RealAssetThumbnail
@@ -620,15 +670,17 @@ export default function DigitalToolbox({ currentScore, onComplete }) {
           <div className="flex justify-between items-center pt-2">
             <div className="text-xs text-slate-400">
               {appChecked && (
-                appCorrectCount >= 14 ? (
-                  <span className="font-bold text-emerald-400 flex items-center gap-1.5 animate-in fade-in">
-                    <span>🎉 Hebat! {appCorrectCount} / 20 Aplikasi Benar (+{labScore}/20 Poin)</span>
-                  </span>
-                ) : (
-                  <span className="font-bold text-rose-400 flex items-center gap-1.5 animate-pulse">
-                    <span>⚠️ Masih ada yang keliru ({appCorrectCount} / 20 Benar). Susun ulang posisi aplikasi merah lalu cek lagi!</span>
-                  </span>
-                )
+                <div className="font-bold flex items-center gap-2 animate-in fade-in">
+                  {appCorrectCount === 20 ? (
+                    <span className="text-emerald-400">
+                      🎉 Luar Biasa! Sempurna 20 / 20 Aplikasi Tepat Sasaran (+{labScore}/20 Poin)
+                    </span>
+                  ) : (
+                    <span className="text-amber-300">
+                      📊 Hasil Evaluasi: {appCorrectCount} dari 20 aplikasi tepat pada kelompoknya (+{labScore}/20 Poin). Periksa kembali penempatanmu jika ingin menyempurnakan!
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
@@ -763,11 +815,21 @@ export default function DigitalToolbox({ currentScore, onComplete }) {
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-slate-900 border border-amber-500/30 flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
-              <ShieldCheck className="w-4 h-4" />
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>Total Poin Misi 3 yang Didapat: {totalM3Score} / 30 Poin</span>
             </div>
+            {onNextMission && (
+              <button
+                type="button"
+                onClick={onNextMission}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition"
+              >
+                <span>Lanjut ke Misi 4 (Dampak & Etika TIK)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}

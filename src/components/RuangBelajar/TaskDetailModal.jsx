@@ -223,7 +223,7 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
                   type="button"
                   onClick={() => {
                     onClose();
-                    navigate(task.custom_route || '/tugas/berpikir-komputasional');
+                    navigate(task.custom_route || (isSK ? '/tugas/sistem-komputer' : '/tugas/berpikir-komputasional'));
                   }}
                   className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-xl shadow-2xs transition ${
                     isCompleted && (task.earnedScore ?? 0) >= points

@@ -46,8 +46,8 @@ export default function SKMissionTabs({
       {MISSIONS.map((m) => {
         const Icon = m.icon;
         const isActive = activeMission === m.id;
-        const isDone = completed[m.key];
-        const currentScore = scores[m.key] || 0;
+        const currentScore = Number(scores[m.key]) || 0;
+        const isDone = Boolean(completed[m.key]) || currentScore > 0;
 
         return (
           <button

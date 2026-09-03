@@ -56,66 +56,115 @@ export function useTugasBKState() {
 
     try {
       // 1. Dapatkan Task ID spesifik untuk Tugas 2 (Berpikir Komputasional)
-      const targetTaskId = explicitTaskId || dbTaskId || 'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0';
+      const candidateTaskIds = [
+        explicitTaskId,
+        dbTaskId,
+        '595d2d95-d16f-4582-9be5-93d9db451f47',
+        'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0',
+        'TUGAS-02-BERPIKIR-KOMPUTASIONAL',
+        'tugas-inf-02',
+        'TUGAS_BK_01'
+      ].filter(Boolean);
 
-      // 2. Kueri ke tugas_pengumpulan WAJIB menyertakan filter tugas_id spesifik
-      const { data: subData } = await supabase
+      try {
+        const { data: masterTasks } = await supabase
+          .from('tugas_master')
+          .select('id, kode_tugas, judul, custom_route')
+          .or('kode_tugas.eq.TUGAS-02-BERPIKIR-KOMPUTASIONAL,kode_tugas.eq.TUGAS_BK_01,kode_tugas.eq.tugas-inf-02,kode_tugas.eq.TUGAS-02-KUIS-ALGO,custom_route.ilike.%berpikir-komputasional%,custom_route.ilike.%kuis-algoritma%');
+
+        if (masterTasks && masterTasks.length > 0) {
+          masterTasks.forEach((m) => {
+            if (
+              m?.id &&
+              m.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
+              m.kode_tugas !== 'TUGAS-03-SISTEM-KOMPUTER' &&
+              m.kode_tugas !== 'tugas-inf-03' &&
+              !candidateTaskIds.includes(m.id)
+            ) {
+              candidateTaskIds.push(m.id);
+            }
+          });
+          const validTask = masterTasks.find(m => 
+            m.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
+            m.kode_tugas !== 'TUGAS-03-SISTEM-KOMPUTER' &&
+            m.kode_tugas !== 'tugas-inf-03'
+          );
+          if (validTask?.id && !dbTaskId) {
+            setDbTaskId(validTask.id);
+          }
+        }
+      } catch (err) {
+        console.warn('Cari candidate task master BK:', err);
+      }
+
+      // 2. Kueri ke tugas_pengumpulan khusus Tugas 2
+      const { data: subDataList } = await supabase
         .from('tugas_pengumpulan')
-        .select('id, tugas_id, siswa_id, status, skor, persentase_skor, detail_jawaban, catatan_guru, submitted_at, graded_at')
+        .select('id, tugas_id, siswa_id, status, skor, nilai_akhir, persentase_skor, detail_jawaban, catatan_guru, submitted_at, graded_at')
         .eq('siswa_id', numStudentId)
-        .eq('tugas_id', targetTaskId)
+        .in('tugas_id', candidateTaskIds)
         .order('submitted_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
+
+      const subData = subDataList && subDataList.length > 0 ? subDataList[0] : null;
 
       if (subData) {
-        setExistingSubmission(subData);
-        setSubmitted(true);
+        // Parse detail_jawaban dengan aman jika bertipe string
+        let parsedDetail = null;
+        if (subData.detail_jawaban) {
+          if (typeof subData.detail_jawaban === 'string') {
+            try {
+              parsedDetail = JSON.parse(subData.detail_jawaban);
+            } catch (e) {
+              console.warn('Gagal JSON.parse detail_jawaban BK:', e);
+            }
+          } else if (typeof subData.detail_jawaban === 'object') {
+            parsedDetail = subData.detail_jawaban;
+          }
+        }
+
+        const officialScore = Number(subData.nilai_akhir ?? subData.skor) || 0;
 
         // UTAMAKAN DATABASE: Pulihkan progres resmi dari snapshot database
-        if (subData.detail_jawaban?.scores) {
-          setScores(subData.detail_jawaban.scores);
-        }
-        if (subData.detail_jawaban?.completed) {
-          setCompleted(subData.detail_jawaban.completed);
+        if (parsedDetail?.scores) {
+          setScores(parsedDetail.scores);
+        } else if (officialScore > 0) {
+          // Fallback jika tidak ada breakdown objek tapi ada skor resmi
+          setScores({
+            m1: officialScore,
+            m2: 0,
+            m3: 0,
+            m4: 0
+          });
         }
 
-        // Sinkronkan balik snapshot database ke localStorage agar cache lokal ter-update
-        if (currentKey && subData.detail_jawaban) {
+        if (parsedDetail?.completed) {
+          setCompleted(parsedDetail.completed);
+        }
+
+        setExistingSubmission({
+          ...subData,
+          skor: officialScore,
+          nilai_akhir: officialScore,
+          detail_jawaban: parsedDetail || subData.detail_jawaban
+        });
+        setSubmitted(true);
+
+        // Sinkronkan balik snapshot database ke localStorage agar cache lokal ter-update sesuai database
+        if (currentKey) {
           try {
             localStorage.setItem(currentKey, JSON.stringify({
-              scores: subData.detail_jawaban.scores || {},
-              completed: subData.detail_jawaban.completed || {}
+              scores: parsedDetail?.scores || { m1: officialScore, m2: 0, m3: 0, m4: 0 },
+              completed: parsedDetail?.completed || {}
             }));
           } catch (e) {
             console.warn('Gagal sinkron database ke local storage:', e);
           }
         }
       } else {
-        // Fallback: periksa apakah ada log nilai Tugas 2 di point_logs
-        const { data: logData } = await supabase
-          .from('point_logs')
-          .select('id, amount, description, created_at')
-          .eq('siswa_id', numStudentId)
-          .ilike('description', '%Tugas 2%')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (logData && logData.amount !== undefined) {
-          setExistingSubmission({
-            tugas_id: targetTaskId,
-            siswa_id: numStudentId,
-            skor: logData.amount,
-            persentase_skor: logData.amount,
-            status: 'selesai',
-            submitted_at: logData.created_at,
-          });
-          setSubmitted(true);
-        } else {
-          setExistingSubmission(null);
-          setSubmitted(false);
-        }
+        // Database tugas 2 bersih / belum ada pengumpulan resmi
+        setExistingSubmission(null);
+        setSubmitted(false);
       }
     } catch (err) {
       console.error('Error cek tugas_pengumpulan BK:', err);
@@ -283,47 +332,32 @@ export function useTugasBKState() {
     try {
       const currentAttemptScore = totalScore;
 
-      // 1. Cek skor terbaik sebelumnya dari state dan database tugas_pengumpulan
+      // 1. Cek skor terbaik sebelumnya HANYA dari tugas_pengumpulan untuk tugas ini
       let previousBestScore = 0;
-      if (existingSubmission && existingSubmission.tugas_id === resolvedTaskId) {
-        previousBestScore = Number(existingSubmission.skor ?? 0) || 0;
+      if (existingSubmission && (existingSubmission.tugas_id === resolvedTaskId || !existingSubmission.tugas_id)) {
+        previousBestScore = Number(existingSubmission.skor ?? existingSubmission.nilai_akhir ?? 0) || 0;
       }
 
       try {
         const { data: dbSub } = await supabase
           .from('tugas_pengumpulan')
-          .select('id, skor')
+          .select('id, skor, nilai_akhir')
           .eq('siswa_id', studentIdInt)
           .eq('tugas_id', resolvedTaskId)
           .maybeSingle();
 
         if (dbSub) {
-          const dbScore = Number(dbSub.skor ?? 0) || 0;
+          const dbScore = Number(dbSub.nilai_akhir ?? dbSub.skor ?? 0) || 0;
           previousBestScore = Math.max(previousBestScore, dbScore);
-        } else {
-          // Periksa jika ada riwayat tercatat di point_logs
-          const { data: pLog } = await supabase
-            .from('point_logs')
-            .select('amount')
-            .eq('siswa_id', studentIdInt)
-            .ilike('description', '%Tugas 2%')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          if (pLog && pLog.amount !== undefined) {
-            previousBestScore = Math.max(previousBestScore, Number(pLog.amount) || 0);
-          }
         }
       } catch (e) {
         console.warn('Kueri previous submission tugas_pengumpulan error:', e);
       }
 
       // ATURAN UTAMA: Proteksi Database
-      // Jika nilai di database LEBIH BESAR atau SAMA dengan skor yang akan dikumpulkan saat ini,
-      // JANGAN simpan data baru ke database (database tidak ditimpa).
-      // Data baru hanya disimpan ke database jika nilainya LEBIH BESAR dari database!
-      const isImproved = previousBestScore === 0 ? true : currentAttemptScore > previousBestScore;
+      // Jika database masih kosong (previousBestScore === 0), SELALU simpan skor percobaan saat ini
+      // Jika sudah ada nilai sebelumnya, hanya timpa jika nilainya LEBIH BESAR
+      const isImproved = previousBestScore === 0 || currentAttemptScore > previousBestScore;
       const isRetained = previousBestScore > 0 && currentAttemptScore <= previousBestScore;
       const finalScoreToSave = Math.max(previousBestScore, currentAttemptScore);
 

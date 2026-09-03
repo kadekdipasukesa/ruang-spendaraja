@@ -125,25 +125,52 @@ export function useSimulasiFolder() {
 
       // Check if student has previous submission in Supabase
       try {
+        const candidateTaskIds = [
+          dbTaskId,
+          'TUGAS-01-SIMULASI-FOLDER',
+          'tugas-inf-01'
+        ].filter(Boolean);
+
         let query = supabase
           .from('tugas_pengumpulan')
           .select('*')
           .eq('siswa_id', student.id);
 
-        if (dbTaskId) {
-          query = query.eq('tugas_id', dbTaskId);
+        if (candidateTaskIds.length > 0) {
+          query = query.in('tugas_id', candidateTaskIds);
         }
 
-        const { data: subData } = await query.limit(1).maybeSingle();
+        const { data: subDataList } = await query
+          .order('submitted_at', { ascending: false })
+          .limit(1);
+
+        const subData = subDataList && subDataList.length > 0 ? subDataList[0] : null;
 
         if (subData) {
-          setPreviousSubmission(subData);
+          let parsedDetail = null;
+          if (subData.detail_jawaban) {
+            if (typeof subData.detail_jawaban === 'string') {
+              try {
+                parsedDetail = JSON.parse(subData.detail_jawaban);
+              } catch (err) {
+                console.warn("Gagal parse detail_jawaban folder:", err);
+              }
+            } else if (typeof subData.detail_jawaban === 'object') {
+              parsedDetail = subData.detail_jawaban;
+            }
+          }
+
+          setPreviousSubmission({
+            ...subData,
+            detail_jawaban: parsedDetail || subData.detail_jawaban
+          });
+
           // UTAMAKAN DATABASE: Pulihkan snapshot struktur folder dari database
-          if (subData.detail_jawaban?.treeSnapshot) {
-            setItems(subData.detail_jawaban.treeSnapshot);
+          if (parsedDetail?.treeSnapshot) {
+            setItems(parsedDetail.treeSnapshot);
             if (storageKey) {
               try {
-                localStorage.setItem(storageKey, JSON.stringify(subData.detail_jawaban.treeSnapshot));
+                localStorage.setItem(storageKey, JSON.stringify(parsedDetail.treeSnapshot));
               } catch (err) {
                 console.warn("Gagal update local storage dari db:", err);
               }

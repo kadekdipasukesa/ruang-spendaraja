@@ -1,18 +1,24 @@
-import { CheckCircle2, Award, ArrowRight, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
+import { CheckCircle2, Award, ArrowRight, RotateCcw, ShieldCheck, Sparkles, X, Target } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ModalSubmissionSuccessSK({
   isOpen,
   onClose,
-  totalScore,
-  scores,
-  submissionMeta,
+  totalScore = 0,
+  scores = { m1: 0, m2: 0, m3: 0, m4: 0 },
+  submissionMeta = {},
   student,
   onGoToRuangBelajar
 }) {
   if (!isOpen) return null;
 
-  const { savedScore, attemptScore, previousScore, isRetained, isImproved } = submissionMeta || {};
+  const savedScore = submissionMeta?.savedScore ?? totalScore;
+  const attemptScore = submissionMeta?.attemptScore ?? totalScore;
+  const previousScore = submissionMeta?.previousScore ?? 0;
+  const isRetained = submissionMeta?.isRetained;
+  const isImproved = submissionMeta?.isImproved;
+  const skippedDbSave = submissionMeta?.skippedDbSave;
+  const isPerfect = savedScore >= 100;
 
   return (
     <AnimatePresence>
@@ -26,6 +32,15 @@ export default function ModalSubmissionSuccessSK({
           {/* Top Decorative Glow */}
           <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl pointer-events-none"></div>
 
+          {/* Close button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 transition cursor-pointer z-10"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
           {/* Icon Header */}
           <div className="flex items-center gap-3.5 mb-5">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
@@ -33,7 +48,7 @@ export default function ModalSubmissionSuccessSK({
             </div>
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2.5 py-0.5 rounded-full">
-                Pengumpulan Berhasil
+                {skippedDbSave ? 'Proteksi Nilai Database' : 'Pengumpulan Berhasil'}
               </span>
               <h2 className="text-xl font-black text-white mt-0.5">Tugas 3 Tersimpan Resmi</h2>
             </div>
@@ -58,45 +73,65 @@ export default function ModalSubmissionSuccessSK({
           </div>
 
           {/* Score Summary Box */}
-          <div className="bg-gradient-to-br from-slate-950 to-slate-900 border border-amber-500/30 rounded-2xl p-4 mb-4 text-center">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-amber-400">Nilai Resmi Tercatat</p>
-            <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 my-1">
-              {savedScore ?? totalScore} <span className="text-lg font-bold text-slate-400">/ 100</span>
+          <div className="bg-gradient-to-br from-slate-950 to-slate-900 border border-amber-500/30 rounded-2xl p-4 mb-4 text-center space-y-2">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
+                {isRetained ? 'Nilai Resmi Tercatat (Skor Tertinggi)' : 'Nilai Resmi Tercatat'}
+              </p>
+              <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 my-1">
+                {savedScore} <span className="text-lg font-bold text-slate-400">/ 100 Poin</span>
+              </div>
             </div>
 
             {/* Score Comparison Note */}
             {isImproved && (
-              <div className="mt-2 text-xs font-bold text-emerald-400 flex items-center justify-center gap-1.5 bg-emerald-950/50 border border-emerald-800/60 py-1 px-2.5 rounded-xl">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Hebat! Nilai kamu meningkat dari {previousScore}p menjadi {savedScore}p.</span>
+              <div className="text-xs font-bold text-emerald-400 flex items-center justify-center gap-1.5 bg-emerald-950/60 border border-emerald-800/80 py-1.5 px-3 rounded-xl text-left">
+                <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>
+                  {previousScore > 0
+                    ? `Hebat! Nilai kamu meningkat dari ${previousScore}p menjadi ${savedScore}p.`
+                    : `Selamat! Percobaan pertama berhasil meraih ${savedScore} Poin.`}
+                </span>
               </div>
             )}
 
             {isRetained && (
-              <div className="mt-2 text-xs font-semibold text-amber-300 flex items-center justify-center gap-1.5 bg-amber-950/50 border border-amber-800/60 py-1 px-2.5 rounded-xl">
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                <span>Skor tertinggi kamu ({savedScore}p) tetap dipertahankan aman!</span>
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-amber-300 flex items-start gap-2 bg-amber-950/60 border border-amber-800/80 p-2.5 rounded-xl text-left">
+                  <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="text-[11px] leading-relaxed">
+                    <span>
+                      Percobaan saat ini memperoleh <strong>{attemptScore} Poin</strong>. Karena skormu sebelumnya sudah mencapai <strong>{savedScore} Poin</strong>, sistem secara otomatis menjaga nilai tertinggimu agar tidak berkurang.
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Breakdown per Mission */}
-          <div className="grid grid-cols-2 gap-2 mb-5 text-xs">
-            <div className="bg-slate-950/60 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
-              <span className="text-slate-400 truncate">M1: Hardware</span>
-              <span className="font-bold text-amber-400">{scores.m1 || 0}/35p</span>
+          {/* Breakdown per Mission (Attempt Terkini) */}
+          <div className="mb-5">
+            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 mb-1.5 px-0.5">
+              <span>Rincian Percobaan Saat Ini:</span>
+              <span className="text-amber-400 font-bold">{attemptScore}/100 Poin</span>
             </div>
-            <div className="bg-slate-950/60 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
-              <span className="text-slate-400 truncate">M2: Data & App</span>
-              <span className="font-bold text-amber-400">{scores.m2 || 0}/20p</span>
-            </div>
-            <div className="bg-slate-950/60 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
-              <span className="text-slate-400 truncate">M3: Software</span>
-              <span className="font-bold text-amber-400">{scores.m3 || 0}/30p</span>
-            </div>
-            <div className="bg-slate-950/60 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
-              <span className="text-slate-400 truncate">M4: Etika TIK</span>
-              <span className="font-bold text-amber-400">{scores.m4 || 0}/15p</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="bg-slate-950/60 border border-slate-800 p-2 rounded-xl text-center">
+                <span className="text-[10px] text-slate-400 block truncate">M1: Hardware</span>
+                <span className="font-bold text-amber-400 text-xs">{scores.m1 || 0}/35p</span>
+              </div>
+              <div className="bg-slate-950/60 border border-slate-800 p-2 rounded-xl text-center">
+                <span className="text-[10px] text-slate-400 block truncate">M2: Data & App</span>
+                <span className="font-bold text-amber-400 text-xs">{scores.m2 || 0}/20p</span>
+              </div>
+              <div className="bg-slate-950/60 border border-slate-800 p-2 rounded-xl text-center">
+                <span className="text-[10px] text-slate-400 block truncate">M3: Software</span>
+                <span className="font-bold text-amber-400 text-xs">{scores.m3 || 0}/30p</span>
+              </div>
+              <div className="bg-slate-950/60 border border-slate-800 p-2 rounded-xl text-center">
+                <span className="text-[10px] text-slate-400 block truncate">M4: Etika TIK</span>
+                <span className="font-bold text-amber-400 text-xs">{scores.m4 || 0}/15p</span>
+              </div>
             </div>
           </div>
 

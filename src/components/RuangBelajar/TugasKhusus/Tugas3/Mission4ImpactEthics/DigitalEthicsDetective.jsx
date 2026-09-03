@@ -22,14 +22,14 @@ const ETHICS_CASES = [
     correctAction: 'action_verify',
     correctImpact: 'negative_phising',
     actions: [
-      { id: 'action_forward', text: 'Langsung teruskan pesan ke seluruh grup keluarga dan teman sekelas' },
-      { id: 'action_verify', text: 'Jangan klik tautan mencurigakan, cek kebenaran di situs resmi, dan peringatkan teman agar tidak tertipu' },
-      { id: 'action_click', text: 'Klik tautan lalu masukkan nomor HP dan kata sandi email' },
+      { id: 'action_forward', text: 'Langsung teruskan tautan ke seluruh kontak grup obrolan agar mendapat kuota gratis' },
+      { id: 'action_verify', text: 'Abaikan tautan mencurigakan, verifikasi di situs resmi, dan beri tahu teman grup' },
+      { id: 'action_click', text: 'Buka tautan secara cepat kemudian masukkan nomor kontak telepon serta kata sandi akun' },
     ],
     impacts: [
-      { id: 'negative_phising', text: 'Dampak Negatif: Berpotensi Phising & Pencurian Akun Pribadi' },
-      { id: 'positive_sharing', text: 'Dampak Positif: Membantu teman dapat kuota nyata' },
-      { id: 'neutral', text: 'Tidak ada dampak apa pun' },
+      { id: 'negative_phising', text: 'Dampak Negatif: Berpotensi Phising & Pembobolan Akun Pribadi' },
+      { id: 'positive_sharing', text: 'Dampak Positif: Mendapat Bonus Akses Internet Tanpa Batas Waktu' },
+      { id: 'neutral', text: 'Dampak Netral: Sistem Otomatis Mengabaikan Formulir Pendaftaran' },
     ],
   },
   {
@@ -39,14 +39,14 @@ const ETHICS_CASES = [
     correctAction: 'action_ask_permission',
     correctImpact: 'negative_cyberbullying',
     actions: [
-      { id: 'action_post_direct', text: 'Langsung unggah tanpa izin supaya viral dan banyak yang tertawa' },
-      { id: 'action_ask_permission', text: 'Minta izin teman terlebih dahulu; jika ia tidak nyaman, batalkan dan hormati privasinya' },
-      { id: 'action_tag_everyone', text: 'Unggah lalu tag akun media sosial guru dan orang tuanya' },
+      { id: 'action_post_direct', text: 'Unggah langsung ke akun publik agar memicu komentar ramai dan tawa pengikut' },
+      { id: 'action_ask_permission', text: 'Minta persetujuan teman secara santun; batalkan unggah bila ia merasa tidak nyaman' },
+      { id: 'action_tag_everyone', text: 'Kirimkan foto tersebut ke akun grup wali murid serta seluruh guru sekolah' },
     ],
     impacts: [
-      { id: 'negative_cyberbullying', text: 'Dampak Negatif: Melanggar Privasi & Berpotensi Menjadi Perundungan Siber (Cyberbullying)' },
-      { id: 'positive_humor', text: 'Dampak Positif: Membuat seluruh dunia gembira' },
-      { id: 'no_harm', text: 'Bercanda bebas tanpa batas hukum' },
+      { id: 'negative_cyberbullying', text: 'Dampak Negatif: Melanggar Privasi & Menjadi Korban Perundungan Siber' },
+      { id: 'positive_humor', text: 'Dampak Positif: Menjalin Keakraban Tanpa Batas Etika Pertemanan' },
+      { id: 'no_harm', text: 'Dampak Netral: Konten Media Sosial Otomatis Terhapus Sendiri' },
     ],
   },
   {
@@ -56,14 +56,14 @@ const ETHICS_CASES = [
     correctAction: 'action_time_management',
     correctImpact: 'negative_health_focus',
     actions: [
-      { id: 'action_all_night', text: 'Terus bermain game sampai pagi sambil meminum kopi' },
-      { id: 'action_time_management', text: 'Menerapkan batas waktu layar (maksimal 1-2 jam untuk hiburan), lalu istirahat cukup untuk menjaga konsentrasi belajar' },
-      { id: 'action_skip_school', text: 'Membolos sekolah keesokan harinya agar bisa tidur siang' },
+      { id: 'action_all_night', text: 'Lanjutkan bermain game sepanjang malam sambil mengonsumsi minuman penahan kantuk' },
+      { id: 'action_time_management', text: 'Batasi screen time maksimal 1-2 jam untuk rileks, lalu tidur cukup demi ujian' },
+      { id: 'action_skip_school', text: 'Mengambil izin tidak masuk kelas esok harinya agar dapat melunasi hutang jam tidur' },
     ],
     impacts: [
-      { id: 'negative_health_focus', text: 'Dampak Negatif: Gangguan Kesehatan Mata, Kurang Tidur & Penurunan Prestasi Belajar' },
-      { id: 'positive_pro_gamer', text: 'Dampak Positif: Menjadi juara dunia instan' },
-      { id: 'no_effect', text: 'Tubuh manusia tidak butuh istirahat' },
+      { id: 'negative_health_focus', text: 'Dampak Negatif: Gangguan Penglihatan, Kelelahan Otak & Nilai Ujian Anjlok' },
+      { id: 'positive_pro_gamer', text: 'Dampak Positif: Keterampilan Bermain Game Meningkat Tanpa Efek Samping' },
+      { id: 'no_effect', text: 'Dampak Netral: Pola Jam Tubuh Menyesuaikan Aktivitas Bermain Game' },
     ],
   },
   {
@@ -73,14 +73,14 @@ const ETHICS_CASES = [
     correctAction: 'action_wise_comment',
     correctImpact: 'negative_digital_trace',
     actions: [
-      { id: 'action_flame', text: 'Mengetik komentar kasar dengan akun samaran karena merasa tidak akan ketahuan' },
-      { id: 'action_wise_comment', text: 'Gunakan etika netiket: berikan kritik santun membangun atau lewati konten tanpa menebar kebencian' },
-      { id: 'action_spam_insult', text: 'Ajak teman-teman untuk menyerang kolom komentarnya beramai-ramai' },
+      { id: 'action_flame', text: 'Tuliskan ejekan dengan profil samaran tanpa nama agar identitas diri tidak diketahui' },
+      { id: 'action_wise_comment', text: 'Terapkan etika netiket: beri tanggapan santun atau lewati konten tanpa mencaci' },
+      { id: 'action_spam_insult', text: 'Mengajak beberapa rekan untuk membanjiri kolom komentar dengan kalimat sindiran' },
     ],
     impacts: [
-      { id: 'negative_digital_trace', text: 'Dampak Negatif: Jejak Digital Buruk Permanen & Potensi Terjerat Masalah Hukum / UU ITE' },
-      { id: 'positive_freedom', text: 'Dampak Positif: Menunjukkan kekuatan di internet' },
-      { id: 'no_trace', text: 'Komentar internet akan hilang sendiri tanpa jejak' },
+      { id: 'negative_digital_trace', text: 'Dampak Negatif: Jejak Digital Tercatat Buruk & Berisiko Sanksi Hukum UU ITE' },
+      { id: 'positive_freedom', text: 'Dampak Positif: Melatih Keberanian Mengutarakan Opini Tanpa Halangan Etika' },
+      { id: 'no_trace', text: 'Dampak Netral: Komentar Daring Otomatis Lenyap Tanpa Bukti Tangkapan Layar' },
     ],
   },
   {
@@ -90,14 +90,14 @@ const ETHICS_CASES = [
     correctAction: 'action_keep_secret',
     correctImpact: 'positive_account_safety',
     actions: [
-      { id: 'action_give_password', text: 'Berikan password akunmu karena merasa tidak enak menolak teman' },
-      { id: 'action_keep_secret', text: 'Jaga kerahasiaan password pribadi, bantu teman dengan menjelaskan materi langsung tanpa membagikan akun' },
-      { id: 'action_write_board', text: 'Tulis password di papan tulis kelas agar semua teman tahu' },
+      { id: 'action_give_password', text: 'Berikan informasi kata sandi akun pribadi karena rasa sungkan menolak kawan dekat' },
+      { id: 'action_keep_secret', text: 'Jaga kerahasiaan kata sandi; dampingi langsung temanmu saat mempelajari materi' },
+      { id: 'action_write_board', text: 'Menempelkan catatan akun dan kata sandi pada meja kelas agar mudah dibuka bersama' },
     ],
     impacts: [
-      { id: 'positive_account_safety', text: 'Dampak Positif: Akun Terlindungi dari Penyalahgunaan, Perubahan Data, & Kebocoran Nilai' },
-      { id: 'negative_friendship', text: 'Dampak Negatif: Merusak hubungan pertemanan' },
-      { id: 'neutral_pass', text: 'Password tidak penting dijaga' },
+      { id: 'positive_account_safety', text: 'Dampak Positif: Profil Aman dari Manipulasi Nilai & Penyalahgunaan Data' },
+      { id: 'negative_friendship', text: 'Dampak Negatif: Mengakibatkan Kerenggangan Tali Hubungan Pertemanan Kelas' },
+      { id: 'neutral_pass', text: 'Dampak Netral: Sistem Otomatis Mengunci Sandi Bila Dipakai Perangkat Lain' },
     ],
   },
 ];
@@ -105,73 +105,92 @@ const ETHICS_CASES = [
 const QUIZ_QUESTIONS = [
   {
     id: 1,
-    question: 'Istilah "Jejak Digital" (Digital Footprint) mengacu pada...',
+    question: 'Istilah "Jejak Digital" (Digital Footprint) dalam dunia teknologi informasi mengacu pada...',
     options: [
-      { id: 'a', text: 'Bekas sidik jari fisik di atas layar sentuh ponsel' },
-      { id: 'b', text: 'Rekam jejak seluruh riwayat aktivitas, postingan, komentar, dan pencarian yang kita tinggalkan di internet yang sulit dihapus sepenuhnya' },
-      { id: 'c', text: 'Ukuran sepatu pengguna saat membeli gadget online' },
-      { id: 'd', text: 'Kabel jaringan yang tertanam di bawah tanah' },
+      { id: 'a', text: 'Sisa partikel debu halus pada permukaan layar sentuh gawai' },
+      { id: 'b', text: 'Kabel tembaga jaringan internet yang tertanam di bawah aspal' },
+      { id: 'c', text: 'Rekam jejak seluruh riwayat aktivitas online yang tersimpan' },
+      { id: 'd', text: 'Ukuran resolusi tampilan grafis kartu video pada monitor LED' },
     ],
-    correct: 'b',
+    correct: 'c',
   },
   {
     id: 2,
     question: 'Tindakan mengirim pesan berulang-ulang yang mengintimidasi, menghina, atau mempermalukan seseorang di media sosial disebut...',
     options: [
-      { id: 'a', text: 'Cyberbullying (Perundungan Siber)' },
-      { id: 'b', text: 'Digital Marketing' },
-      { id: 'c', text: 'Cloud Computing' },
-      { id: 'd', text: 'E-Commerce' },
+      { id: 'a', text: 'Cyberbullying atau perundungan siber di ranah internet' },
+      { id: 'b', text: 'Cloud storage atau pencadangan berkas server daring' },
+      { id: 'c', text: 'Digital marketing atau promosi komersial produk daring' },
+      { id: 'd', text: 'Search engine optimization atau perayapan halaman situs' },
     ],
     correct: 'a',
   },
   {
     id: 3,
-    question: 'Ciri-ciri KATA SANDI (Password) yang kuat dan aman dari peretasan adalah...',
+    question: 'Kombinasi kata sandi (password) akun yang memiliki tingkat keamanan tinggi dari risiko peretasan adalah...',
     options: [
-      { id: 'a', text: 'Hanya angka tanggal lahir "123456" atau nama panggilan' },
-      { id: 'b', text: 'Kombinasi minimal 8-12 karakter berisi huruf besar, huruf kecil, angka, dan simbol unik (contoh: Sp3nd4#2026!)' },
-      { id: 'c', text: 'Sama persis dengan nama akun pengguna' },
-      { id: 'd', text: 'Ditulis di selembar kertas dan ditempel di casing komputer lab' },
+      { id: 'a', text: 'Rangkaian tanggal lahir lengkap siswa tanpa spasi' },
+      { id: 'b', text: 'Nama panggilan akun media sosial berulang tiga kali' },
+      { id: 'c', text: 'Urutan alfabet angka berurutan sederhana "12345678"' },
+      { id: 'd', text: 'Paduan minimal 8 karakter huruf besar, angka, dan simbol' },
+    ],
+    correct: 'd',
+  },
+  {
+    id: 4,
+    question: 'Manakah di bawah ini yang merupakan DAMPAK POSITIF dari pemanfaatan Teknologi Informasi dan Komunikasi?',
+    options: [
+      { id: 'a', text: 'Meningkatnya kebiasaan begadang tanpa beristirahat' },
+      { id: 'b', text: 'Kemudahan mengakses ilmu dan kolaborasi pembelajaran' },
+      { id: 'c', text: 'Makin derasnya peredaran kabar palsu yang menyesatkan' },
+      { id: 'd', text: 'Tergantungnya aktivitas harian pada layar ponsel cerdas' },
     ],
     correct: 'b',
   },
   {
-    id: 4,
-    question: 'Manakah di bawah ini yang merupakan DAMPAK POSITIF dari perkembangan Teknologi Informasi dan Komunikasi (TIK)?',
-    options: [
-      { id: 'a', text: 'Kemudahan mengakses ensiklopedia ilmu pengetahuan dunia dan kolaborasi belajar lintas negara dalam hitungan detik' },
-      { id: 'b', text: 'Meningkatnya rasa malas bergerak (sedentary lifestyle)' },
-      { id: 'c', text: 'Makin mudahnya menyebarkan berita palsu tanpa konfirmasi' },
-      { id: 'd', text: 'Ketergantungan mata menatap layar 18 jam sehari' },
-    ],
-    correct: 'a',
-  },
-  {
     id: 5,
-    question: 'Aturan etika dan kesopanan yang harus diterapkan saat berkomunikasi di dunia digital dikenal dengan istilah...',
+    question: 'Tata krama kesopanan serta etika komunikasi yang wajib dijunjung saat berinteraksi di dunia maya dikenal dengan istilah...',
     options: [
-      { id: 'a', text: 'Netiket (Network Etiquette)' },
-      { id: 'b', text: 'Algorithm Protocol' },
-      { id: 'c', text: 'Firewall System' },
-      { id: 'd', text: 'Bandwidth Limit' },
+      { id: 'a', text: 'Algorithm protocol sistem pertukaran kode data jaringan' },
+      { id: 'b', text: 'Bandwidth throttling pembatasan kuota kecepatan sinyal' },
+      { id: 'c', text: 'Netiket atau etika berkomunikasi santun di ruang siber' },
+      { id: 'd', text: 'Firewall antivirus filter penyaring data lalu lintas web' },
     ],
-    correct: 'a',
+    correct: 'c',
   },
 ];
 
-export default function DigitalEthicsDetective({ currentScore, onComplete }) {
+export default function DigitalEthicsDetective({ currentScore, onComplete, onSubmitAll, isSubmitting }) {
   const [activeTab, setActiveTab] = useState('materi');
-  const [caseAnswers, setCaseAnswers] = useState({
-    case_hoax: { action: '', impact: '' },
-    case_privacy: { action: '', impact: '' },
-    case_screentime: { action: '', impact: '' },
-    case_digital_footprint: { action: '', impact: '' },
-    case_security_password: { action: '', impact: '' },
+  const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
+  const [caseAnswers, setCaseAnswers] = useState(() => {
+    if (Number(currentScore) >= 10) {
+      const initC = {};
+      ETHICS_CASES.forEach((cs) => {
+        initC[cs.id] = { action: cs.correctAction, impact: cs.correctImpact };
+      });
+      return initC;
+    }
+    return {
+      case_hoax: { action: '', impact: '' },
+      case_privacy: { action: '', impact: '' },
+      case_screentime: { action: '', impact: '' },
+      case_digital_footprint: { action: '', impact: '' },
+      case_security_password: { action: '', impact: '' },
+    };
   });
-  const [casesChecked, setCasesChecked] = useState(false);
-  const [quizAnswers, setQuizAnswers] = useState({});
-  const [quizChecked, setQuizChecked] = useState(false);
+  const [casesChecked, setCasesChecked] = useState(() => Number(currentScore) >= 10);
+  const [quizAnswers, setQuizAnswers] = useState(() => {
+    if (Number(currentScore) >= 5) {
+      const initQ = {};
+      QUIZ_QUESTIONS.forEach((q) => {
+        initQ[q.id] = q.correct;
+      });
+      return initQ;
+    }
+    return {};
+  });
+  const [quizChecked, setQuizChecked] = useState(() => Number(currentScore) >= 5);
 
   // ====================================================
   // PERHITUNGAN SKOR MISI 4 (Total 15 Poin):
@@ -197,7 +216,7 @@ export default function DigitalEthicsDetective({ currentScore, onComplete }) {
   ).length;
   const quizScore = quizChecked ? quizCorrectCount * 1 : 0; // 5 Poin max
 
-  const totalM4Score = Math.min(15, labScore + quizScore);
+  const totalM4Score = Math.min(15, Math.max(Number(currentScore) || 0, labScore + quizScore));
 
   // Sync skor ke controller
   const onCompleteRef = useRef(onComplete);
@@ -206,7 +225,7 @@ export default function DigitalEthicsDetective({ currentScore, onComplete }) {
   }, [onComplete]);
 
   useEffect(() => {
-    if (onCompleteRef.current) {
+    if (onCompleteRef.current && totalM4Score > 0) {
       onCompleteRef.current('m4', totalM4Score);
     }
   }, [totalM4Score]);
@@ -229,9 +248,7 @@ export default function DigitalEthicsDetective({ currentScore, onComplete }) {
 
   const handleCheckCases = () => {
     setCasesChecked(true);
-    if (labScore > 0) {
-      celebratePointGain(labScore >= 9);
-    }
+    celebratePointGain(true);
   };
 
   const handleEvaluateQuiz = () => {
@@ -268,7 +285,10 @@ export default function DigitalEthicsDetective({ currentScore, onComplete }) {
         {/* Tab Switcher */}
         <div className="flex flex-wrap items-center gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 shrink-0">
           <button
-            onClick={() => setActiveTab('materi')}
+            onClick={() => {
+              setActiveTab('materi');
+              setMateriRead(true);
+            }}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeTab === 'materi'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
@@ -277,6 +297,9 @@ export default function DigitalEthicsDetective({ currentScore, onComplete }) {
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>1. Materi Etika</span>
+            {materiRead && (
+              <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'materi' ? 'text-slate-950' : 'text-emerald-400'}`} />
+            )}
           </button>
 
           <button
@@ -289,6 +312,16 @@ export default function DigitalEthicsDetective({ currentScore, onComplete }) {
           >
             <Eye className="w-3.5 h-3.5" />
             <span>2. Kasus Detektif (10p)</span>
+            {(casesChecked || labScore > 0) && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                activeTab === 'detective'
+                  ? 'bg-slate-950/20 text-slate-950'
+                  : 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
+              }`}>
+                <CheckCircle2 className="w-3 h-3" />
+                <span>{labScore}/10p</span>
+              </span>
+            )}
           </button>
 
           <button
@@ -301,6 +334,16 @@ export default function DigitalEthicsDetective({ currentScore, onComplete }) {
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>3. Kuis Netiket (5p)</span>
+            {(quizChecked || quizScore > 0) && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                activeTab === 'kuis'
+                  ? 'bg-slate-950/20 text-slate-950'
+                  : 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
+              }`}>
+                <CheckCircle2 className="w-3 h-3" />
+                <span>{quizScore}/5p</span>
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -388,7 +431,10 @@ export default function DigitalEthicsDetective({ currentScore, onComplete }) {
 
           <div className="flex justify-end pt-2">
             <button
-              onClick={() => setActiveTab('detective')}
+              onClick={() => {
+                setMateriRead(true);
+                setActiveTab('detective');
+              }}
               className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20"
             >
               <span>Lanjut ke 5 Kasus Detektif</span>
@@ -661,11 +707,22 @@ export default function DigitalEthicsDetective({ currentScore, onComplete }) {
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-slate-900 border border-amber-500/30 flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
-              <ShieldCheck className="w-4 h-4" />
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>Total Poin Misi 4 yang Didapat: {totalM4Score} / 15 Poin</span>
             </div>
+            {onSubmitAll && (
+              <button
+                type="button"
+                onClick={onSubmitAll}
+                disabled={isSubmitting}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition"
+              >
+                <span>{isSubmitting ? 'Menyimpan...' : 'Kumpulkan & Selesaikan Semua Misi'}</span>
+                <CheckCircle2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}

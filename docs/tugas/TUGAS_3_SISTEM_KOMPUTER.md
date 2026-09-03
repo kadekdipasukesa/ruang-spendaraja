@@ -54,9 +54,15 @@ TUGAS 3: SISTEM KOMPUTER & PERKAKAS DIGITAL (100 Poin)
   - Urutan daftar komponen hardware, software, dan aplikasi perkakas digital diacak (*shuffled*) setiap kali halaman dibuka maupun saat tombol *Reset Semua* ditekan agar tidak memicu tebak-tebakan berpola.
 * **Evaluasi Hasil Pengelompokan & Audio Feedback**:
   - Petasan *tidak lagi* muncul per setiap komponen yang dipindahkan (mencegah *spoiler* jawaban benar secara instan).
-  - Evaluasi skor penuh diberikan saat siswa menekan tombol **"Cek Hasil"**:
-    - **Jika Berhasil (≥ 70% Benar)**: Memunculkan selebrasi kembang api/petasan (`celebratePointGain` / `playCelebrationFirework`) dengan banner sukses bernuansa hijau *emerald*.
-    - **Jika Belum Tepat / Banyak Salah (< 70% Benar)**: Memainkan efek suara nada gagal (*sad descending buzz* dari `soundEffects.playFail()`) dengan banner peringatan bernuansa *rose* yang berkedip, mengarahkan siswa untuk meninjau kembali komponen yang keliru.
+  - **Umpan Balik Tanpa Bocoran Warna Merah/Hijau**: Saat tombol **"Cek Hasil"** ditekan pada Misi 1 (Hardware & Software) maupun Misi 3 (Aplikasi Perkakas), chip komponen yang berada di dropzone tetap mempertahankan gaya visual netral (abu-abu/slate gelap) tanpa diwarnai merah/hijau secara individual. Hal ini mencegah siswa menebak langsung mana item yang salah secara visual per-item.
+  - Hasil evaluasi ditampilkan secara menyeluruh (*aggregate result*) dalam bentuk jumlah komponen yang tepat dan total perolehan poin (contoh: *"📊 Hasil Evaluasi: 17 dari 20 komponen tepat pada posisinya (+12.8/15 Poin)"*).
+  - Setiap kali tombol **"Cek Hasil"** ditekan, selebrasi animasi petasan/kembang api (`celebratePointGain`) selalu dimunculkan sebagai bentuk apresiasi usaha siswa dalam menyelesaikan praktikum.
+* **Penghilangan Pola Jawaban (Anti-Pattern / Balanced Options)**:
+  - Pada Misi 2 (DataAppPipeline), seluruh opsi input, aplikasi, dan output dibuat setara dalam panjang kalimat dan tingkat kerincian, menghilangkan kelemahan opsi benar yang sebelumnya "panjang sendiri".
+  - Pada seluruh Kuis Pemahaman (Misi 1, 2, 3, dan 4) serta Studi Kasus Etika Misi 4, seluruh pilihan jawaban telah diseimbangkan panjang karakternya dan kunci jawaban disebar merata secara acak (A, B, C, D) sehingga tidak dapat ditebak berdasarkan pola panjang teks maupun letak posisi opsi.
+* **Penyimpanan Posisi Komponen (Local Draft Persistence)**:
+  - Posisi penempatan komponen di Misi 1 dan Misi 3 disimpan ke `localStorage` browser siswa (`tugas_sk_m1_hw_placements`, `tugas_sk_m1_sw_placements`, `tugas_sk_m3_app_placements`) secara otomatis.
+  - Hal ini menjaga agar penempatan komponen tidak hilang saat browser tidak sengaja ter-refresh atau berpindah tab, tanpa membebani basis data Supabase dengan ratusan transaksi posisi mikro per-gerakan. Database Supabase difokuskan secara optimal untuk merekam nilai resmi dan status ketuntasan misi.
 * **Interaktivitas Mobile & Layout Berdampingan (Side-by-Side Viewport)**:
   - Pada Misi 1 (Hardware & Software) dan Misi 3 (Aplikasi Digital), antarmuka menggunakan **tata letak berdampingan (*side-by-side layout*)**:
     - **Kolom Kiri**: Bank komponen scrollable 1-kolom yang ringkas dan *sticky*, menampilkan item yang tersisa beserta tombol *Reset*.
@@ -75,20 +81,45 @@ TUGAS 3: SISTEM KOMPUTER & PERKAKAS DIGITAL (100 Poin)
 
 ## 4. Mekanisme Pengumpulan, Persistensi & Sistem Perbaikan Nilai
 
-### A. Persistensi Draft Lokal (`localStorage`)
-* Kunci penyimpanan draft terikat ID siswa: `tugas_sk_state_user_{studentId}` (atau `tugas_sk_state_guest` untuk tamu).
-* Menyimpan skor tiap misi (`m1`, `m2`, `m3`, `m4`) dan status penyelesaian misi secara realtime sehingga siswa dapat menutup peramban dan melanjutkan kapan saja tanpa kehilangan progres.
+### A. Kebijakan Pemuatan Data: Database-First Priority & Sync Lokal
+* **Pemuatan Awal (Database-First Priority)**:
+  - Saat siswa membuka halaman tugas atau menekan tombol **"Lanjutkan" / "Ulangi Praktik"**, sistem memuat snapshot nilai dan status `completed` (`m1`, `m2`, `m3`, `m4`) langsung dari database Supabase (`tugas_pengumpulan.detail_jawaban`).
+  - Hal ini menjamin progres siswa tetap utuh dan tersinkronisasi saat berpindah komputer laboratorium atau peramban.
+  - Snapshot dari database kemudian dicerminkan ke `localStorage` (`tugas_sk_state_user_{studentId}`) sebagai *scratchpad* sesi aktif.
+* **Indikator Centang Sub-Tab & Misi**:
+  - Tab navigasi utama 4 misi (`SKMissionTabs.jsx`) dan sub-tab di dalam tiap misi (Materi Visual, Praktikum Lab Drag & Drop, dan Kuis) dilengkapi lencana centang hijau (`CheckCircle2`) dan rincian skor perolehan jika misi/sub-tab telah terselesaikan.
+* **Restorasi State Interaktif**:
+  - Komponen yang memiliki riwayat skor tersimpan otomatis memulihkan status pengerjaan, membaca materi (`materiRead`), dan penempatan jawaban yang benar sehingga siswa dapat langsung melihat status penyelesaiannya secara transparan.
 
-### B. Sinkronisasi Database Supabase
-Saat siswa menekan tombol **"Kumpulkan Tugas"**:
-1. Menghitung `totalScore = scores.m1 + scores.m2 + scores.m3 + scores.m4` (Maksimal 100 Poin).
-2. Mengambil data pengumpulan sebelumnya dari tabel `tugas_pengumpulan` untuk mendeteksi apakah siswa sedang melakukan **perbaikan nilai**.
-3. **Logika Proteksi Nilai Tertinggi (`Math.max`)**:
-   ```javascript
-   const finalOfficialScore = Math.max(currentAttemptScore, previousBestScore);
-   ```
-   Siswa tidak perlu khawatir nilai resminya turun saat mencoba mengulang misi.
-4. Melakukan `upsert` ke tabel `tugas_pengumpulan`.
-5. Trigger database `trg_sync_tugas_to_point_logs` membuat/mengupdate entri di `point_logs`.
-6. Trigger database `trg_update_master_siswa_total_points` secara otomatis menyinkronkan `master_siswa.total_points` yang menjadi sumber data Header dan Papan Peringkat (Leaderboard).
-7. Memicu dentuman petasan selebrasi besar (`celebratePointGain(true)`) dan menampilkan modal kelulusan (`ModalSubmissionSuccessSK.jsx`).
+### B. Sinkronisasi Database Supabase & Isolasi Tugas Ketat
+* **Isolasi ID Tugas Eksklusif**:
+  - `candidateTaskIds` untuk Tugas 3 secara ketat memfilter hanya kode tugas Sistem Komputer (`TUGAS-03-SISTEM-KOMPUTER`, `TUGAS_SK_01`, `tugas-inf-03`) dan rute `/ruang-belajar/tugas/sistem-komputer`.
+  - Secara eksplisit memblokir ID tugas dari Tugas 1 (`TUGAS-01-SIMULASI-FOLDER`) dan Tugas 2 (`TUGAS-02-BERPIKIR-KOMPUTASIONAL`), mencegah pembacaan data lintas tugas meskipun memiliki kategori yang serupa.
+* **Perilaku Reset / Database Bersih**:
+  - Jika data di tabel `tugas_pengumpulan` untuk Tugas 3 telah dihapus / bersih, `existingSubmission` bernilai `null` dan `previousBestScore = 0`.
+  - Percobaan baru (berapapun nilainya, misal 3 Poin) akan langsung disimpan sebagai pengumpulan resmi pertama ke database `tugas_pengumpulan`.
+* **Saat siswa menekan tombol "Kumpulkan Tugas"**:
+  1. Menghitung `totalScore = scores.m1 + scores.m2 + scores.m3 + scores.m4` (Maksimal 100 Poin).
+  2. Mengambil data pengumpulan sebelumnya khusus Tugas 3 dari tabel `tugas_pengumpulan`.
+  3. **Logika Proteksi Nilai Tertinggi (`Math.max`)**:
+     ```javascript
+     const isImproved = previousBestScore === 0 || currentAttemptScore > previousBestScore;
+     const finalOfficialScore = Math.max(currentAttemptScore, previousBestScore);
+     ```
+  4. Melakukan `upsert` ke tabel `tugas_pengumpulan` jika percobaan baru lebih tinggi atau jika database masih kosong.
+  5. Trigger database `trg_sync_tugas_to_point_logs` menyinkronkan ke `point_logs` dan `master_siswa.total_points`.
+  6. Menampilkan modal hasil resmi (`ModalSubmissionSuccessSK.jsx`).
+
+### C. Alur Navigasi Antar Misi & Restorasi Nilai Sebagian (Partial Progress)
+* **Restorasi Nilai Parsial**:
+  - Jika siswa memiliki nilai tersimpan sebagian (misalnya Misi 1 bernilai 10 Poin dari kuis/praktikum), state kuis dan penempatan dipulihkan secara proporsional.
+  - Komponen menggunakan `Math.max(Number(currentScore) || 0, calculatedScore)` sehingga nilai tersimpan tidak akan berkurang atau ter-reset menjadi 0 saat halaman dimuat.
+* **Tombol Navigasi Kontinu (Direct Flow)**:
+  - Pada bagian bawah setiap misi terdapat tombol navigasi langsung:
+    - Misi 1 (Hardware & Software): Tombol **"Lanjut ke Misi 2 (Data & Aplikasi) →"**
+    - Misi 2 (Data & Aplikasi): Tombol **"Lanjut ke Misi 3 (Perkakas Digital) →"**
+    - Misi 3 (Perkakas Digital): Tombol **"Lanjut ke Misi 4 (Dampak & Etika TIK) →"**
+    - Misi 4 (Etika Digital): Tombol **"Kumpulkan & Selesaikan Semua Misi ✓"**
+  - Footer navigasi (`SKFooterNav.jsx`) dan tab atas (`SKMissionTabs.jsx`) juga selalu aktif sehingga siswa bebas berpindah misi kapan saja.
+* **Fallback Rute Modal Tugas**:
+  - `TaskDetailModal.jsx` dilengkapi *route fallback* otomatis ke `/tugas/sistem-komputer` untuk tugas berkode Sistem Komputer, menjamin tombol "Lanjutkan Petualangan" selalu membuka rute tugas yang benar.

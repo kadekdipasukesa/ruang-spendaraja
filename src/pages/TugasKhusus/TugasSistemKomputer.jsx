@@ -73,24 +73,29 @@ export default function TugasSistemKomputer() {
             <HardwareExplorer
               currentScore={scores.m1}
               onComplete={handleMissionComplete}
+              onNextMission={() => setActiveMission(2)}
             />
           )}
           {activeMission === 2 && (
             <DataAppPipeline
               currentScore={scores.m2}
               onComplete={handleMissionComplete}
+              onNextMission={() => setActiveMission(3)}
             />
           )}
           {activeMission === 3 && (
             <DigitalToolbox
               currentScore={scores.m3}
               onComplete={handleMissionComplete}
+              onNextMission={() => setActiveMission(4)}
             />
           )}
           {activeMission === 4 && (
             <DigitalEthicsDetective
               currentScore={scores.m4}
               onComplete={handleMissionComplete}
+              onSubmitAll={handleSubmitAll}
+              isSubmitting={submitting}
             />
           )}
         </div>
