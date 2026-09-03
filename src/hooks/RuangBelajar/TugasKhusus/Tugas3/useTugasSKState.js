@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '../../../../lib/supabaseClient';
 import { syncStudentPointsAfterTask } from '../../../../utils/pointLogger';
 import { celebratePointGain } from '../../../../components/RuangBelajar/TugasKhusus/Tugas3/skAssets';
@@ -32,14 +32,25 @@ export function useTugasSKState() {
   const [submitted, setSubmitted] = useState(false);
   const [existingSubmission, setExistingSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [dbTaskId, setDbTaskId] = useState(null);
+  const DEFAULT_SK_TASK_ID = '489b0d1e-8fd0-4bfa-9759-3996773347f3';
+  const [dbTaskId, setDbTaskId] = useState(DEFAULT_SK_TASK_ID);
+  const dbTaskIdRef = useRef(DEFAULT_SK_TASK_ID);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const updateDbTaskId = useCallback((newId) => {
+    if (newId && dbTaskIdRef.current !== newId) {
+      dbTaskIdRef.current = newId;
+      setDbTaskId(newId);
+    }
+  }, []);
+
   const [submissionMeta, setSubmissionMeta] = useState({
     savedScore: 0,
     attemptScore: 0,
     previousScore: 0,
     isRetained: false,
     isImproved: false,
+    isLower: false,
   });
 
   // Storage key spesifik per siswa untuk menyimpan jawaban terakhir
@@ -47,7 +58,9 @@ export function useTugasSKState() {
     return user?.id ? `tugas_sk_state_user_${user.id}` : 'tugas_sk_state_guest';
   }, [user?.id]);
 
+
   // Cek apakah sudah pernah kumpul di Supabase & muat progress terakhir
+  // PRIORITAS UTAMA: Database-First (Muat langsung dari database Supabase jika ada, bukan dari local)
   const checkExistingSubmission = useCallback(async (studentId, currentKey, explicitTaskId) => {
     const numStudentId = parseInt(studentId, 10);
     if (isNaN(numStudentId)) {
@@ -59,8 +72,8 @@ export function useTugasSKState() {
       // 1. Dapatkan Task ID spesifik untuk Tugas 3 (Sistem Komputer & Perkakas Digital)
       const candidateTaskIds = [
         explicitTaskId,
-        dbTaskId,
-        '489b0d1e-8fd0-4bfa-9759-3996773347f3',
+        dbTaskIdRef.current,
+        DEFAULT_SK_TASK_ID,
         'TUGAS-03-SISTEM-KOMPUTER',
         'tugas-inf-03',
         'TUGAS_SK_01'
@@ -91,8 +104,8 @@ export function useTugasSKState() {
             m.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
             m.kode_tugas !== 'TUGAS-02-KUIS-ALGO'
           );
-          if (validMaster?.id && !dbTaskId) {
-            setDbTaskId(validMaster.id);
+          if (validMaster?.id) {
+            updateDbTaskId(validMaster.id);
           }
         }
       } catch (err) {
@@ -127,7 +140,7 @@ export function useTugasSKState() {
 
         const officialScore = Number(subData.nilai_akhir ?? subData.skor) || 0;
 
-        // UTAMAKAN DATABASE: Pulihkan progres resmi dari snapshot database
+        // PRIORITAS DATABASE MUTLAK: Pulihkan skor dan status misi dari database
         if (parsedDetail?.scores) {
           setScores(parsedDetail.scores);
         } else if (officialScore > 0) {
@@ -143,6 +156,76 @@ export function useTugasSKState() {
           setCompleted(parsedDetail.completed);
         }
 
+        // PRIORITAS DATABASE MUTLAK: Pulihkan seluruh penempatan drag & drop dari database ke localStorage
+        if (parsedDetail?.placements || parsedDetail?.missionData) {
+          const loadedPlacements = parsedDetail.placements || parsedDetail.missionData;
+
+          // Sinkronkan ke localStorage draft lokal agar langsung tersedia untuk semua komponen misi
+          if (loadedPlacements?.m1?.hwPlacements) {
+            try {
+              localStorage.setItem('tugas_sk_m1_hw_placements', JSON.stringify(loadedPlacements.m1.hwPlacements));
+            } catch (e) {
+              /* ignore */
+            }
+          }
+          if (loadedPlacements?.m1?.swPlacements) {
+            try {
+              localStorage.setItem('tugas_sk_m1_sw_placements', JSON.stringify(loadedPlacements.m1.swPlacements));
+            } catch (e) {
+              /* ignore */
+            }
+          }
+          if (loadedPlacements?.m1?.quizAnswers) {
+            try {
+              localStorage.setItem('tugas_sk_m1_quiz_answers', JSON.stringify(loadedPlacements.m1.quizAnswers));
+            } catch (e) {
+              /* ignore */
+            }
+          }
+          if (loadedPlacements?.m2?.pipelineAnswers) {
+            try {
+              localStorage.setItem('tugas_sk_m2_pipeline_answers', JSON.stringify(loadedPlacements.m2.pipelineAnswers));
+            } catch (e) {
+              /* ignore */
+            }
+          }
+          if (loadedPlacements?.m2?.quizAnswers) {
+            try {
+              localStorage.setItem('tugas_sk_m2_quiz_answers', JSON.stringify(loadedPlacements.m2.quizAnswers));
+            } catch (e) {
+              /* ignore */
+            }
+          }
+          if (loadedPlacements?.m3?.appPlacements) {
+            try {
+              localStorage.setItem('tugas_sk_m3_app_placements', JSON.stringify(loadedPlacements.m3.appPlacements));
+            } catch (e) {
+              /* ignore */
+            }
+          }
+          if (loadedPlacements?.m3?.quizAnswers) {
+            try {
+              localStorage.setItem('tugas_sk_m3_quiz_answers', JSON.stringify(loadedPlacements.m3.quizAnswers));
+            } catch (e) {
+              /* ignore */
+            }
+          }
+          if (loadedPlacements?.m4?.caseAnswers) {
+            try {
+              localStorage.setItem('tugas_sk_m4_case_answers', JSON.stringify(loadedPlacements.m4.caseAnswers));
+            } catch (e) {
+              /* ignore */
+            }
+          }
+          if (loadedPlacements?.m4?.quizAnswers) {
+            try {
+              localStorage.setItem('tugas_sk_m4_quiz_answers', JSON.stringify(loadedPlacements.m4.quizAnswers));
+            } catch (e) {
+              /* ignore */
+            }
+          }
+        }
+
         setExistingSubmission({
           ...subData,
           skor: officialScore,
@@ -156,7 +239,8 @@ export function useTugasSKState() {
           try {
             localStorage.setItem(currentKey, JSON.stringify({
               scores: parsedDetail?.scores || { m1: officialScore, m2: 0, m3: 0, m4: 0 },
-              completed: parsedDetail?.completed || {}
+              completed: parsedDetail?.completed || {},
+              placements: parsedDetail?.placements || parsedDetail?.missionData || null,
             }));
           } catch (e) {
             console.warn('Gagal sinkron database ke local storage:', e);
@@ -172,7 +256,7 @@ export function useTugasSKState() {
     } finally {
       setLoading(false);
     }
-  }, [dbTaskId]);
+  }, [updateDbTaskId]);
 
   // Ambil sesi user dari localStorage & pulihkan progress tersimpan
   useEffect(() => {
@@ -188,7 +272,7 @@ export function useTugasSKState() {
         else if (storedUser) parsed = JSON.parse(storedUser);
 
         if (parsed) {
-          setUser(parsed);
+          setUser((prev) => (prev?.id === parsed.id ? prev : parsed));
           const currentKey = parsed.id ? `tugas_sk_state_user_${parsed.id}` : 'tugas_sk_state_guest';
 
           // Muat state lokal siswa jika ada
@@ -203,8 +287,11 @@ export function useTugasSKState() {
             }
           }
 
-          if (parsed.id) checkExistingSubmission(parsed.id, currentKey, dbTaskId);
-          else setLoading(false);
+          if (parsed.id) {
+            checkExistingSubmission(parsed.id, currentKey, dbTaskIdRef.current);
+          } else {
+            setLoading(false);
+          }
         } else {
           // Guest mode
           const localSaved = localStorage.getItem('tugas_sk_state_guest');
@@ -228,10 +315,11 @@ export function useTugasSKState() {
     loadSession();
     window.addEventListener('storage', loadSession);
     return () => window.removeEventListener('storage', loadSession);
-  }, [checkExistingSubmission, dbTaskId]);
+  }, [checkExistingSubmission]);
 
-  // Cari ID master tugas dari database jika ada
+  // Cari ID master tugas dari database saat pertama kali mount
   useEffect(() => {
+    let isMounted = true;
     const findTask = async () => {
       try {
         const { data } = await supabase
@@ -242,23 +330,23 @@ export function useTugasSKState() {
           .maybeSingle();
 
         if (
+          isMounted &&
           data?.id &&
           data.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
           data.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
           data.kode_tugas !== 'TUGAS-02-KUIS-ALGO'
         ) {
-          setDbTaskId(data.id);
-          if (user?.id) {
-            const currentKey = `tugas_sk_state_user_${user.id}`;
-            checkExistingSubmission(user.id, currentKey, data.id);
-          }
+          updateDbTaskId(data.id);
         }
       } catch (err) {
         console.warn('Kueri tugas_master SK:', err);
       }
     };
     findTask();
-  }, [user?.id, checkExistingSubmission]);
+    return () => {
+      isMounted = false;
+    };
+  }, [updateDbTaskId]);
 
   const handleOpenLogin = () => {
     window.dispatchEvent(new CustomEvent('open-login-modal'));
@@ -296,12 +384,26 @@ export function useTugasSKState() {
   const handleResetAll = () => {
     setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
     setCompleted({ m1: false, m2: false, m3: false, m4: false });
+    try {
+      localStorage.removeItem('tugas_sk_m1_hw_placements');
+      localStorage.removeItem('tugas_sk_m1_sw_placements');
+      localStorage.removeItem('tugas_sk_m1_quiz_answers');
+      localStorage.removeItem('tugas_sk_m2_pipeline_answers');
+      localStorage.removeItem('tugas_sk_m2_quiz_answers');
+      localStorage.removeItem('tugas_sk_m3_app_placements');
+      localStorage.removeItem('tugas_sk_m3_quiz_answers');
+      localStorage.removeItem('tugas_sk_m4_case_answers');
+      localStorage.removeItem('tugas_sk_m4_quiz_answers');
+    } catch (e) {
+      /* ignore */
+    }
     if (storageKey) {
       localStorage.removeItem(storageKey);
     }
   };
 
-  // Submit flexible: Menyimpan jawaban terakhir & menggunakan NILAI TERBESAR (Math.max) jika percobaan berikutnya lebih kecil
+  // Submit: Menyimpan seluruh snapshot penempatan & jawaban ke database.
+  // Jika nilai di database sebelumnya lebih tinggi dari percobaan saat ini, NILAI TIDAK DIREPLACE / DITURUNKAN.
   const handleSubmitAll = async () => {
     if (!user) {
       handleOpenLogin();
@@ -346,7 +448,7 @@ export function useTugasSKState() {
     try {
       const currentAttemptScore = totalScore;
 
-      // 1. Cek skor terbaik sebelumnya HANYA dari tugas_pengumpulan untuk tugas ini
+      // 1. Cek skor terbaik sebelumnya dari database tugas_pengumpulan
       let previousBestScore = 0;
       if (existingSubmission && (existingSubmission.tugas_id === resolvedTaskId || !existingSubmission.tugas_id)) {
         previousBestScore = Number(existingSubmission.skor ?? existingSubmission.nilai_akhir ?? 0) || 0;
@@ -355,7 +457,7 @@ export function useTugasSKState() {
       try {
         const { data: dbSub } = await supabase
           .from('tugas_pengumpulan')
-          .select('id, skor, nilai_akhir')
+          .select('id, skor, nilai_akhir, detail_jawaban')
           .eq('siswa_id', studentIdInt)
           .eq('tugas_id', resolvedTaskId)
           .maybeSingle();
@@ -368,16 +470,77 @@ export function useTugasSKState() {
         console.warn('Kueri previous submission tugas_pengumpulan error:', e);
       }
 
-      // ATURAN UTAMA: Proteksi Database
-      // Jika tugas_pengumpulan masih kosong (previousBestScore === 0), SELALU simpan skor percobaan saat ini
-      // Jika sudah pernah ada nilai sebelumnya, hanya timpa database jika nilainya LEBIH BESAR
+      // ATURAN PROTEKSI SKOR DATABASE:
+      // - isImproved: Skor percobaan saat ini lebih tinggi dari database sebelumnya (atau pertama kali).
+      // - isLower: Nilai di database sebelumnya lebih tinggi dari nilai sekarang.
+      // Jika isLower = true: NILAI DI DATABASE TIDAK DIREPLACE / DITURUNKAN. Nilai resmi tetap previousBestScore!
       const isImproved = previousBestScore === 0 || currentAttemptScore > previousBestScore;
-      const isRetained = previousBestScore > 0 && currentAttemptScore <= previousBestScore;
+      const isLower = previousBestScore > 0 && currentAttemptScore < previousBestScore;
+      const isEqual = previousBestScore > 0 && currentAttemptScore === previousBestScore;
+      const isRetained = isLower || isEqual;
       const finalScoreToSave = Math.max(previousBestScore, currentAttemptScore);
+
+      // Siapkan snapshot detail penempatan komponen langsung dari localStorage
+      let currentHwPlacements = null;
+      let currentSwPlacements = null;
+      let currentM1Quiz = null;
+      let currentM2Pipeline = null;
+      let currentM2Quiz = null;
+      let currentAppPlacements = null;
+      let currentM3Quiz = null;
+      let currentM4Cases = null;
+      let currentM4Quiz = null;
+
+      try {
+        const hws = localStorage.getItem('tugas_sk_m1_hw_placements');
+        if (hws) currentHwPlacements = JSON.parse(hws);
+        const sws = localStorage.getItem('tugas_sk_m1_sw_placements');
+        if (sws) currentSwPlacements = JSON.parse(sws);
+        const m1q = localStorage.getItem('tugas_sk_m1_quiz_answers');
+        if (m1q) currentM1Quiz = JSON.parse(m1q);
+
+        const m2p = localStorage.getItem('tugas_sk_m2_pipeline_answers');
+        if (m2p) currentM2Pipeline = JSON.parse(m2p);
+        const m2q = localStorage.getItem('tugas_sk_m2_quiz_answers');
+        if (m2q) currentM2Quiz = JSON.parse(m2q);
+
+        const apps = localStorage.getItem('tugas_sk_m3_app_placements');
+        if (apps) currentAppPlacements = JSON.parse(apps);
+        const m3q = localStorage.getItem('tugas_sk_m3_quiz_answers');
+        if (m3q) currentM3Quiz = JSON.parse(m3q);
+
+        const m4c = localStorage.getItem('tugas_sk_m4_case_answers');
+        if (m4c) currentM4Cases = JSON.parse(m4c);
+        const m4q = localStorage.getItem('tugas_sk_m4_quiz_answers');
+        if (m4q) currentM4Quiz = JSON.parse(m4q);
+      } catch (e) {
+        /* ignore */
+      }
+
+      const consolidatedPlacements = {
+        m1: {
+          hwPlacements: currentHwPlacements || null,
+          swPlacements: currentSwPlacements || null,
+          quizAnswers: currentM1Quiz || null,
+        },
+        m2: {
+          pipelineAnswers: currentM2Pipeline || null,
+          quizAnswers: currentM2Quiz || null,
+        },
+        m3: {
+          appPlacements: currentAppPlacements || null,
+          quizAnswers: currentM3Quiz || null,
+        },
+        m4: {
+          caseAnswers: currentM4Cases || null,
+          quizAnswers: currentM4Quiz || null,
+        },
+      };
 
       const detailLog = {
         scores,
         completed,
+        placements: consolidatedPlacements,
         breakdown: {
           m1_komponen_komputer: scores.m1 || 0,
           m2_data_aplikasi: scores.m2 || 0,
@@ -389,42 +552,43 @@ export function useTugasSKState() {
         skor_sebelumnya: previousBestScore,
         is_retained: isRetained,
         is_improved: isImproved,
+        is_lower: isLower,
         submitted_at: new Date().toISOString()
       };
 
-      let upsertedSub = null;
+      // 2. Simpan ke database:
+      // Bila isLower: Skor yang disimpan TETAP previousBestScore (nilai tidak di-replace/turun),
+      // namun posisi penempatan komponen tetap diperbarui di detail_jawaban agar bisa dilanjutkan di perangkat lain.
+      const payload = {
+        tugas_id: resolvedTaskId,
+        siswa_id: studentIdInt,
+        status: 'selesai',
+        skor: Math.round(finalScoreToSave),
+        persentase_skor: Math.min(100, Math.max(0, finalScoreToSave)),
+        detail_jawaban: detailLog,
+        catatan_guru: isLower
+          ? `Skor Praktik Sistem Komputer: ${finalScoreToSave}/100 Poin (Nilai tertinggi sebelumnya dipertahankan. Percobaan saat ini: ${currentAttemptScore}/100 Poin).`
+          : `Skor Praktik Sistem Komputer & Perkakas Digital: ${finalScoreToSave}/100 Poin (M1 Hardware: ${scores.m1 || 0}/35, M2 Data: ${scores.m2 || 0}/20, M3 Software: ${scores.m3 || 0}/30, M4 Etika: ${scores.m4 || 0}/15).`,
+        submitted_at: new Date().toISOString(),
+        graded_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
-      // 2. HANYA SIMPAN KE DATABASE (tugas_pengumpulan) JIKA NILAI LEBIH BESAR (atau belum pernah submit)
+      const { data: resSub, error: upsertErr } = await supabase
+        .from('tugas_pengumpulan')
+        .upsert(payload, { onConflict: 'tugas_id,siswa_id' })
+        .select()
+        .maybeSingle();
+
+      if (upsertErr) {
+        console.error('Gagal simpan ke tugas_pengumpulan SK:', upsertErr);
+        throw upsertErr;
+      }
+
+      console.log('[Tugas 3 SK] Berhasil tersimpan di tugas_pengumpulan:', resSub);
+
+      // Sinkronisasi total_points ke master_siswa & user session jika ada peningkatan rekor
       if (isImproved) {
-        const payload = {
-          tugas_id: resolvedTaskId,
-          siswa_id: studentIdInt,
-          status: 'selesai',
-          skor: Math.round(finalScoreToSave),
-          persentase_skor: Math.min(100, Math.max(0, finalScoreToSave)),
-          detail_jawaban: detailLog,
-          catatan_guru: `Skor Praktik Sistem Komputer & Perkakas Digital: ${finalScoreToSave}/100 Poin (M1 Hardware: ${scores.m1 || 0}/35, M2 Data: ${scores.m2 || 0}/20, M3 Software: ${scores.m3 || 0}/30, M4 Etika: ${scores.m4 || 0}/15).`,
-          submitted_at: new Date().toISOString(),
-          graded_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-
-        const { data: resSub, error: upsertErr } = await supabase
-          .from('tugas_pengumpulan')
-          .upsert(payload, { onConflict: 'tugas_id,siswa_id' })
-          .select()
-          .maybeSingle();
-
-        upsertedSub = resSub;
-
-        if (upsertErr) {
-          console.error('Gagal simpan ke tugas_pengumpulan SK:', upsertErr);
-          throw upsertErr;
-        } else {
-          console.log('[Tugas 3 SK] Berhasil tersimpan di tugas_pengumpulan (Trigger trg_sync_tugas_to_point_logs otomatis aktif):', resSub);
-        }
-
-        // Sinkronisasi total_points ke master_siswa & user session
         setTimeout(async () => {
           try {
             const latestPoints = await syncStudentPointsAfterTask(studentIdInt);
@@ -438,33 +602,46 @@ export function useTugasSKState() {
             console.warn('Sync points after task error:', e);
           }
         }, 300);
-      } else {
-        console.log(`[Tugas 3 SK] Nilai database (${previousBestScore}) >= percobaan saat ini (${currentAttemptScore}). Data tugas_pengumpulan TIDAK ditimpa.`);
       }
 
-      // 5. Trigger Grand Fireworks & Sound Effect!
+      // Sinkronisasi local storage
+      if (storageKey) {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify({
+            scores,
+            completed,
+            placements: consolidatedPlacements,
+            updated_at: new Date().toISOString()
+          }));
+        } catch (e) {
+          /* ignore */
+        }
+      }
+
+      // 3. Trigger Grand Fireworks
       celebratePointGain(true);
 
-      // 6. Update local state
+      // 4. Update local submission state
       setSubmitted(true);
-      if (isImproved) {
-        setExistingSubmission(upsertedSub || {
-          tugas_id: resolvedTaskId,
-          siswa_id: studentIdInt,
-          status: 'selesai',
-          skor: finalScoreToSave,
-          persentase_skor: finalScoreToSave,
-          submitted_at: new Date().toISOString(),
-        });
-      }
+      setExistingSubmission(resSub || {
+        tugas_id: resolvedTaskId,
+        siswa_id: studentIdInt,
+        status: 'selesai',
+        skor: finalScoreToSave,
+        nilai_akhir: finalScoreToSave,
+        detail_jawaban: detailLog,
+        submitted_at: new Date().toISOString(),
+      });
+
       setSubmissionMeta({
         savedScore: finalScoreToSave,
         attemptScore: currentAttemptScore,
         previousScore: previousBestScore,
         isRetained,
         isImproved,
-        skippedDbSave: !isImproved,
+        isLower,
       });
+
       setShowSuccessModal(true);
     } catch (err) {
       console.error('Gagal submit tugas SK:', err);

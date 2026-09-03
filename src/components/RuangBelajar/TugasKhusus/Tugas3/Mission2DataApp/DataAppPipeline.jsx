@@ -157,6 +157,15 @@ export default function DataAppPipeline({ currentScore, onComplete, onNextMissio
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'pipeline' | 'kuis'
   const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
   const [pipelineAnswers, setPipelineAnswers] = useState(() => {
+    try {
+      const saved = localStorage.getItem('tugas_sk_m2_pipeline_answers');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {
+      /* ignore */
+    }
     if (Number(currentScore) >= 10) {
       const initP = {};
       PIPELINE_CASES.forEach((c) => {
@@ -170,8 +179,24 @@ export default function DataAppPipeline({ currentScore, onComplete, onNextMissio
       case_smartwatch: { input: '', app: '', output: '' },
     };
   });
-  const [pipelineChecked, setPipelineChecked] = useState(() => Number(currentScore) >= 10);
+  const [pipelineChecked, setPipelineChecked] = useState(() => {
+    try {
+      return Boolean(localStorage.getItem('tugas_sk_m2_pipeline_answers')) || Number(currentScore) >= 10;
+    } catch (e) {
+      return Number(currentScore) >= 10;
+    }
+  });
+
   const [quizAnswers, setQuizAnswers] = useState(() => {
+    try {
+      const savedQ = localStorage.getItem('tugas_sk_m2_quiz_answers');
+      if (savedQ) {
+        const parsed = JSON.parse(savedQ);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {
+      /* ignore */
+    }
     if (Number(currentScore) >= 10) {
       const initQ = {};
       QUIZ_QUESTIONS.forEach((q) => {
@@ -181,7 +206,29 @@ export default function DataAppPipeline({ currentScore, onComplete, onNextMissio
     }
     return {};
   });
-  const [quizChecked, setQuizChecked] = useState(() => Number(currentScore) >= 10);
+  const [quizChecked, setQuizChecked] = useState(() => {
+    try {
+      return Boolean(localStorage.getItem('tugas_sk_m2_quiz_answers')) || Number(currentScore) >= 10;
+    } catch (e) {
+      return Number(currentScore) >= 10;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('tugas_sk_m2_pipeline_answers', JSON.stringify(pipelineAnswers));
+    } catch (e) {
+      /* ignore */
+    }
+  }, [pipelineAnswers]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('tugas_sk_m2_quiz_answers', JSON.stringify(quizAnswers));
+    } catch (e) {
+      /* ignore */
+    }
+  }, [quizAnswers]);
 
   // ====================================================
   // PERHITUNGAN SKOR MISI 2 (Total 20 Poin):

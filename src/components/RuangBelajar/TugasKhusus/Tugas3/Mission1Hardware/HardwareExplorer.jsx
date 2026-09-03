@@ -174,8 +174,17 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'hw_drag' | 'sw_drag' | 'kuis'
   const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
 
-  // State Penempatan 20 Komponen Hardware
+  // State Penempatan 20 Komponen Hardware: Cek localStorage (sinkron dengan database), lalu default
   const [hwPlacements, setHwPlacements] = useState(() => {
+    try {
+      const saved = localStorage.getItem('tugas_sk_m1_hw_placements');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {
+      /* ignore */
+    }
     if (Number(currentScore) >= 15) {
       const init = {};
       HARDWARE_20_ITEMS.forEach((item) => {
@@ -183,13 +192,6 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
       });
       return init;
     }
-    try {
-      const saved = localStorage.getItem('tugas_sk_m1_hw_placements');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object') return parsed;
-      }
-    } catch (e) {}
     const init = {};
     HARDWARE_20_ITEMS.forEach((item) => {
       init[item.id] = '';
@@ -200,10 +202,25 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
     [...HARDWARE_20_ITEMS].sort(() => Math.random() - 0.5)
   );
   const [selectedHwItem, setSelectedHwItem] = useState(null);
-  const [hwChecked, setHwChecked] = useState(() => Number(currentScore) >= 15);
+  const [hwChecked, setHwChecked] = useState(() => {
+    try {
+      return Boolean(localStorage.getItem('tugas_sk_m1_hw_placements')) || Number(currentScore) >= 15;
+    } catch (e) {
+      return Number(currentScore) >= 15;
+    }
+  });
 
-  // State Penempatan 20 Perangkat Lunak
+  // State Penempatan 20 Perangkat Lunak: Cek localStorage (sinkron dengan database), lalu default
   const [swPlacements, setSwPlacements] = useState(() => {
+    try {
+      const saved = localStorage.getItem('tugas_sk_m1_sw_placements');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {
+      /* ignore */
+    }
     if (Number(currentScore) >= 25) {
       const init = {};
       SOFTWARE_20_ITEMS.forEach((item) => {
@@ -211,13 +228,6 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
       });
       return init;
     }
-    try {
-      const saved = localStorage.getItem('tugas_sk_m1_sw_placements');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object') return parsed;
-      }
-    } catch (e) {}
     const init = {};
     SOFTWARE_20_ITEMS.forEach((item) => {
       init[item.id] = '';
@@ -228,24 +238,42 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
     [...SOFTWARE_20_ITEMS].sort(() => Math.random() - 0.5)
   );
   const [selectedSwItem, setSelectedSwItem] = useState(null);
-  const [swChecked, setSwChecked] = useState(() => Number(currentScore) >= 25);
+  const [swChecked, setSwChecked] = useState(() => {
+    try {
+      return Boolean(localStorage.getItem('tugas_sk_m1_sw_placements')) || Number(currentScore) >= 25;
+    } catch (e) {
+      return Number(currentScore) >= 25;
+    }
+  });
 
-  // Simpan draft penempatan ke localStorage agar tidak hilang jika tidak sengaja ter-refresh
+  // Simpan draft penempatan ke localStorage agar aman saat berpindah tab/misi
   useEffect(() => {
     try {
       localStorage.setItem('tugas_sk_m1_hw_placements', JSON.stringify(hwPlacements));
-    } catch (e) {}
+    } catch (e) {
+      /* ignore */
+    }
   }, [hwPlacements]);
 
   useEffect(() => {
     try {
       localStorage.setItem('tugas_sk_m1_sw_placements', JSON.stringify(swPlacements));
-    } catch (e) {}
+    } catch (e) {
+      /* ignore */
+    }
   }, [swPlacements]);
 
   // State Kuis (No individual answer reveal, full reset required)
   const [quizAnswers, setQuizAnswers] = useState(() => {
-    // Jika ada skor tersimpan (>=10, misal kuis tuntas atau total >=10), pulihkan kunci jawaban
+    try {
+      const savedQ = localStorage.getItem('tugas_sk_m1_quiz_answers');
+      if (savedQ) {
+        const parsed = JSON.parse(savedQ);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {
+      /* ignore */
+    }
     if (Number(currentScore) >= 10) {
       const initQ = {};
       QUIZ_QUESTIONS.forEach((q) => {
@@ -255,7 +283,21 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
     }
     return {};
   });
-  const [quizChecked, setQuizChecked] = useState(() => Number(currentScore) >= 10);
+  const [quizChecked, setQuizChecked] = useState(() => {
+    try {
+      return Boolean(localStorage.getItem('tugas_sk_m1_quiz_answers')) || Number(currentScore) >= 10;
+    } catch (e) {
+      return Number(currentScore) >= 10;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('tugas_sk_m1_quiz_answers', JSON.stringify(quizAnswers));
+    } catch (e) {
+      /* ignore */
+    }
+  }, [quizAnswers]);
 
   // ====================================================
   // PERHITUNGAN SKOR BARU (Total 35 Poin untuk Misi 1):

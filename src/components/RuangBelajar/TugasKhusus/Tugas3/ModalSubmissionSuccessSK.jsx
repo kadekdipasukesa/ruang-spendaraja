@@ -96,13 +96,19 @@ export default function ModalSubmissionSuccessSK({
             )}
 
             {isRetained && (
-              <div className="space-y-1.5">
-                <div className="text-xs font-semibold text-amber-300 flex items-start gap-2 bg-amber-950/60 border border-amber-800/80 p-2.5 rounded-xl text-left">
-                  <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <div className="text-[11px] leading-relaxed">
-                    <span>
-                      Percobaan saat ini memperoleh <strong>{attemptScore} Poin</strong>. Karena skormu sebelumnya sudah mencapai <strong>{savedScore} Poin</strong>, sistem secara otomatis menjaga nilai tertinggimu agar tidak berkurang.
-                    </span>
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-amber-300 flex items-start gap-2.5 bg-amber-950/70 border border-amber-500/50 p-3 rounded-2xl text-left shadow-lg shadow-amber-950/40">
+                  <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="text-[11px] leading-relaxed space-y-1">
+                    <p className="font-bold text-amber-200">
+                      Pemberitahuan Proteksi Nilai Database:
+                    </p>
+                    <p className="text-amber-100/90">
+                      Nilai di database sebelumnya (<strong className="text-amber-300 font-bold">{previousScore} Poin</strong>) lebih tinggi dari pengerjaan saat ini (<strong className="text-white font-bold">{attemptScore} Poin</strong>). Nilai di database <strong className="text-amber-300">TIDAK DI-REPLACE / DITIMPA</strong> dengan nilai yang lebih kecil. Nilai resmi terbaikmu ({previousScore} Poin) tetap aman!
+                    </p>
+                    <p className="text-[10px] text-amber-300/80 pt-0.5">
+                      ✓ Posisi letak komponen & progres tugas tetap disimpan ke database agar dapat dilanjutkan kapan pun di perangkat lain.
+                    </p>
                   </div>
                 </div>
               </div>

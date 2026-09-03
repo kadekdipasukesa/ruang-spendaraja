@@ -136,8 +136,17 @@ export default function DigitalToolbox({ currentScore, onComplete, onNextMission
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'tools_drag' | 'kuis'
   const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
 
-  // Penempatan 20 Aplikasi
+  // Penempatan 20 Aplikasi: Cek localStorage (sinkron dengan database), lalu default
   const [appPlacements, setAppPlacements] = useState(() => {
+    try {
+      const saved = localStorage.getItem('tugas_sk_m3_app_placements');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {
+      /* ignore */
+    }
     if (Number(currentScore) >= 20) {
       const init = {};
       APP_20_TOOLS.forEach((item) => {
@@ -145,13 +154,6 @@ export default function DigitalToolbox({ currentScore, onComplete, onNextMission
       });
       return init;
     }
-    try {
-      const saved = localStorage.getItem('tugas_sk_m3_app_placements');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object') return parsed;
-      }
-    } catch (e) {}
     const init = {};
     APP_20_TOOLS.forEach((item) => {
       init[item.id] = '';
@@ -162,17 +164,34 @@ export default function DigitalToolbox({ currentScore, onComplete, onNextMission
     [...APP_20_TOOLS].sort(() => Math.random() - 0.5)
   );
   const [selectedAppItem, setSelectedAppItem] = useState(null);
-  const [appChecked, setAppChecked] = useState(() => Number(currentScore) >= 20);
+  const [appChecked, setAppChecked] = useState(() => {
+    try {
+      return Boolean(localStorage.getItem('tugas_sk_m3_app_placements')) || Number(currentScore) >= 20;
+    } catch (e) {
+      return Number(currentScore) >= 20;
+    }
+  });
 
   // Simpan draft penempatan ke localStorage agar tidak hilang
   useEffect(() => {
     try {
       localStorage.setItem('tugas_sk_m3_app_placements', JSON.stringify(appPlacements));
-    } catch (e) {}
+    } catch (e) {
+      /* ignore */
+    }
   }, [appPlacements]);
 
   // Kuis State (No individual answer reveal, reset required)
   const [quizAnswers, setQuizAnswers] = useState(() => {
+    try {
+      const savedQ = localStorage.getItem('tugas_sk_m3_quiz_answers');
+      if (savedQ) {
+        const parsed = JSON.parse(savedQ);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {
+      /* ignore */
+    }
     if (Number(currentScore) >= 10) {
       const initQ = {};
       QUIZ_QUESTIONS.forEach((q) => {
@@ -182,7 +201,21 @@ export default function DigitalToolbox({ currentScore, onComplete, onNextMission
     }
     return {};
   });
-  const [quizChecked, setQuizChecked] = useState(() => Number(currentScore) >= 10);
+  const [quizChecked, setQuizChecked] = useState(() => {
+    try {
+      return Boolean(localStorage.getItem('tugas_sk_m3_quiz_answers')) || Number(currentScore) >= 10;
+    } catch (e) {
+      return Number(currentScore) >= 10;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('tugas_sk_m3_quiz_answers', JSON.stringify(quizAnswers));
+    } catch (e) {
+      /* ignore */
+    }
+  }, [quizAnswers]);
 
   // ====================================================
   // PERHITUNGAN SKOR MISI 3 (Total 30 Poin):

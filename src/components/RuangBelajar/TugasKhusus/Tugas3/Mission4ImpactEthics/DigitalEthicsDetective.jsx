@@ -164,6 +164,15 @@ export default function DigitalEthicsDetective({ currentScore, onComplete, onSub
   const [activeTab, setActiveTab] = useState('materi');
   const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
   const [caseAnswers, setCaseAnswers] = useState(() => {
+    try {
+      const saved = localStorage.getItem('tugas_sk_m4_case_answers');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {
+      /* ignore */
+    }
     if (Number(currentScore) >= 10) {
       const initC = {};
       ETHICS_CASES.forEach((cs) => {
@@ -179,8 +188,24 @@ export default function DigitalEthicsDetective({ currentScore, onComplete, onSub
       case_security_password: { action: '', impact: '' },
     };
   });
-  const [casesChecked, setCasesChecked] = useState(() => Number(currentScore) >= 10);
+  const [casesChecked, setCasesChecked] = useState(() => {
+    try {
+      return Boolean(localStorage.getItem('tugas_sk_m4_case_answers')) || Number(currentScore) >= 10;
+    } catch (e) {
+      return Number(currentScore) >= 10;
+    }
+  });
+
   const [quizAnswers, setQuizAnswers] = useState(() => {
+    try {
+      const savedQ = localStorage.getItem('tugas_sk_m4_quiz_answers');
+      if (savedQ) {
+        const parsed = JSON.parse(savedQ);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {
+      /* ignore */
+    }
     if (Number(currentScore) >= 5) {
       const initQ = {};
       QUIZ_QUESTIONS.forEach((q) => {
@@ -190,7 +215,29 @@ export default function DigitalEthicsDetective({ currentScore, onComplete, onSub
     }
     return {};
   });
-  const [quizChecked, setQuizChecked] = useState(() => Number(currentScore) >= 5);
+  const [quizChecked, setQuizChecked] = useState(() => {
+    try {
+      return Boolean(localStorage.getItem('tugas_sk_m4_quiz_answers')) || Number(currentScore) >= 5;
+    } catch (e) {
+      return Number(currentScore) >= 5;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('tugas_sk_m4_case_answers', JSON.stringify(caseAnswers));
+    } catch (e) {
+      /* ignore */
+    }
+  }, [caseAnswers]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('tugas_sk_m4_quiz_answers', JSON.stringify(quizAnswers));
+    } catch (e) {
+      /* ignore */
+    }
+  }, [quizAnswers]);
 
   // ====================================================
   // PERHITUNGAN SKOR MISI 4 (Total 15 Poin):

@@ -83,32 +83,26 @@ TUGAS 3: SISTEM KOMPUTER & PERKAKAS DIGITAL (100 Poin)
 
 ### A. Kebijakan Pemuatan Data: Database-First Priority & Sync Lokal
 * **Pemuatan Awal (Database-First Priority)**:
-  - Saat siswa membuka halaman tugas atau menekan tombol **"Lanjutkan" / "Ulangi Praktik"**, sistem memuat snapshot nilai dan status `completed` (`m1`, `m2`, `m3`, `m4`) langsung dari database Supabase (`tugas_pengumpulan.detail_jawaban`).
-  - Hal ini menjamin progres siswa tetap utuh dan tersinkronisasi saat berpindah komputer laboratorium atau peramban.
-  - Snapshot dari database kemudian dicerminkan ke `localStorage` (`tugas_sk_state_user_{studentId}`) sebagai *scratchpad* sesi aktif.
+  - Saat siswa membuka halaman tugas atau menekan tombol **"Lanjutkan" / "Perbaiki Nilai"**, sistem secara ketat memuat data langsung dari database Supabase (`tugas_pengumpulan.detail_jawaban`), mengesampingkan cache lokal jika terdapat rekaman di database.
+  - Snapshot yang dimuat mencakup skor per misi, status selesai (`completed`), serta data susunan/penempatan komponen (`placements`) untuk Misi 1 (Hardware & Software), Misi 2 (Data & Aplikasi), Misi 3 (Aplikasi Perkakas), dan Misi 4 (Etika Digital).
+  - Snapshot database disinkronkan secara langsung ke `localStorage` pada saat pemuatan awal tanpa memicu re-render cascade atau siklus pemanggilan `useEffect` melingkar (*loop-free architecture*).
+  - Hal ini menjamin progres siswa tersinkronisasi penuh saat berpindah komputer laboratorium atau berganti perangkat/peramban.
+  - Komponen sub-misi membaca langsung susunan terakhir dari `localStorage` yang telah dipulihkan dari database, menjaga performa peramban tetap ringan dan responsif.
 * **Indikator Centang Sub-Tab & Misi**:
   - Tab navigasi utama 4 misi (`SKMissionTabs.jsx`) dan sub-tab di dalam tiap misi (Materi Visual, Praktikum Lab Drag & Drop, dan Kuis) dilengkapi lencana centang hijau (`CheckCircle2`) dan rincian skor perolehan jika misi/sub-tab telah terselesaikan.
 * **Restorasi State Interaktif**:
-  - Komponen yang memiliki riwayat skor tersimpan otomatis memulihkan status pengerjaan, membaca materi (`materiRead`), dan penempatan jawaban yang benar sehingga siswa dapat langsung melihat status penyelesaiannya secara transparan.
+  - Komponen yang memiliki riwayat skor tersimpan otomatis memulihkan status pengerjaan, membaca materi (`materiRead`), dan penempatan komponen/jawaban dari database.
 
-### B. Sinkronisasi Database Supabase & Isolasi Tugas Ketat
-* **Isolasi ID Tugas Eksklusif**:
-  - `candidateTaskIds` untuk Tugas 3 secara ketat memfilter hanya kode tugas Sistem Komputer (`TUGAS-03-SISTEM-KOMPUTER`, `TUGAS_SK_01`, `tugas-inf-03`) dan rute `/ruang-belajar/tugas/sistem-komputer`.
-  - Secara eksplisit memblokir ID tugas dari Tugas 1 (`TUGAS-01-SIMULASI-FOLDER`) dan Tugas 2 (`TUGAS-02-BERPIKIR-KOMPUTASIONAL`), mencegah pembacaan data lintas tugas meskipun memiliki kategori yang serupa.
-* **Perilaku Reset / Database Bersih**:
-  - Jika data di tabel `tugas_pengumpulan` untuk Tugas 3 telah dihapus / bersih, `existingSubmission` bernilai `null` dan `previousBestScore = 0`.
-  - Percobaan baru (berapapun nilainya, misal 3 Poin) akan langsung disimpan sebagai pengumpulan resmi pertama ke database `tugas_pengumpulan`.
-* **Saat siswa menekan tombol "Kumpulkan Tugas"**:
-  1. Menghitung `totalScore = scores.m1 + scores.m2 + scores.m3 + scores.m4` (Maksimal 100 Poin).
-  2. Mengambil data pengumpulan sebelumnya khusus Tugas 3 dari tabel `tugas_pengumpulan`.
-  3. **Logika Proteksi Nilai Tertinggi (`Math.max`)**:
-     ```javascript
-     const isImproved = previousBestScore === 0 || currentAttemptScore > previousBestScore;
-     const finalOfficialScore = Math.max(currentAttemptScore, previousBestScore);
-     ```
-  4. Melakukan `upsert` ke tabel `tugas_pengumpulan` jika percobaan baru lebih tinggi atau jika database masih kosong.
-  5. Trigger database `trg_sync_tugas_to_point_logs` menyinkronkan ke `point_logs` dan `master_siswa.total_points`.
-  6. Menampilkan modal hasil resmi (`ModalSubmissionSuccessSK.jsx`).
+### B. Sinkronisasi Database Supabase & Proteksi Nilai Tertinggi
+* **Sinkronisasi Posisi Saat Terakhir Kumpulkan Tugas**:
+  - Posisi drag & drop komponen tidak dikirim ke database pada setiap pergeseran mikro, melainkan dikonsolidasikan dan disimpan ke `tugas_pengumpulan.detail_jawaban.placements` pada saat tombol **"Kumpulkan Tugas" / "Perbaiki Nilai"** ditekan.
+  - Dengan demikian, akun siswa yang sama pada perangkat/komputer berbeda dapat melanjutkan pekerjaan secara akurat.
+* **Proteksi Skor Database (Tidak Di-replace Jika Nilai Baru Lebih Kecil)**:
+  - Jika nilai di database sebelumnya lebih tinggi daripada percobaan saat ini (`currentAttemptScore < previousBestScore`), nilai resmi di kolom `skor` dan `nilai_akhir` **TIDAK AKAN DITIMPA / DIREPLACE** dengan nilai yang lebih kecil.
+  - Skor tertinggi sebelumnya dipertahankan penuh, dan posisi komponen terbaru tetap disimpan di `detail_jawaban` agar progres pekerjaan tidak hilang.
+  - Modal hasil pengumpulan (`ModalSubmissionSuccessSK.jsx`) menampilkan **Pemberitahuan Proteksi Nilai Database** yang jelas dan tegas bahwa nilai tertinggi siswa ({previousScore} Poin) tetap aman dan tidak ditimpa oleh percobaan baru ({attemptScore} Poin).
+* **Peningkatan Rekor (isImproved)**:
+  - Jika percobaan baru menghasilkan skor lebih tinggi (`currentAttemptScore > previousBestScore`) atau pengumpulan perdana, database akan memperbarui `skor` dengan nilai rekor baru dan trigger database `trg_sync_tugas_to_point_logs` otomatis menyinkronkan peningkatan poin ke `point_logs` dan `master_siswa.total_points`.
 
 ### C. Alur Navigasi Antar Misi & Restorasi Nilai Sebagian (Partial Progress)
 * **Restorasi Nilai Parsial**:
