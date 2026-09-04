@@ -170,17 +170,19 @@ const QUIZ_QUESTIONS = [
   },
 ];
 
-export default function HardwareExplorer({ currentScore, onComplete, onNextMission, initialPlacements }) {
+export default function HardwareExplorer({ userId, currentScore, onComplete, onNextMission }) {
+  const uid = userId ? String(userId) : 'guest';
+  const HW_KEY = `tugas_sk_m1_hw_placements_user_${uid}`;
+  const SW_KEY = `tugas_sk_m1_sw_placements_user_${uid}`;
+  const QUIZ_KEY = `tugas_sk_m1_quiz_answers_user_${uid}`;
+
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'hw_drag' | 'sw_drag' | 'kuis'
   const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
 
-  // State Penempatan 20 Komponen Hardware: Cek initialPlacements, lalu localStorage, lalu default
+  // State Penempatan 20 Komponen Hardware: Cek localStorage (sinkron dengan database), lalu default
   const [hwPlacements, setHwPlacements] = useState(() => {
-    if (initialPlacements?.hwPlacements && typeof initialPlacements.hwPlacements === 'object') {
-      return initialPlacements.hwPlacements;
-    }
     try {
-      const saved = localStorage.getItem('tugas_sk_m1_hw_placements');
+      const saved = localStorage.getItem(HW_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object') return parsed;
@@ -206,28 +208,13 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
   );
   const [selectedHwItem, setSelectedHwItem] = useState(null);
   const [hwChecked, setHwChecked] = useState(() => {
-    if (initialPlacements?.hwPlacements && Object.values(initialPlacements.hwPlacements).some(Boolean)) {
-      return true;
-    }
-    try {
-      const saved = localStorage.getItem('tugas_sk_m1_hw_placements');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && Object.values(parsed).some(Boolean)) return true;
-      }
-      return Number(currentScore) >= 15;
-    } catch (e) {
-      return Number(currentScore) >= 15;
-    }
+    return Number(currentScore) >= 15;
   });
 
-  // State Penempatan 20 Perangkat Lunak: Cek initialPlacements, lalu localStorage, lalu default
+  // State Penempatan 20 Perangkat Lunak: Cek localStorage (sinkron dengan database), lalu default
   const [swPlacements, setSwPlacements] = useState(() => {
-    if (initialPlacements?.swPlacements && typeof initialPlacements.swPlacements === 'object') {
-      return initialPlacements.swPlacements;
-    }
     try {
-      const saved = localStorage.getItem('tugas_sk_m1_sw_placements');
+      const saved = localStorage.getItem(SW_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object') return parsed;
@@ -253,64 +240,30 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
   );
   const [selectedSwItem, setSelectedSwItem] = useState(null);
   const [swChecked, setSwChecked] = useState(() => {
-    if (initialPlacements?.swPlacements && Object.values(initialPlacements.swPlacements).some(Boolean)) {
-      return true;
-    }
-    try {
-      const saved = localStorage.getItem('tugas_sk_m1_sw_placements');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && Object.values(parsed).some(Boolean)) return true;
-      }
-      return Number(currentScore) >= 25;
-    } catch (e) {
-      return Number(currentScore) >= 25;
-    }
+    return Number(currentScore) >= 25;
   });
-
-  // Sinkronkan prop initialPlacements bila tiba dari kueri database Supabase
-  useEffect(() => {
-    if (initialPlacements?.hwPlacements && typeof initialPlacements.hwPlacements === 'object') {
-      setHwPlacements(initialPlacements.hwPlacements);
-      if (Object.values(initialPlacements.hwPlacements).some(Boolean)) {
-        setHwChecked(true);
-      }
-    }
-    if (initialPlacements?.swPlacements && typeof initialPlacements.swPlacements === 'object') {
-      setSwPlacements(initialPlacements.swPlacements);
-      if (Object.values(initialPlacements.swPlacements).some(Boolean)) {
-        setSwChecked(true);
-      }
-    }
-    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
-      setQuizAnswers(initialPlacements.quizAnswers);
-      if (Object.values(initialPlacements.quizAnswers).some(Boolean)) {
-        setQuizChecked(true);
-      }
-    }
-  }, [initialPlacements]);
 
   // Simpan draft penempatan ke localStorage agar aman saat berpindah tab/misi
   useEffect(() => {
     try {
-      localStorage.setItem('tugas_sk_m1_hw_placements', JSON.stringify(hwPlacements));
+      localStorage.setItem(HW_KEY, JSON.stringify(hwPlacements));
     } catch (e) {
       /* ignore */
     }
-  }, [hwPlacements]);
+  }, [HW_KEY, hwPlacements]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('tugas_sk_m1_sw_placements', JSON.stringify(swPlacements));
+      localStorage.setItem(SW_KEY, JSON.stringify(swPlacements));
     } catch (e) {
       /* ignore */
     }
-  }, [swPlacements]);
+  }, [SW_KEY, swPlacements]);
 
   // State Kuis (No individual answer reveal, full reset required)
   const [quizAnswers, setQuizAnswers] = useState(() => {
     try {
-      const savedQ = localStorage.getItem('tugas_sk_m1_quiz_answers');
+      const savedQ = localStorage.getItem(QUIZ_KEY);
       if (savedQ) {
         const parsed = JSON.parse(savedQ);
         if (parsed && typeof parsed === 'object') return parsed;
@@ -328,20 +281,80 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
     return {};
   });
   const [quizChecked, setQuizChecked] = useState(() => {
-    try {
-      return Boolean(localStorage.getItem('tugas_sk_m1_quiz_answers')) || Number(currentScore) >= 10;
-    } catch (e) {
-      return Number(currentScore) >= 10;
-    }
+    return Number(currentScore) >= 35;
   });
 
   useEffect(() => {
     try {
-      localStorage.setItem('tugas_sk_m1_quiz_answers', JSON.stringify(quizAnswers));
+      localStorage.setItem(QUIZ_KEY, JSON.stringify(quizAnswers));
     } catch (e) {
       /* ignore */
     }
-  }, [quizAnswers]);
+  }, [QUIZ_KEY, quizAnswers]);
+
+  // Sinkronisasi otomatis saat user login berganti
+  useEffect(() => {
+    try {
+      const savedHw = localStorage.getItem(HW_KEY);
+      if (savedHw) {
+        const parsed = JSON.parse(savedHw);
+        if (parsed && typeof parsed === 'object') {
+          setHwPlacements(parsed);
+        }
+      } else if (Number(currentScore) >= 15) {
+        const init = {};
+        HARDWARE_20_ITEMS.forEach((item) => { init[item.id] = item.category; });
+        setHwPlacements(init);
+      } else {
+        const init = {};
+        HARDWARE_20_ITEMS.forEach((item) => { init[item.id] = ''; });
+        setHwPlacements(init);
+        setHwChecked(false);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+
+    try {
+      const savedSw = localStorage.getItem(SW_KEY);
+      if (savedSw) {
+        const parsed = JSON.parse(savedSw);
+        if (parsed && typeof parsed === 'object') {
+          setSwPlacements(parsed);
+        }
+      } else if (Number(currentScore) >= 25) {
+        const init = {};
+        SOFTWARE_20_ITEMS.forEach((item) => { init[item.id] = item.type; });
+        setSwPlacements(init);
+      } else {
+        const init = {};
+        SOFTWARE_20_ITEMS.forEach((item) => { init[item.id] = ''; });
+        setSwPlacements(init);
+        setSwChecked(false);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+
+    try {
+      const savedQ = localStorage.getItem(QUIZ_KEY);
+      if (savedQ) {
+        const parsed = JSON.parse(savedQ);
+        if (parsed && typeof parsed === 'object') {
+          setQuizAnswers(parsed);
+        }
+      } else if (Number(currentScore) >= 35) {
+        const initQ = {};
+        QUIZ_QUESTIONS.forEach((q) => { initQ[q.id] = q.correct; });
+        setQuizAnswers(initQ);
+      } else {
+        setQuizAnswers({});
+        setQuizChecked(false);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }, [HW_KEY, SW_KEY, QUIZ_KEY, currentScore]);
 
   // ====================================================
   // PERHITUNGAN SKOR BARU (Total 35 Poin untuk Misi 1):
@@ -367,18 +380,6 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
 
   const calculatedScore = Math.round(hwScore + swScore + quizScore);
   const totalM1Score = Math.min(35, Math.max(Number(currentScore) || 0, calculatedScore));
-
-  // Sync skor ke controller HANYA jika nilainya lebih besar atau sama
-  const onCompleteRef = useRef(onComplete);
-  useEffect(() => {
-    onCompleteRef.current = onComplete;
-  }, [onComplete]);
-
-  useEffect(() => {
-    if (onCompleteRef.current && totalM1Score > 0) {
-      onCompleteRef.current('m1', totalM1Score);
-    }
-  }, [totalM1Score]);
 
   // Handler Hardware Placement (Tanpa petasan per klik)
   const handleAssignHw = (itemId, targetCategory) => {
@@ -440,12 +441,24 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
   const handleCheckHw = () => {
     setHwChecked(true);
     celebratePointGain(true);
+    const newHwCount = HARDWARE_20_ITEMS.filter((item) => hwPlacements[item.id] === item.category).length;
+    const newHwScore = Math.round((newHwCount / 20) * 15 * 10) / 10;
+    const newTotal = Math.min(35, Math.max(Number(currentScore) || 0, Math.round(newHwScore + swScore + quizScore)));
+    if (onComplete && newTotal > 0) {
+      onComplete('m1', newTotal);
+    }
   };
 
   // Check software with sound & petasan/confetti
   const handleCheckSw = () => {
     setSwChecked(true);
     celebratePointGain(true);
+    const newSwCount = SOFTWARE_20_ITEMS.filter((item) => swPlacements[item.id] === item.type).length;
+    const newSwScore = Math.round((newSwCount / 20) * 10 * 10) / 10;
+    const newTotal = Math.min(35, Math.max(Number(currentScore) || 0, Math.round(hwScore + newSwScore + quizScore)));
+    if (onComplete && newTotal > 0) {
+      onComplete('m1', newTotal);
+    }
   };
 
   // Evaluate quiz with sound/confetti
@@ -453,6 +466,11 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
     setQuizChecked(true);
     if (quizCorrectCount > 0) {
       celebratePointGain(quizCorrectCount === 5);
+    }
+    const newQuizScore = quizCorrectCount * 2;
+    const newTotal = Math.min(35, Math.max(Number(currentScore) || 0, Math.round(hwScore + swScore + newQuizScore)));
+    if (onComplete && newTotal > 0) {
+      onComplete('m1', newTotal);
     }
   };
 
@@ -1363,7 +1381,12 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
             {onNextMission && (
               <button
                 type="button"
-                onClick={onNextMission}
+                onClick={() => {
+                  if (onComplete && totalM1Score > 0) {
+                    onComplete('m1', totalM1Score);
+                  }
+                  onNextMission();
+                }}
                 className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition"
               >
                 <span>Lanjut ke Misi 2 (Data & Aplikasi)</span>

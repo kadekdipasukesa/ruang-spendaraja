@@ -132,17 +132,18 @@ const QUIZ_QUESTIONS = [
   },
 ];
 
-export default function DigitalToolbox({ currentScore, onComplete, onNextMission, initialPlacements }) {
+export default function DigitalToolbox({ userId, currentScore, onComplete, onNextMission }) {
+  const uid = userId ? String(userId) : 'guest';
+  const APP_KEY = `tugas_sk_m3_app_placements_user_${uid}`;
+  const QUIZ_KEY = `tugas_sk_m3_quiz_answers_user_${uid}`;
+
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'tools_drag' | 'kuis'
   const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
 
-  // Penempatan 20 Aplikasi: Cek initialPlacements, lalu localStorage, lalu default
+  // Penempatan 20 Aplikasi: Cek localStorage (sinkron dengan database), lalu default
   const [appPlacements, setAppPlacements] = useState(() => {
-    if (initialPlacements?.appPlacements && typeof initialPlacements.appPlacements === 'object') {
-      return initialPlacements.appPlacements;
-    }
     try {
-      const saved = localStorage.getItem('tugas_sk_m3_app_placements');
+      const saved = localStorage.getItem(APP_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object') return parsed;
@@ -168,32 +169,22 @@ export default function DigitalToolbox({ currentScore, onComplete, onNextMission
   );
   const [selectedAppItem, setSelectedAppItem] = useState(null);
   const [appChecked, setAppChecked] = useState(() => {
-    if (initialPlacements?.appPlacements && Object.values(initialPlacements.appPlacements).some(Boolean)) {
-      return true;
-    }
-    try {
-      return Boolean(localStorage.getItem('tugas_sk_m3_app_placements')) || Number(currentScore) >= 20;
-    } catch (e) {
-      return Number(currentScore) >= 20;
-    }
+    return Number(currentScore) >= 20;
   });
 
   // Simpan draft penempatan ke localStorage agar tidak hilang
   useEffect(() => {
     try {
-      localStorage.setItem('tugas_sk_m3_app_placements', JSON.stringify(appPlacements));
+      localStorage.setItem(APP_KEY, JSON.stringify(appPlacements));
     } catch (e) {
       /* ignore */
     }
-  }, [appPlacements]);
+  }, [APP_KEY, appPlacements]);
 
   // Kuis State (No individual answer reveal, reset required)
   const [quizAnswers, setQuizAnswers] = useState(() => {
-    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
-      return initialPlacements.quizAnswers;
-    }
     try {
-      const savedQ = localStorage.getItem('tugas_sk_m3_quiz_answers');
+      const savedQ = localStorage.getItem(QUIZ_KEY);
       if (savedQ) {
         const parsed = JSON.parse(savedQ);
         if (parsed && typeof parsed === 'object') return parsed;
@@ -211,39 +202,59 @@ export default function DigitalToolbox({ currentScore, onComplete, onNextMission
     return {};
   });
   const [quizChecked, setQuizChecked] = useState(() => {
-    if (initialPlacements?.quizAnswers && Object.values(initialPlacements.quizAnswers).some(Boolean)) {
-      return true;
-    }
-    try {
-      return Boolean(localStorage.getItem('tugas_sk_m3_quiz_answers')) || Number(currentScore) >= 10;
-    } catch (e) {
-      return Number(currentScore) >= 10;
-    }
+    return Number(currentScore) >= 30;
   });
 
-  // Sinkronkan prop initialPlacements bila tiba dari database Supabase
-  useEffect(() => {
-    if (initialPlacements?.appPlacements && typeof initialPlacements.appPlacements === 'object') {
-      setAppPlacements(initialPlacements.appPlacements);
-      if (Object.values(initialPlacements.appPlacements).some(Boolean)) {
-        setAppChecked(true);
-      }
-    }
-    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
-      setQuizAnswers(initialPlacements.quizAnswers);
-      if (Object.values(initialPlacements.quizAnswers).some(Boolean)) {
-        setQuizChecked(true);
-      }
-    }
-  }, [initialPlacements]);
-
   useEffect(() => {
     try {
-      localStorage.setItem('tugas_sk_m3_quiz_answers', JSON.stringify(quizAnswers));
+      localStorage.setItem(QUIZ_KEY, JSON.stringify(quizAnswers));
     } catch (e) {
       /* ignore */
     }
-  }, [quizAnswers]);
+  }, [QUIZ_KEY, quizAnswers]);
+
+  // Sinkronisasi otomatis saat user login berganti
+  useEffect(() => {
+    try {
+      const savedApp = localStorage.getItem(APP_KEY);
+      if (savedApp) {
+        const parsed = JSON.parse(savedApp);
+        if (parsed && typeof parsed === 'object') {
+          setAppPlacements(parsed);
+        }
+      } else if (Number(currentScore) >= 20) {
+        const init = {};
+        APP_20_TOOLS.forEach((item) => { init[item.id] = item.group; });
+        setAppPlacements(init);
+      } else {
+        const init = {};
+        APP_20_TOOLS.forEach((item) => { init[item.id] = ''; });
+        setAppPlacements(init);
+        setAppChecked(false);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+
+    try {
+      const savedQ = localStorage.getItem(QUIZ_KEY);
+      if (savedQ) {
+        const parsed = JSON.parse(savedQ);
+        if (parsed && typeof parsed === 'object') {
+          setQuizAnswers(parsed);
+        }
+      } else if (Number(currentScore) >= 30) {
+        const initQ = {};
+        QUIZ_QUESTIONS.forEach((q) => { initQ[q.id] = q.correct; });
+        setQuizAnswers(initQ);
+      } else {
+        setQuizAnswers({});
+        setQuizChecked(false);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }, [APP_KEY, QUIZ_KEY, currentScore]);
 
   // ====================================================
   // PERHITUNGAN SKOR MISI 3 (Total 30 Poin):
@@ -262,18 +273,6 @@ export default function DigitalToolbox({ currentScore, onComplete, onNextMission
   const quizScore = quizChecked ? quizCorrectCount * 2 : 0; // 10 Poin
 
   const totalM3Score = Math.min(30, Math.max(Number(currentScore) || 0, Math.round(labScore + quizScore)));
-
-  // Sync skor ke controller
-  const onCompleteRef = useRef(onComplete);
-  useEffect(() => {
-    onCompleteRef.current = onComplete;
-  }, [onComplete]);
-
-  useEffect(() => {
-    if (onCompleteRef.current && totalM3Score > 0) {
-      onCompleteRef.current('m3', totalM3Score);
-    }
-  }, [totalM3Score]);
 
   // Handler Assign Aplikasi (Tanpa petasan per klik)
   const handleAssignApp = (itemId, targetGroup) => {
@@ -308,12 +307,23 @@ export default function DigitalToolbox({ currentScore, onComplete, onNextMission
   const handleCheckApps = () => {
     setAppChecked(true);
     celebratePointGain(true);
+    const newAppCount = APP_20_TOOLS.filter((item) => appPlacements[item.id] === item.group).length;
+    const newLabScore = newAppCount;
+    const newTotal = Math.min(30, Math.max(Number(currentScore) || 0, Math.round(newLabScore + quizScore)));
+    if (onComplete && newTotal > 0) {
+      onComplete('m3', newTotal);
+    }
   };
 
   const handleEvaluateQuiz = () => {
     setQuizChecked(true);
     if (quizCorrectCount > 0) {
       celebratePointGain(quizCorrectCount === 5);
+    }
+    const newQuizScore = quizCorrectCount * 2;
+    const newTotal = Math.min(30, Math.max(Number(currentScore) || 0, Math.round(labScore + newQuizScore)));
+    if (onComplete && newTotal > 0) {
+      onComplete('m3', newTotal);
     }
   };
 
@@ -884,7 +894,12 @@ export default function DigitalToolbox({ currentScore, onComplete, onNextMission
             {onNextMission && (
               <button
                 type="button"
-                onClick={onNextMission}
+                onClick={() => {
+                  if (onComplete && totalM3Score > 0) {
+                    onComplete('m3', totalM3Score);
+                  }
+                  onNextMission();
+                }}
                 className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition"
               >
                 <span>Lanjut ke Misi 4 (Dampak & Etika TIK)</span>

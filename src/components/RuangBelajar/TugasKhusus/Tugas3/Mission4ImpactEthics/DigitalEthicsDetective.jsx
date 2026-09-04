@@ -160,15 +160,16 @@ const QUIZ_QUESTIONS = [
   },
 ];
 
-export default function DigitalEthicsDetective({ currentScore, onComplete, onSubmitAll, isSubmitting, initialPlacements }) {
+export default function DigitalEthicsDetective({ userId, currentScore, onComplete, onSubmitAll, isSubmitting }) {
+  const uid = userId ? String(userId) : 'guest';
+  const CASE_KEY = `tugas_sk_m4_case_answers_user_${uid}`;
+  const QUIZ_KEY = `tugas_sk_m4_quiz_answers_user_${uid}`;
+
   const [activeTab, setActiveTab] = useState('materi');
   const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
   const [caseAnswers, setCaseAnswers] = useState(() => {
-    if (initialPlacements?.caseAnswers && typeof initialPlacements.caseAnswers === 'object') {
-      return initialPlacements.caseAnswers;
-    }
     try {
-      const saved = localStorage.getItem('tugas_sk_m4_case_answers');
+      const saved = localStorage.getItem(CASE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object') return parsed;
@@ -192,22 +193,12 @@ export default function DigitalEthicsDetective({ currentScore, onComplete, onSub
     };
   });
   const [casesChecked, setCasesChecked] = useState(() => {
-    if (initialPlacements?.caseAnswers && Object.values(initialPlacements.caseAnswers).some(c => c && (c.action || c.impact))) {
-      return true;
-    }
-    try {
-      return Boolean(localStorage.getItem('tugas_sk_m4_case_answers')) || Number(currentScore) >= 10;
-    } catch (e) {
-      return Number(currentScore) >= 10;
-    }
+    return Number(currentScore) >= 10;
   });
 
   const [quizAnswers, setQuizAnswers] = useState(() => {
-    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
-      return initialPlacements.quizAnswers;
-    }
     try {
-      const savedQ = localStorage.getItem('tugas_sk_m4_quiz_answers');
+      const savedQ = localStorage.getItem(QUIZ_KEY);
       if (savedQ) {
         const parsed = JSON.parse(savedQ);
         if (parsed && typeof parsed === 'object') return parsed;
@@ -225,47 +216,73 @@ export default function DigitalEthicsDetective({ currentScore, onComplete, onSub
     return {};
   });
   const [quizChecked, setQuizChecked] = useState(() => {
-    if (initialPlacements?.quizAnswers && Object.values(initialPlacements.quizAnswers).some(Boolean)) {
-      return true;
-    }
-    try {
-      return Boolean(localStorage.getItem('tugas_sk_m4_quiz_answers')) || Number(currentScore) >= 5;
-    } catch (e) {
-      return Number(currentScore) >= 5;
-    }
+    return Number(currentScore) >= 15;
   });
 
-  // Sinkronkan prop initialPlacements bila tiba dari database Supabase
-  useEffect(() => {
-    if (initialPlacements?.caseAnswers && typeof initialPlacements.caseAnswers === 'object') {
-      setCaseAnswers(initialPlacements.caseAnswers);
-      if (Object.values(initialPlacements.caseAnswers).some(c => c && (c.action || c.impact))) {
-        setCasesChecked(true);
-      }
-    }
-    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
-      setQuizAnswers(initialPlacements.quizAnswers);
-      if (Object.values(initialPlacements.quizAnswers).some(Boolean)) {
-        setQuizChecked(true);
-      }
-    }
-  }, [initialPlacements]);
-
   useEffect(() => {
     try {
-      localStorage.setItem('tugas_sk_m4_case_answers', JSON.stringify(caseAnswers));
+      localStorage.setItem(CASE_KEY, JSON.stringify(caseAnswers));
     } catch (e) {
       /* ignore */
     }
-  }, [caseAnswers]);
+  }, [CASE_KEY, caseAnswers]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('tugas_sk_m4_quiz_answers', JSON.stringify(quizAnswers));
+      localStorage.setItem(QUIZ_KEY, JSON.stringify(quizAnswers));
     } catch (e) {
       /* ignore */
     }
-  }, [quizAnswers]);
+  }, [QUIZ_KEY, quizAnswers]);
+
+  // Sinkronisasi otomatis saat user login berganti
+  useEffect(() => {
+    try {
+      const savedCases = localStorage.getItem(CASE_KEY);
+      if (savedCases) {
+        const parsed = JSON.parse(savedCases);
+        if (parsed && typeof parsed === 'object') {
+          setCaseAnswers(parsed);
+        }
+      } else if (Number(currentScore) >= 10) {
+        const initC = {};
+        ETHICS_CASES.forEach((cs) => {
+          initC[cs.id] = { action: cs.correctAction, impact: cs.correctImpact };
+        });
+        setCaseAnswers(initC);
+      } else {
+        setCaseAnswers({
+          case_hoax: { action: '', impact: '' },
+          case_privacy: { action: '', impact: '' },
+          case_screentime: { action: '', impact: '' },
+          case_digital_footprint: { action: '', impact: '' },
+          case_security_password: { action: '', impact: '' },
+        });
+        setCasesChecked(false);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+
+    try {
+      const savedQ = localStorage.getItem(QUIZ_KEY);
+      if (savedQ) {
+        const parsed = JSON.parse(savedQ);
+        if (parsed && typeof parsed === 'object') {
+          setQuizAnswers(parsed);
+        }
+      } else if (Number(currentScore) >= 15) {
+        const initQ = {};
+        QUIZ_QUESTIONS.forEach((q) => { initQ[q.id] = q.correct; });
+        setQuizAnswers(initQ);
+      } else {
+        setQuizAnswers({});
+        setQuizChecked(false);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }, [CASE_KEY, QUIZ_KEY, currentScore]);
 
   // ====================================================
   // PERHITUNGAN SKOR MISI 4 (Total 15 Poin):
@@ -293,18 +310,6 @@ export default function DigitalEthicsDetective({ currentScore, onComplete, onSub
 
   const totalM4Score = Math.min(15, Math.max(Number(currentScore) || 0, labScore + quizScore));
 
-  // Sync skor ke controller
-  const onCompleteRef = useRef(onComplete);
-  useEffect(() => {
-    onCompleteRef.current = onComplete;
-  }, [onComplete]);
-
-  useEffect(() => {
-    if (onCompleteRef.current && totalM4Score > 0) {
-      onCompleteRef.current('m4', totalM4Score);
-    }
-  }, [totalM4Score]);
-
   const handleSelectAction = (caseId, actionId) => {
     setCaseAnswers((prev) => ({
       ...prev,
@@ -324,12 +329,30 @@ export default function DigitalEthicsDetective({ currentScore, onComplete, onSub
   const handleCheckCases = () => {
     setCasesChecked(true);
     celebratePointGain(true);
+    let pts = 0;
+    ETHICS_CASES.forEach((cs) => {
+      const st = caseAnswers[cs.id] || {};
+      const isActOk = st.action === cs.correctAction;
+      const isImpOk = st.impact === cs.correctImpact;
+      if (isActOk && isImpOk) pts += 2;
+      else if (isActOk || isImpOk) pts += 1;
+    });
+    const newLabScore = Math.min(10, Math.round(pts));
+    const newTotal = Math.min(15, Math.max(Number(currentScore) || 0, newLabScore + quizScore));
+    if (onComplete && newTotal > 0) {
+      onComplete('m4', newTotal);
+    }
   };
 
   const handleEvaluateQuiz = () => {
     setQuizChecked(true);
     if (quizCorrectCount > 0) {
       celebratePointGain(quizCorrectCount === 5);
+    }
+    const newQuizScore = quizCorrectCount * 1;
+    const newTotal = Math.min(15, Math.max(Number(currentScore) || 0, labScore + newQuizScore));
+    if (onComplete && newTotal > 0) {
+      onComplete('m4', newTotal);
     }
   };
 
@@ -790,7 +813,12 @@ export default function DigitalEthicsDetective({ currentScore, onComplete, onSub
             {onSubmitAll && (
               <button
                 type="button"
-                onClick={onSubmitAll}
+                onClick={() => {
+                  if (onComplete && totalM4Score > 0) {
+                    onComplete('m4', totalM4Score);
+                  }
+                  onSubmitAll();
+                }}
                 disabled={isSubmitting}
                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition"
               >

@@ -153,15 +153,16 @@ const QUIZ_QUESTIONS = [
   },
 ];
 
-export default function DataAppPipeline({ currentScore, onComplete, onNextMission, initialPlacements }) {
+export default function DataAppPipeline({ userId, currentScore, onComplete, onNextMission }) {
+  const uid = userId ? String(userId) : 'guest';
+  const PIPELINE_KEY = `tugas_sk_m2_pipeline_answers_user_${uid}`;
+  const QUIZ_KEY = `tugas_sk_m2_quiz_answers_user_${uid}`;
+
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'pipeline' | 'kuis'
   const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
   const [pipelineAnswers, setPipelineAnswers] = useState(() => {
-    if (initialPlacements?.pipelineAnswers && typeof initialPlacements.pipelineAnswers === 'object') {
-      return initialPlacements.pipelineAnswers;
-    }
     try {
-      const saved = localStorage.getItem('tugas_sk_m2_pipeline_answers');
+      const saved = localStorage.getItem(PIPELINE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object') return parsed;
@@ -183,22 +184,12 @@ export default function DataAppPipeline({ currentScore, onComplete, onNextMissio
     };
   });
   const [pipelineChecked, setPipelineChecked] = useState(() => {
-    if (initialPlacements?.pipelineAnswers && Object.values(initialPlacements.pipelineAnswers).some(p => p && (p.input || p.app || p.output))) {
-      return true;
-    }
-    try {
-      return Boolean(localStorage.getItem('tugas_sk_m2_pipeline_answers')) || Number(currentScore) >= 10;
-    } catch (e) {
-      return Number(currentScore) >= 10;
-    }
+    return Number(currentScore) >= 10;
   });
 
   const [quizAnswers, setQuizAnswers] = useState(() => {
-    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
-      return initialPlacements.quizAnswers;
-    }
     try {
-      const savedQ = localStorage.getItem('tugas_sk_m2_quiz_answers');
+      const savedQ = localStorage.getItem(QUIZ_KEY);
       if (savedQ) {
         const parsed = JSON.parse(savedQ);
         if (parsed && typeof parsed === 'object') return parsed;
@@ -216,47 +207,71 @@ export default function DataAppPipeline({ currentScore, onComplete, onNextMissio
     return {};
   });
   const [quizChecked, setQuizChecked] = useState(() => {
-    if (initialPlacements?.quizAnswers && Object.values(initialPlacements.quizAnswers).some(Boolean)) {
-      return true;
-    }
-    try {
-      return Boolean(localStorage.getItem('tugas_sk_m2_quiz_answers')) || Number(currentScore) >= 10;
-    } catch (e) {
-      return Number(currentScore) >= 10;
-    }
+    return Number(currentScore) >= 20;
   });
 
-  // Sinkronkan prop initialPlacements bila tiba dari database Supabase
-  useEffect(() => {
-    if (initialPlacements?.pipelineAnswers && typeof initialPlacements.pipelineAnswers === 'object') {
-      setPipelineAnswers(initialPlacements.pipelineAnswers);
-      if (Object.values(initialPlacements.pipelineAnswers).some(p => p && (p.input || p.app || p.output))) {
-        setPipelineChecked(true);
-      }
-    }
-    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
-      setQuizAnswers(initialPlacements.quizAnswers);
-      if (Object.values(initialPlacements.quizAnswers).some(Boolean)) {
-        setQuizChecked(true);
-      }
-    }
-  }, [initialPlacements]);
-
   useEffect(() => {
     try {
-      localStorage.setItem('tugas_sk_m2_pipeline_answers', JSON.stringify(pipelineAnswers));
+      localStorage.setItem(PIPELINE_KEY, JSON.stringify(pipelineAnswers));
     } catch (e) {
       /* ignore */
     }
-  }, [pipelineAnswers]);
+  }, [PIPELINE_KEY, pipelineAnswers]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('tugas_sk_m2_quiz_answers', JSON.stringify(quizAnswers));
+      localStorage.setItem(QUIZ_KEY, JSON.stringify(quizAnswers));
     } catch (e) {
       /* ignore */
     }
-  }, [quizAnswers]);
+  }, [QUIZ_KEY, quizAnswers]);
+
+  // Sinkronisasi otomatis saat user login berganti
+  useEffect(() => {
+    try {
+      const savedPipe = localStorage.getItem(PIPELINE_KEY);
+      if (savedPipe) {
+        const parsed = JSON.parse(savedPipe);
+        if (parsed && typeof parsed === 'object') {
+          setPipelineAnswers(parsed);
+        }
+      } else if (Number(currentScore) >= 10) {
+        const initP = {};
+        PIPELINE_CASES.forEach((c) => {
+          initP[c.id] = { input: c.correctInput, app: c.correctApp, output: c.correctOutput };
+        });
+        setPipelineAnswers(initP);
+      } else {
+        setPipelineAnswers({
+          case_school: { input: '', app: '', output: '' },
+          case_supermarket: { input: '', app: '', output: '' },
+          case_smartwatch: { input: '', app: '', output: '' },
+        });
+        setPipelineChecked(false);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+
+    try {
+      const savedQ = localStorage.getItem(QUIZ_KEY);
+      if (savedQ) {
+        const parsed = JSON.parse(savedQ);
+        if (parsed && typeof parsed === 'object') {
+          setQuizAnswers(parsed);
+        }
+      } else if (Number(currentScore) >= 20) {
+        const initQ = {};
+        QUIZ_QUESTIONS.forEach((q) => { initQ[q.id] = q.correct; });
+        setQuizAnswers(initQ);
+      } else {
+        setQuizAnswers({});
+        setQuizChecked(false);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }, [PIPELINE_KEY, QUIZ_KEY, currentScore]);
 
   // ====================================================
   // PERHITUNGAN SKOR MISI 2 (Total 20 Poin):
@@ -286,18 +301,6 @@ export default function DataAppPipeline({ currentScore, onComplete, onNextMissio
 
   const totalM2Score = Math.min(20, Math.max(Number(currentScore) || 0, labScore + quizScore));
 
-  // Sync skor ke controller
-  const onCompleteRef = useRef(onComplete);
-  useEffect(() => {
-    onCompleteRef.current = onComplete;
-  }, [onComplete]);
-
-  useEffect(() => {
-    if (onCompleteRef.current && totalM2Score > 0) {
-      onCompleteRef.current('m2', totalM2Score);
-    }
-  }, [totalM2Score]);
-
   const handleSelect = (caseId, field, value) => {
     setPipelineAnswers((prev) => ({
       ...prev,
@@ -312,12 +315,35 @@ export default function DataAppPipeline({ currentScore, onComplete, onNextMissio
   const handleCheckPipeline = () => {
     setPipelineChecked(true);
     celebratePointGain(true);
+    let pts = 0;
+    PIPELINE_CASES.forEach((c) => {
+      const userChoice = pipelineAnswers[c.id] || {};
+      const isInputOk = userChoice.input === c.correctInput;
+      const isAppOk = userChoice.app === c.correctApp;
+      const isOutputOk = userChoice.output === c.correctOutput;
+      if (isInputOk && isAppOk && isOutputOk) pts += 3.334;
+      else {
+        if (isInputOk) pts += 1;
+        if (isAppOk) pts += 1.334;
+        if (isOutputOk) pts += 1;
+      }
+    });
+    const newLabScore = Math.min(10, Math.round(pts));
+    const newTotal = Math.min(20, Math.max(Number(currentScore) || 0, newLabScore + quizScore));
+    if (onComplete && newTotal > 0) {
+      onComplete('m2', newTotal);
+    }
   };
 
   const handleEvaluateQuiz = () => {
     setQuizChecked(true);
     if (quizCorrectCount > 0) {
       celebratePointGain(quizCorrectCount === 5);
+    }
+    const newQuizScore = quizCorrectCount * 2;
+    const newTotal = Math.min(20, Math.max(Number(currentScore) || 0, labScore + newQuizScore));
+    if (onComplete && newTotal > 0) {
+      onComplete('m2', newTotal);
     }
   };
 
@@ -768,7 +794,12 @@ export default function DataAppPipeline({ currentScore, onComplete, onNextMissio
             {onNextMission && (
               <button
                 type="button"
-                onClick={onNextMission}
+                onClick={() => {
+                  if (onComplete && totalM2Score > 0) {
+                    onComplete('m2', totalM2Score);
+                  }
+                  onNextMission();
+                }}
                 className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition"
               >
                 <span>Lanjut ke Misi 3 (Perkakas Digital)</span>

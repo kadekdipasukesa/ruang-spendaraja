@@ -71,32 +71,32 @@ export default function TugasSistemKomputer() {
         <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl shadow-amber-500/5 text-slate-100">
           {activeMission === 1 && (
             <HardwareExplorer
+              userId={user?.id}
               currentScore={scores.m1}
-              initialPlacements={existingSubmission?.detail_jawaban?.placements?.m1 || existingSubmission?.detail_jawaban?.missionData?.m1}
               onComplete={handleMissionComplete}
               onNextMission={() => setActiveMission(2)}
             />
           )}
           {activeMission === 2 && (
             <DataAppPipeline
+              userId={user?.id}
               currentScore={scores.m2}
-              initialPlacements={existingSubmission?.detail_jawaban?.placements?.m2 || existingSubmission?.detail_jawaban?.missionData?.m2}
               onComplete={handleMissionComplete}
               onNextMission={() => setActiveMission(3)}
             />
           )}
           {activeMission === 3 && (
             <DigitalToolbox
+              userId={user?.id}
               currentScore={scores.m3}
-              initialPlacements={existingSubmission?.detail_jawaban?.placements?.m3 || existingSubmission?.detail_jawaban?.missionData?.m3}
               onComplete={handleMissionComplete}
               onNextMission={() => setActiveMission(4)}
             />
           )}
           {activeMission === 4 && (
             <DigitalEthicsDetective
+              userId={user?.id}
               currentScore={scores.m4}
-              initialPlacements={existingSubmission?.detail_jawaban?.placements?.m4 || existingSubmission?.detail_jawaban?.missionData?.m4}
               onComplete={handleMissionComplete}
               onSubmitAll={handleSubmitAll}
               isSubmitting={submitting}

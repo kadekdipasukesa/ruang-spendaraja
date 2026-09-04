@@ -1,15 +1,67 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 import { supabase } from '../../../../lib/supabaseClient';
 import { syncStudentPointsAfterTask } from '../../../../utils/pointLogger';
 import { celebratePointGain } from '../../../../components/RuangBelajar/TugasKhusus/Tugas3/skAssets';
 
-const isValidUUID = (str) =>
-  typeof str === 'string' &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+// Helper pembatas poin tiap misi Sistem Komputer agar tidak pernah melebihi batas maksimal:
+// M1 (Komponen Sistem Komputer): Max 35 Poin
+// M2 (Siklus Data & Aplikasi): Max 20 Poin
+// M3 (Perkakas Digital & Software): Max 30 Poin
+// M4 (Dampak & Etika Digital TIK): Max 15 Poin
+// Total Max = 100 Poin
+const clampSKScores = (raw) => ({
+  m1: Math.min(35, Math.max(0, Math.round(Number(raw?.m1) || 0))),
+  m2: Math.min(20, Math.max(0, Math.round(Number(raw?.m2) || 0))),
+  m3: Math.min(30, Math.max(0, Math.round(Number(raw?.m3) || 0))),
+  m4: Math.min(15, Math.max(0, Math.round(Number(raw?.m4) || 0))),
+});
+
+export const getSKStorageKey = (name, userId) => {
+  const uid = userId ? String(userId) : 'guest';
+  return `tugas_sk_${name}_user_${uid}`;
+};
+
+export const clearLegacySKStorage = () => {
+  try {
+    const legacyKeys = [
+      'tugas_sk_m1_hw_placements',
+      'tugas_sk_m1_sw_placements',
+      'tugas_sk_m1_quiz_answers',
+      'tugas_sk_m2_pipeline_answers',
+      'tugas_sk_m2_quiz_answers',
+      'tugas_sk_m3_app_placements',
+      'tugas_sk_m3_quiz_answers',
+      'tugas_sk_m4_case_answers',
+      'tugas_sk_m4_quiz_answers',
+    ];
+    legacyKeys.forEach((k) => localStorage.removeItem(k));
+  } catch (e) {
+    /* ignore */
+  }
+};
+
+export const clearUserSKDrafts = (userId) => {
+  try {
+    const uid = userId ? String(userId) : 'guest';
+    const keys = [
+      `tugas_sk_m1_hw_placements_user_${uid}`,
+      `tugas_sk_m1_sw_placements_user_${uid}`,
+      `tugas_sk_m1_quiz_answers_user_${uid}`,
+      `tugas_sk_m2_pipeline_answers_user_${uid}`,
+      `tugas_sk_m2_quiz_answers_user_${uid}`,
+      `tugas_sk_m3_app_placements_user_${uid}`,
+      `tugas_sk_m3_quiz_answers_user_${uid}`,
+      `tugas_sk_m4_case_answers_user_${uid}`,
+      `tugas_sk_m4_quiz_answers_user_${uid}`,
+      `tugas_sk_state_user_${uid}`,
+    ];
+    keys.forEach((k) => localStorage.removeItem(k));
+  } catch (e) {
+    /* ignore */
+  }
+};
 
 export function useTugasSKState() {
-  const location = useLocation();
   const [user, setUser] = useState(null);
   const [activeMission, setActiveMission] = useState(1);
 
@@ -38,13 +90,13 @@ export function useTugasSKState() {
   const [submitted, setSubmitted] = useState(false);
   const [existingSubmission, setExistingSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
-  const DEFAULT_SK_TASK_ID = '595d2d95-d16f-4582-9be5-93d9db451f47';
+  const DEFAULT_SK_TASK_ID = '489b0d1e-8fd0-4bfa-9759-3996773347f3';
   const [dbTaskId, setDbTaskId] = useState(DEFAULT_SK_TASK_ID);
   const dbTaskIdRef = useRef(DEFAULT_SK_TASK_ID);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const updateDbTaskId = useCallback((newId) => {
-    if (newId && isValidUUID(newId) && dbTaskIdRef.current !== newId) {
+    if (newId && dbTaskIdRef.current !== newId) {
       dbTaskIdRef.current = newId;
       setDbTaskId(newId);
     }
@@ -80,20 +132,22 @@ export function useTugasSKState() {
         explicitTaskId,
         dbTaskIdRef.current,
         DEFAULT_SK_TASK_ID,
-      ].filter(isValidUUID);
+        'TUGAS-03-SISTEM-KOMPUTER',
+        'tugas-inf-03',
+        'TUGAS_SK_01'
+      ].filter(Boolean);
 
       try {
         const { data: masterTasks } = await supabase
           .from('tugas_master')
           .select('id, kode_tugas, judul, custom_route')
-          .or('kode_tugas.eq.TUGAS-03-SISTEM-KOMPUTER,kode_tugas.eq.TUGAS_SK_01,kode_tugas.eq.tugas-inf-03,custom_route.ilike.%sistem-komputer%,judul.ilike.%Sistem Komputer%');
+          .or('kode_tugas.eq.TUGAS-03-SISTEM-KOMPUTER,kode_tugas.eq.TUGAS_SK_01,kode_tugas.eq.tugas-inf-03,custom_route.ilike.%sistem-komputer%,judul.ilike.%Sistem Komputer & Perkakas Digital%');
 
         if (masterTasks && masterTasks.length > 0) {
           masterTasks.forEach((m) => {
             // Lindungi agar ID tugas 1 dan tugas 2 tidak pernah masuk ke Tugas 3
             if (
               m?.id &&
-              isValidUUID(m.id) &&
               m.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
               m.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
               m.kode_tugas !== 'TUGAS-02-KUIS-ALGO' &&
@@ -106,8 +160,7 @@ export function useTugasSKState() {
           const validMaster = masterTasks.find(m => 
             m.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
             m.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
-            m.kode_tugas !== 'TUGAS-02-KUIS-ALGO' &&
-            isValidUUID(m.id)
+            m.kode_tugas !== 'TUGAS-02-KUIS-ALGO'
           );
           if (validMaster?.id) {
             updateDbTaskId(validMaster.id);
@@ -117,19 +170,14 @@ export function useTugasSKState() {
         console.warn('Cari candidate task master SK:', err);
       }
 
-      // 2. Kueri ke tugas_pengumpulan khusus Tugas 3 (hanya kolom nyata, TANPA nilai_akhir)
-      const validQueryIds = candidateTaskIds.filter(isValidUUID);
-      const { data: subDataList, error: subErr } = await supabase
+      // 2. Kueri ke tugas_pengumpulan khusus Tugas 3
+      const { data: subDataList } = await supabase
         .from('tugas_pengumpulan')
-        .select('id, tugas_id, siswa_id, status, skor, persentase_skor, detail_jawaban, catatan_guru, submitted_at, graded_at')
+        .select('id, tugas_id, siswa_id, status, skor, nilai_akhir, persentase_skor, detail_jawaban, catatan_guru, submitted_at, graded_at')
         .eq('siswa_id', numStudentId)
-        .in('tugas_id', validQueryIds.length > 0 ? validQueryIds : [DEFAULT_SK_TASK_ID])
+        .in('tugas_id', candidateTaskIds)
         .order('submitted_at', { ascending: false })
         .limit(1);
-
-      if (subErr) {
-        console.warn('Kueri tugas_pengumpulan SK returned error:', subErr);
-      }
 
       const subData = subDataList && subDataList.length > 0 ? subDataList[0] : null;
 
@@ -148,98 +196,80 @@ export function useTugasSKState() {
           }
         }
 
-        const officialScore = Number(subData.skor) || 0;
+        const officialScore = Number(subData.nilai_akhir ?? subData.skor) || 0;
 
         // PRIORITAS DATABASE MUTLAK: Pulihkan skor dan status misi dari database
         if (parsedDetail?.scores) {
-          setScores(parsedDetail.scores);
-        } else if (officialScore > 0) {
-          setScores({
-            m1: officialScore,
-            m2: 0,
-            m3: 0,
-            m4: 0
-          });
+          setScores(clampSKScores(parsedDetail.scores));
         }
 
         if (parsedDetail?.completed) {
           setCompleted(parsedDetail.completed);
-          // Bila melanjutkan petualangan, langsung arahkan ke misi yang belum tuntas
-          if (!parsedDetail.completed.m1) {
-            setActiveMission(1);
-          } else if (!parsedDetail.completed.m2) {
-            setActiveMission(2);
-          } else if (!parsedDetail.completed.m3) {
-            setActiveMission(3);
-          } else if (!parsedDetail.completed.m4) {
-            setActiveMission(4);
-          }
         }
 
-        // PRIORITAS DATABASE MUTLAK: Pulihkan seluruh penempatan drag & drop dari database ke localStorage
+        // PRIORITAS DATABASE MUTLAK: Pulihkan seluruh penempatan drag & drop dari database ke localStorage khusus user ini
         if (parsedDetail?.placements || parsedDetail?.missionData) {
           const loadedPlacements = parsedDetail.placements || parsedDetail.missionData;
 
-          // Sinkronkan ke localStorage draft lokal agar langsung tersedia untuk semua komponen misi
           if (loadedPlacements?.m1?.hwPlacements) {
             try {
-              localStorage.setItem('tugas_sk_m1_hw_placements', JSON.stringify(loadedPlacements.m1.hwPlacements));
+              localStorage.setItem(getSKStorageKey('m1_hw_placements', numStudentId), JSON.stringify(loadedPlacements.m1.hwPlacements));
             } catch (e) {
               /* ignore */
             }
           }
           if (loadedPlacements?.m1?.swPlacements) {
             try {
-              localStorage.setItem('tugas_sk_m1_sw_placements', JSON.stringify(loadedPlacements.m1.swPlacements));
+              localStorage.setItem(getSKStorageKey('m1_sw_placements', numStudentId), JSON.stringify(loadedPlacements.m1.swPlacements));
             } catch (e) {
               /* ignore */
             }
           }
           if (loadedPlacements?.m1?.quizAnswers) {
             try {
-              localStorage.setItem('tugas_sk_m1_quiz_answers', JSON.stringify(loadedPlacements.m1.quizAnswers));
+              localStorage.setItem(getSKStorageKey('m1_quiz_answers', numStudentId), JSON.stringify(loadedPlacements.m1.quizAnswers));
             } catch (e) {
               /* ignore */
             }
           }
           if (loadedPlacements?.m2?.pipelineAnswers) {
             try {
-              localStorage.setItem('tugas_sk_m2_pipeline_answers', JSON.stringify(loadedPlacements.m2.pipelineAnswers));
+              localStorage.setItem(getSKStorageKey('m2_pipeline_answers', numStudentId), JSON.stringify(loadedPlacements.m2.pipelineAnswers));
             } catch (e) {
               /* ignore */
             }
           }
           if (loadedPlacements?.m2?.quizAnswers) {
             try {
-              localStorage.setItem('tugas_sk_m2_quiz_answers', JSON.stringify(loadedPlacements.m2.quizAnswers));
+              localStorage.setItem(getSKStorageKey('m2_quiz_answers', numStudentId), JSON.stringify(loadedPlacements.m2.quizAnswers));
             } catch (e) {
               /* ignore */
             }
           }
           if (loadedPlacements?.m3?.appPlacements) {
             try {
-              localStorage.setItem('tugas_sk_m3_app_placements', JSON.stringify(loadedPlacements.m3.appPlacements));
+              localStorage.setItem(getSKStorageKey('m3_app_placements', numStudentId), JSON.stringify(loadedPlacements.m3.appPlacements));
             } catch (e) {
               /* ignore */
             }
           }
           if (loadedPlacements?.m3?.quizAnswers) {
             try {
-              localStorage.setItem('tugas_sk_m3_quiz_answers', JSON.stringify(loadedPlacements.m3.quizAnswers));
+              localStorage.setItem(getSKStorageKey('m3_quiz_answers', numStudentId), JSON.stringify(loadedPlacements.m3.quizAnswers));
             } catch (e) {
               /* ignore */
             }
           }
           if (loadedPlacements?.m4?.caseAnswers) {
             try {
-              localStorage.setItem('tugas_sk_m4_case_answers', JSON.stringify(loadedPlacements.m4.caseAnswers));
+              localStorage.setItem(getSKStorageKey('m4_case_answers', numStudentId), JSON.stringify(loadedPlacements.m4.caseAnswers));
             } catch (e) {
               /* ignore */
             }
           }
           if (loadedPlacements?.m4?.quizAnswers) {
             try {
-              localStorage.setItem('tugas_sk_m4_quiz_answers', JSON.stringify(loadedPlacements.m4.quizAnswers));
+              localStorage.setItem(getSKStorageKey('m4_quiz_answers', numStudentId), JSON.stringify(loadedPlacements.m4.quizAnswers));
             } catch (e) {
               /* ignore */
             }
@@ -248,8 +278,8 @@ export function useTugasSKState() {
 
         setExistingSubmission({
           ...subData,
-          skor: officialScore,
-          nilai_akhir: officialScore,
+          skor: Math.min(100, Math.max(0, officialScore)),
+          nilai_akhir: Math.min(100, Math.max(0, officialScore)),
           detail_jawaban: parsedDetail || subData.detail_jawaban
         });
         setSubmitted(true);
@@ -258,7 +288,7 @@ export function useTugasSKState() {
         if (currentKey) {
           try {
             localStorage.setItem(currentKey, JSON.stringify({
-              scores: parsedDetail?.scores || { m1: officialScore, m2: 0, m3: 0, m4: 0 },
+              scores: parsedDetail?.scores ? clampSKScores(parsedDetail.scores) : { m1: 0, m2: 0, m3: 0, m4: 0 },
               completed: parsedDetail?.completed || {},
               placements: parsedDetail?.placements || parsedDetail?.missionData || null,
             }));
@@ -267,9 +297,27 @@ export function useTugasSKState() {
           }
         }
       } else {
-        // Database tugas 3 bersih / belum ada pengumpulan resmi
+        // Database tugas 3 bersih / akun siswa ini belum pernah mengumpulkan tugas 3!
         setExistingSubmission(null);
         setSubmitted(false);
+
+        // Periksa apakah ada draft lokal yang tersimpan khusus untuk akun ini
+        const localSaved = currentKey ? localStorage.getItem(currentKey) : null;
+        if (localSaved) {
+          try {
+            const parsedLocal = JSON.parse(localSaved);
+            if (parsedLocal.scores) setScores(clampSKScores(parsedLocal.scores));
+            if (parsedLocal.completed) setCompleted(parsedLocal.completed);
+          } catch (e) {
+            setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
+            setCompleted({ m1: false, m2: false, m3: false, m4: false });
+          }
+        } else {
+          // Akun ini belum pernah mengerjakan: pastikan SEMUA skor dan status selesai bersih 0!
+          setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
+          setCompleted({ m1: false, m2: false, m3: false, m4: false });
+          clearUserSKDrafts(numStudentId);
+        }
       }
     } catch (err) {
       console.error('Error cek tugas_pengumpulan SK:', err);
@@ -282,6 +330,7 @@ export function useTugasSKState() {
   useEffect(() => {
     const loadSession = () => {
       try {
+        clearLegacySKStorage();
         const storedSiswa = localStorage.getItem('user_siswa');
         const storedSpenda = localStorage.getItem('user_spenda');
         const storedUser = localStorage.getItem('user');
@@ -295,23 +344,24 @@ export function useTugasSKState() {
           setUser((prev) => (prev?.id === parsed.id ? prev : parsed));
           const currentKey = parsed.id ? `tugas_sk_state_user_${parsed.id}` : 'tugas_sk_state_guest';
 
-          // Muat state lokal siswa jika ada
+          // Muat state lokal siswa jika ada (dengan batas aman)
           const localSaved = localStorage.getItem(currentKey);
           if (localSaved) {
             try {
               const parsedLocal = JSON.parse(localSaved);
-              if (parsedLocal.scores) setScores(parsedLocal.scores);
+              if (parsedLocal.scores) setScores(clampSKScores(parsedLocal.scores));
               if (parsedLocal.completed) setCompleted(parsedLocal.completed);
             } catch (e) {
               console.warn('Gagal parse local saved SK state:', e);
             }
+          } else {
+            // User baru belum ada draft: reset ke 0 agar tidak mewarisi sisa akun lain
+            setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
+            setCompleted({ m1: false, m2: false, m3: false, m4: false });
           }
 
-          const routeTaskId = location?.state?.taskId || new URLSearchParams(location?.search).get('taskId');
-          const resolvedTargetTaskId = (routeTaskId && isValidUUID(routeTaskId)) ? routeTaskId : dbTaskIdRef.current;
-
           if (parsed.id) {
-            checkExistingSubmission(parsed.id, currentKey, resolvedTargetTaskId);
+            checkExistingSubmission(parsed.id, currentKey, dbTaskIdRef.current);
           } else {
             setLoading(false);
           }
@@ -321,7 +371,7 @@ export function useTugasSKState() {
           if (localSaved) {
             try {
               const parsedLocal = JSON.parse(localSaved);
-              if (parsedLocal.scores) setScores(parsedLocal.scores);
+              if (parsedLocal.scores) setScores(clampSKScores(parsedLocal.scores));
               if (parsedLocal.completed) setCompleted(parsedLocal.completed);
             } catch (e) {
               console.warn('Gagal parse guest SK state:', e);
@@ -375,13 +425,20 @@ export function useTugasSKState() {
     window.dispatchEvent(new CustomEvent('open-login-modal'));
   };
 
-  // Simpan progres ke state dan localStorage setiap kali ada misi selesai
+  // Simpan progres ke state dan localStorage setiap kali ada misi selesai (dengan batas poin tegas)
   const handleMissionComplete = useCallback((missionKey, score) => {
+    let maxCap = 15;
+    if (missionKey === 'm1') maxCap = 35;
+    else if (missionKey === 'm2') maxCap = 20;
+    else if (missionKey === 'm3') maxCap = 30;
+    else if (missionKey === 'm4') maxCap = 15;
+    const clampedScore = Math.min(maxCap, Math.max(0, Math.round(Number(score) || 0)));
+
     setScores((prevScores) => {
-      if (prevScores[missionKey] === score) {
+      if (prevScores[missionKey] === clampedScore) {
         return prevScores;
       }
-      const newScores = { ...prevScores, [missionKey]: score };
+      const newScores = clampSKScores({ ...prevScores, [missionKey]: clampedScore });
       setCompleted((prevCompleted) => {
         const newCompleted = { ...prevCompleted, [missionKey]: true };
         if (storageKey) {
@@ -401,24 +458,25 @@ export function useTugasSKState() {
     });
   }, [storageKey]);
 
-  const totalScore = (scores.m1 || 0) + (scores.m2 || 0) + (scores.m3 || 0) + (scores.m4 || 0);
+  // Total skor terhitung dengan batas maksimal pasti 100 poin
+  const totalScore = Math.min(
+    100,
+    Math.max(
+      0,
+      (Math.min(35, Number(scores.m1) || 0)) +
+      (Math.min(20, Number(scores.m2) || 0)) +
+      (Math.min(30, Number(scores.m3) || 0)) +
+      (Math.min(15, Number(scores.m4) || 0))
+    )
+  );
   const isAllCompleted = completed.m1 && completed.m2 && completed.m3 && completed.m4;
 
   const handleResetAll = () => {
     setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
     setCompleted({ m1: false, m2: false, m3: false, m4: false });
-    try {
-      localStorage.removeItem('tugas_sk_m1_hw_placements');
-      localStorage.removeItem('tugas_sk_m1_sw_placements');
-      localStorage.removeItem('tugas_sk_m1_quiz_answers');
-      localStorage.removeItem('tugas_sk_m2_pipeline_answers');
-      localStorage.removeItem('tugas_sk_m2_quiz_answers');
-      localStorage.removeItem('tugas_sk_m3_app_placements');
-      localStorage.removeItem('tugas_sk_m3_quiz_answers');
-      localStorage.removeItem('tugas_sk_m4_case_answers');
-      localStorage.removeItem('tugas_sk_m4_quiz_answers');
-    } catch (e) {
-      /* ignore */
+    clearLegacySKStorage();
+    if (user?.id) {
+      clearUserSKDrafts(user.id);
     }
     if (storageKey) {
       localStorage.removeItem(storageKey);
@@ -464,29 +522,33 @@ export function useTugasSKState() {
         console.warn('Gagal cari tugas_master SK saat submit:', e);
       }
     }
-    if (!resolvedTaskId || !isValidUUID(resolvedTaskId)) {
-      resolvedTaskId = DEFAULT_SK_TASK_ID;
+    if (!resolvedTaskId) {
+      resolvedTaskId = '489b0d1e-8fd0-4bfa-9759-3996773347f3';
     }
 
     try {
-      const currentAttemptScore = totalScore;
+      const clampedScores = clampSKScores(scores);
+      const currentAttemptScore = Math.min(
+        100,
+        Math.max(0, clampedScores.m1 + clampedScores.m2 + clampedScores.m3 + clampedScores.m4)
+      );
 
-      // 1. Cek skor terbaik sebelumnya dari database tugas_pengumpulan
+      // 1. Cek skor terbaik sebelumnya dari database tugas_pengumpulan (maksimal 100)
       let previousBestScore = 0;
       if (existingSubmission && (existingSubmission.tugas_id === resolvedTaskId || !existingSubmission.tugas_id)) {
-        previousBestScore = Number(existingSubmission.skor ?? 0) || 0;
+        previousBestScore = Math.min(100, Math.max(0, Number(existingSubmission.skor ?? existingSubmission.nilai_akhir ?? 0) || 0));
       }
 
       try {
         const { data: dbSub } = await supabase
           .from('tugas_pengumpulan')
-          .select('id, skor, detail_jawaban')
+          .select('id, skor, nilai_akhir, detail_jawaban')
           .eq('siswa_id', studentIdInt)
           .eq('tugas_id', resolvedTaskId)
           .maybeSingle();
 
         if (dbSub) {
-          const dbScore = Number(dbSub.skor ?? 0) || 0;
+          const dbScore = Math.min(100, Math.max(0, Number(dbSub.nilai_akhir ?? dbSub.skor ?? 0) || 0));
           previousBestScore = Math.max(previousBestScore, dbScore);
         }
       } catch (e) {
@@ -501,9 +563,9 @@ export function useTugasSKState() {
       const isLower = previousBestScore > 0 && currentAttemptScore < previousBestScore;
       const isEqual = previousBestScore > 0 && currentAttemptScore === previousBestScore;
       const isRetained = isLower || isEqual;
-      const finalScoreToSave = Math.max(previousBestScore, currentAttemptScore);
+      const finalScoreToSave = Math.min(100, Math.max(previousBestScore, currentAttemptScore));
 
-      // Siapkan snapshot detail penempatan komponen langsung dari localStorage
+      // Siapkan snapshot detail penempatan komponen langsung dari localStorage berdasarkan studentId
       let currentHwPlacements = null;
       let currentSwPlacements = null;
       let currentM1Quiz = null;
@@ -515,26 +577,26 @@ export function useTugasSKState() {
       let currentM4Quiz = null;
 
       try {
-        const hws = localStorage.getItem('tugas_sk_m1_hw_placements');
+        const hws = localStorage.getItem(getSKStorageKey('m1_hw_placements', studentIdInt));
         if (hws) currentHwPlacements = JSON.parse(hws);
-        const sws = localStorage.getItem('tugas_sk_m1_sw_placements');
+        const sws = localStorage.getItem(getSKStorageKey('m1_sw_placements', studentIdInt));
         if (sws) currentSwPlacements = JSON.parse(sws);
-        const m1q = localStorage.getItem('tugas_sk_m1_quiz_answers');
+        const m1q = localStorage.getItem(getSKStorageKey('m1_quiz_answers', studentIdInt));
         if (m1q) currentM1Quiz = JSON.parse(m1q);
 
-        const m2p = localStorage.getItem('tugas_sk_m2_pipeline_answers');
+        const m2p = localStorage.getItem(getSKStorageKey('m2_pipeline_answers', studentIdInt));
         if (m2p) currentM2Pipeline = JSON.parse(m2p);
-        const m2q = localStorage.getItem('tugas_sk_m2_quiz_answers');
+        const m2q = localStorage.getItem(getSKStorageKey('m2_quiz_answers', studentIdInt));
         if (m2q) currentM2Quiz = JSON.parse(m2q);
 
-        const apps = localStorage.getItem('tugas_sk_m3_app_placements');
+        const apps = localStorage.getItem(getSKStorageKey('m3_app_placements', studentIdInt));
         if (apps) currentAppPlacements = JSON.parse(apps);
-        const m3q = localStorage.getItem('tugas_sk_m3_quiz_answers');
+        const m3q = localStorage.getItem(getSKStorageKey('m3_quiz_answers', studentIdInt));
         if (m3q) currentM3Quiz = JSON.parse(m3q);
 
-        const m4c = localStorage.getItem('tugas_sk_m4_case_answers');
+        const m4c = localStorage.getItem(getSKStorageKey('m4_case_answers', studentIdInt));
         if (m4c) currentM4Cases = JSON.parse(m4c);
-        const m4q = localStorage.getItem('tugas_sk_m4_quiz_answers');
+        const m4q = localStorage.getItem(getSKStorageKey('m4_quiz_answers', studentIdInt));
         if (m4q) currentM4Quiz = JSON.parse(m4q);
       } catch (e) {
         /* ignore */
@@ -561,14 +623,14 @@ export function useTugasSKState() {
       };
 
       const detailLog = {
-        scores,
+        scores: clampedScores,
         completed,
         placements: consolidatedPlacements,
         breakdown: {
-          m1_komponen_komputer: scores.m1 || 0,
-          m2_data_aplikasi: scores.m2 || 0,
-          m3_perkakas_digital: scores.m3 || 0,
-          m4_etika_dampak_tik: scores.m4 || 0,
+          m1_komponen_komputer: clampedScores.m1,
+          m2_data_aplikasi: clampedScores.m2,
+          m3_perkakas_digital: clampedScores.m3,
+          m4_etika_dampak_tik: clampedScores.m4,
         },
         skor_percobaan_saat_ini: currentAttemptScore,
         skor_tertinggi_disimpan: finalScoreToSave,
@@ -586,12 +648,12 @@ export function useTugasSKState() {
         tugas_id: resolvedTaskId,
         siswa_id: studentIdInt,
         status: 'selesai',
-        skor: Math.round(finalScoreToSave),
+        skor: Math.min(100, Math.max(0, Math.round(finalScoreToSave))),
         persentase_skor: Math.min(100, Math.max(0, finalScoreToSave)),
         detail_jawaban: detailLog,
         catatan_guru: isLower
           ? `Skor Praktik Sistem Komputer: ${finalScoreToSave}/100 Poin (Nilai tertinggi sebelumnya dipertahankan. Percobaan saat ini: ${currentAttemptScore}/100 Poin).`
-          : `Skor Praktik Sistem Komputer & Perkakas Digital: ${finalScoreToSave}/100 Poin (M1 Hardware: ${scores.m1 || 0}/35, M2 Data: ${scores.m2 || 0}/20, M3 Software: ${scores.m3 || 0}/30, M4 Etika: ${scores.m4 || 0}/15).`,
+          : `Skor Praktik Sistem Komputer & Perkakas Digital: ${finalScoreToSave}/100 Poin (M1 Hardware: ${clampedScores.m1}/35, M2 Data: ${clampedScores.m2}/20, M3 Software: ${clampedScores.m3}/30, M4 Etika: ${clampedScores.m4}/15).`,
         submitted_at: new Date().toISOString(),
         graded_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
