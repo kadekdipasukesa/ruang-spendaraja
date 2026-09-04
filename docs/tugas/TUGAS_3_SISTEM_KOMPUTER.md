@@ -17,7 +17,7 @@ Modul pembelajaran interaktif dan praktikum terpadu untuk topik **Sistem Kompute
 
 ---
 
-## 2. Struktur 4 Misi Pembelajaran Interaktif
+## 2. Struktur 4 Misi Pembelajaran Interaktif 
 
 ```
 TUGAS 3: SISTEM KOMPUTER & PERKAKAS DIGITAL (100 Poin)
