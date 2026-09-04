@@ -93,17 +93,18 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
   - `missionsConfig.js`: 25 misi bertingkat dengan evaluasi otomatis berbasis struktur item JSON.
   - `FloatingMissionPanel.jsx`: Panel panduan misi dengan auto-highlight `(Lokasi Target: ...)`.
   - `ModalMove.jsx`: Modal pemindahan file dengan visualisasi direktori pohon (*folder tree hierarchy*).
+  - Fitur Persistensi: Kebijakan **Database-Only Continuation** (saat klik mulai/lanjutkan, progres file tree murni dipulihkan dari `tugas_pengumpulan.detail_jawaban.treeSnapshot` di Supabase. Dilarang melanjutkan dari localStorage jika belum ada data di database; jika belum ada di database, wajib mulai dari awal / `INITIAL_FILES_DATA`).
 * `src/components/RuangBelajar/TugasKhusus/Tugas2/`: Petualangan 4 Misi Berpikir Komputasional:
   - Controller: `src/pages/TugasKhusus/TugasBerpikirKomputasional.jsx`
   - Sub-komponen: `BKHeader.jsx`, `BKMissionTabs.jsx`, `BKFooterNav.jsx`, `ModalSubmissionSuccessBK.jsx`, `AlgorithmMaze.jsx`, `ScheduleOptimizer.jsx`, `DataStructureVisualizer.jsx`, `BinaryCardGame.jsx`.
   - Custom Hooks: `src/hooks/RuangBelajar/TugasKhusus/Tugas2/` (`useTugasBKState.js`, dll.).
-  - Fitur Persistensi & Skor: Kebijakan **Database-First Priority** (mengutamakan snapshot data dari database Supabase saat membuka tugas / klik lanjutkan sehingga sinkron saat pindah komputer). `localStorage` digunakan sebagai cache/scratchpad sesi aktif. Proteksi nilai database (`Math.max`) menjamin nilai tertinggi tidak pernah ditimpa jika percobaan baru bernilai lebih kecil.
+  - Fitur Persistensi & Skor: Kebijakan **Database-Only Continuation** (saat membuka tugas / klik lanjutkan, status dan skor 4 misi murni dipulihkan dari tabel `tugas_pengumpulan` di Supabase. Dilarang melanjutkan dari localStorage jika belum ada data di database; jika belum ada data di database, wajib mulai dari awal dengan skor 0). Proteksi nilai database (`Math.max`) menjamin nilai tertinggi tidak pernah ditimpa jika percobaan baru bernilai lebih kecil.
 * `src/components/RuangBelajar/TugasKhusus/Tugas3/`: Petualangan 4 Misi Sistem Komputer & Perkakas Digital:
   - Controller: `src/pages/TugasKhusus/TugasSistemKomputer.jsx`
   - Sub-komponen: `SKHeader.jsx`, `SKMissionTabs.jsx`, `SKFooterNav.jsx`, `ModalSubmissionSuccessSK.jsx`, `HardwareExplorer.jsx` (Misi 1: Materi Sistem Komputer + Drag & Drop 20 Komponen Hardware + Drag & Drop 20 Software OS vs Aplikasi + Kuis), `DataAppPipeline.jsx` (Misi 2: Materi Transformasi Data + Simulator 3 Pipeline Data Mentah/Aplikasi/Informasi + Kuis Data), `DigitalToolbox.jsx` (Misi 3: Materi 5 Kelompok Perkakas + Drag & Drop 20 Aplikasi ke Kelompoknya + Kuis Software), `DigitalEthicsDetective.jsx` (Misi 4: Materi Netiket + Detektif 5 Studi Kasus Etika + Kuis Keamanan).
   - Custom Hooks: `src/hooks/RuangBelajar/TugasKhusus/Tugas3/useTugasSKState.js`.
   - Fitur UI & Evaluasi: Layout berdampingan (*side-by-side single viewport*) untuk bank komponen kiri scrollable dan dropzones kanan pada Misi 1 & 3, urutan acak komponen (*randomized shuffle*), evaluasi agregat saat klik "Cek Hasil" dengan animasi petasan selebrasi tanpa bocoran warna merah/hijau pada item, opsi kuis & alur data berpanjang seimbang (*anti-pattern*), serta perlindungan nilai tertinggi (`Math.max`).
-  - Fitur Persistensi & Sinkronisasi: Kebijakan **Database-First Priority** dengan isolasi data per akun siswa (*user-scoped localStorage* `tugas_sk_*_user_[id]`). Mencegah kebocoran draft antar-siswa pada komputer lab bersama. Posisi draft penempatan komponen dicadangkan ke database pada saat tombol "Kumpulkan Tugas" ditekan (dalam kolom `detail_jawaban.placements`) sehingga siswa dapat melanjutkan tugas di perangkat berbeda. Saat membuka atau melanjutkan tugas, sistem memprioritaskan data dari database di atas cache lokal. Proteksi nilai database menjamin nilai resmi di database tidak ditimpa/di-replace jika nilai pengerjaan baru lebih kecil, disertai dialog pemberitahuan proteksi skor yang transparan.
+  - Fitur Persistensi & Sinkronisasi: Kebijakan **Database-Only Continuation** (saat membuka atau melanjutkan tugas, status dan penempatan komponen murni dipulihkan dari `tugas_pengumpulan.detail_jawaban` di Supabase. Dilarang melanjutkan dari data localStorage jika belum ada data di database; jika belum ada di database, wajib mulai dari awal dengan skor 0 dan draft komponen bersih). Proteksi nilai database menjamin nilai resmi di database tidak ditimpa/di-replace jika nilai pengerjaan baru lebih kecil, disertai dialog pemberitahuan proteksi skor yang transparan.
 
 ---
 
@@ -121,6 +122,9 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
 4. **Standar Desain & UI**:
    - Gunakan palet cerah, bersih, modern (berbasis `src/pages/bee-2026.jsx` dengan aksen amber/orange/indigo yang elegan).
    - Pastikan touch target mobile ramah sentuhan (minimal 44px) dan tidak terjadi overflow teks pada pill/badge.
+5. **Keamanan Tipe Data Kolom UUID Supabase (Anti-Error 22P02)**:
+   - Kolom `tugas_id` pada tabel `tugas_pengumpulan` bertipe data `UUID`. Saat membuat kueri `.in('tugas_id', candidateTaskIds)` atau `.eq('tugas_id', id)`, seluruh kandidat ID wajib disaring menggunakan regex validator UUID (`/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i`).
+   - Dilarang keras menyertakan string non-UUID seperti kode teks tugas (misal `'TUGAS-01-SIMULASI-FOLDER'`) ke dalam array filter kolom UUID, karena PostgreSQL akan membatalkan kueri dengan error `22P02: invalid input syntax for type uuid` sehingga data riwayat/state pengerjaan siswa gagal termuat.
 
 ---
 

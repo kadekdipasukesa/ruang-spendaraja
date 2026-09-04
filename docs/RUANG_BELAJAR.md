@@ -97,10 +97,9 @@ src/
 * Menampilkan daftar modul pelajaran dan alur roadmap pembelajaran.
 * **Indikator Visual & Kartu Interaktif**:
   - **Tuntas Sempurna (100%)**: Badge hijau emerald (`Tuntas: 100/100 Poin`) + banner nilai resmi lengkap dengan ikon piala & tombol *"Lihat / Ulangi Praktik"*.
-  - **Tersimpan Sebagian / Lanjutan (Skor < Maksimal)**: Badge amber (`Tersimpan: X/100 Poin`) + status strip berisi *progress bar* animasi & tombol *"Lanjutkan & Sempurnakan Skor (X/100 Poin)"*.
-  - **Draft Pengerjaan Lokal**: Badge indigo (`Draft: X/100 Poin`) + progress bar & tombol *"Lanjutkan Draft"*.
-  - **Belum Mulai**: Badge bobot tugas + tombol *"Mulai Praktik"* / *"Mulai Petualangan BK"*.
-* Jika tugas memiliki `custom_route` (misal `/tugas/simulasi-folder` atau `/tugas/berpikir-komputasional`), tombol aksi akan mengarahkan siswa langsung ke modul tugas terkait.
+  - **Tersimpan Sebagian / Lanjutan (Skor < Maksimal)**: Badge amber (`Tersimpan: X/100 Poin`) + status strip berisi *progress bar* animasi & tombol *"Lanjutkan & Sempurnakan Skor (X/100 Poin)"* (murni berdasarkan rekaman di tabel `tugas_pengumpulan`).
+  - **Belum Mulai / Belum Ada di Database**: Badge bobot tugas + tombol *"Mulai Praktik"* / *"Mulai Petualangan"*. Jika belum ada di database, wajib mulai dari awal (skor 0).
+* Jika tugas memiliki `custom_route` (misal `/tugas/simulasi-folder`, `/tugas/berpikir-komputasional`, atau `/tugas/sistem-komputer`), tombol aksi akan mengarahkan siswa langsung ke modul tugas terkait.
 * Jika tugas tipe upload file / link, membuka `ModalSubmitProyek.jsx`.
 
 ### 2. Tab Log Nilai (`LogScoreTugas.jsx`)
@@ -124,6 +123,7 @@ Untuk menjaga performa dan keterbacaan, setiap modul **Tugas Khusus / Simulator 
 |---|---|---|---|
 | **Tugas 1** | Simulator Manajemen File & Folder (`/tugas/simulasi-folder`) | 📄 **[`/docs/tugas/TUGAS_1_SIMULATOR_FOLDER.md`](/docs/tugas/TUGAS_1_SIMULATOR_FOLDER.md)** | ✅ Selesai (25 Misi) |
 | **Tugas 2** | Petualangan Berpikir Komputasional (`/tugas/berpikir-komputasional`) | 📄 **[`/docs/tugas/TUGAS_2_BERPIKIR_KOMPUTASIONAL.md`](/docs/tugas/TUGAS_2_BERPIKIR_KOMPUTASIONAL.md)** | ✅ Selesai (4 Misi Terpadu & Modular) |
+| **Tugas 3** | Petualangan Sistem Komputer & Perkakas Digital (`/tugas/sistem-komputer`) | 📄 **[`/docs/tugas/TUGAS_3_SISTEM_KOMPUTER.md`](/docs/tugas/TUGAS_3_SISTEM_KOMPUTER.md)** | ✅ Selesai (4 Misi Terpadu & Modular) |
 
 ---
 
@@ -162,4 +162,5 @@ Untuk menjaga performa dan keterbacaan, setiap modul **Tugas Khusus / Simulator 
 2. **Navigasi Bawah**: Fixed bottom navigation bar di `RuangBelajarHeader.jsx` dirender melalui `createPortal` ke `document.body` dengan safe-area inset agar tetap berada di posisi terbawah layar perangkat mobile tanpa tertutup keyboard/browser bar.
 3. **Padding Container**: Pastikan `src/pages/RuangBelajar.jsx` mempertahankan bottom padding `pb-32 sm:pb-36` agar elemen paling bawah tidak terpotong oleh bottom bar.
 4. **Modal Layering (Highest Priority Z-Index)**: Seluruh modal interaksi (`TaskDetailModal.jsx` dan `ModalSubmitProyek.jsx`) dirender menggunakan `createPortal` ke `document.body` dengan `z-[99999]`, memastikan modal detail tugas dan tombol aksi (seperti *"Lanjutkan Petualangan"*) selalu tampil di lapisan paling depan tanpa tertutupi oleh navbar atas, floating online presence, maupun bar navigasi bawah (Timeline, Log, Peringkat).
+5. **Kebijakan Lanjutkan Tugas Wajib dari Database**: Saat siswa mengklik Mulai atau Lanjutkan pada Tugas 1, 2, dan 3, dilarang melanjutkan dari cache localStorage jika datanya belum ada di tabel `tugas_pengumpulan` Supabase. Jika belum ada di database, siswa wajib memulai dari awal (skor 0). Progres dan skor yang dilanjutkan murni berasal dari data resmi database.
 

@@ -269,65 +269,20 @@ export function useRuangBelajarDB() {
     };
   }, [fetchTasks, fetchSubmissions, fetchLeaderboard, student?.id]);
 
-  // Merge Tasks with Current Student Submission Status & Local Drafts
+  // Merge Tasks with Current Student Submission Status from Database
+  // WAJIB DARI DATABASE: Status pengerjaan & nilai murni berasal dari tabel tugas_pengumpulan.
+  // Jika belum ada pengumpulan di database, status strictly 'belum' dan nilai null (mulai dari awal).
   const mergedTasks = useMemo(() => {
     const studentId = student?.id;
 
-    const getLocalDraft = (task) => {
-      try {
-        if (task.tipe_tugas === 'simulasi' || task.urutan === 1 || task.kode_tugas === 'TUGAS-01-SIMULASI-FOLDER') {
-          const key = studentId ? `simulasi_folder_state_user_${studentId}` : 'simulasi_folder_state_guest';
-          const localStr = localStorage.getItem(key);
-          if (localStr) {
-            const parsed = JSON.parse(localStr);
-            if (parsed && typeof parsed.totalScore === 'number' && parsed.totalScore > 0) {
-              return parsed.totalScore;
-            }
-          }
-        } else if (
-          task.urutan === 3 ||
-          task.kode_tugas === 'TUGAS-03-SISTEM-KOMPUTER' ||
-          task.custom_route?.includes('sistem-komputer')
-        ) {
-          const key = studentId ? `tugas_sk_state_user_${studentId}` : 'tugas_sk_state_guest';
-          const localStr = localStorage.getItem(key);
-          if (localStr) {
-            const parsed = JSON.parse(localStr);
-            if (parsed?.scores) {
-              const sc = (parsed.scores.m1 || 0) + (parsed.scores.m2 || 0) + (parsed.scores.m3 || 0) + (parsed.scores.m4 || 0);
-              if (sc > 0) {
-                return sc;
-              }
-            }
-          }
-        } else if (task.tipe_tugas === 'kuis' || task.urutan === 2 || task.kode_tugas === 'TUGAS-02-KUIS-ALGO' || task.id === 'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0') {
-          const key = studentId ? `tugas_bk_state_user_${studentId}` : 'tugas_bk_state_guest';
-          const localStr = localStorage.getItem(key);
-          if (localStr) {
-            const parsed = JSON.parse(localStr);
-            if (parsed?.scores) {
-              const sc = (parsed.scores.m1 || 0) + (parsed.scores.m2 || 0) + (parsed.scores.m3 || 0) + (parsed.scores.m4 || 0);
-              if (sc > 0) {
-                return sc;
-              }
-            }
-          }
-        }
-      } catch (e) {
-        // ignore
-      }
-      return null;
-    };
-
-    // If guest (not logged in and not admin), check local draft if any
+    // If guest (not logged in and not admin), all tasks start from scratch
     if (!studentId && !isAdmin) {
       return tasks.map((task) => {
-        const localDraftScore = getLocalDraft(task);
         return {
           ...task,
-          status: localDraftScore ? 'sedang' : 'belum',
+          status: 'belum',
           earnedScore: null,
-          localDraftScore,
+          localDraftScore: null,
           submission: null
         };
       });
@@ -382,7 +337,6 @@ export function useRuangBelajarDB() {
       let status = 'belum';
       let earnedScore = null;
       let submissionData = null;
-      const localDraftScore = getLocalDraft(task);
 
       if (sub) {
         const rawScore = sub.skor ?? sub.nilai_akhir ?? sub.score;
@@ -398,15 +352,13 @@ export function useRuangBelajarDB() {
           feedback: sub.catatan_guru || sub.feedback_guru,
           detailJawaban: sub.detail_jawaban
         };
-      } else if (localDraftScore) {
-        status = 'sedang';
       }
 
       return {
         ...task,
         status,
         earnedScore,
-        localDraftScore,
+        localDraftScore: null,
         submission: submissionData
       };
     });

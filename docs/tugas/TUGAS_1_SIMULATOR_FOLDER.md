@@ -128,3 +128,9 @@ Siswa Menyelesaikan Misi Ke-N
    - Komponen `ModalMove.jsx` merender direktori secara rekursif. Hindari looping tak hingga dengan memastikan tidak ada item folder yang memiliki `parentId` dirinya sendiri.
 3. **Reset State**:
    - Tombol *Reset Folder Default* mengembalikan state `items` ke `initialFileSystemData` bawaan misi 1.
+4. **Kebijakan Lanjutkan Wajib Database (Database-Only Continuation)**:
+   - Saat membuka atau mengklik lanjutkan pada Tugas 1, simulator hanya memulihkan struktur file tree snapshot jika ada catatan pengerjaan resmi di tabel `tugas_pengumpulan` Supabase (`detail_jawaban.treeSnapshot`).
+   - Dilarang memulihkan dari `localStorage` jika data belum tersimpan di database; jika belum ada di database, simulator wajib mulai dari awal (`INITIAL_FILES_DATA`).
+5. **Keamanan Filter UUID Supabase**:
+   - Kolom `tugas_id` pada Supabase adalah UUID. Seluruh query `tugas_pengumpulan` disaring dengan regex UUID agar string kode tugas tidak memicu error PostgreSQL 22P02, menjamin proses pemulihan state tugas siswa berlangsung lancar.
+

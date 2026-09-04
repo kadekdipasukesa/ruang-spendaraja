@@ -110,9 +110,11 @@ Dokumen ini merangkum arsitektur, alur data, komponen interaktif, custom hooks, 
 
 ## 4. Alur Pengumpulan & Sinkronisasi Skor Database
 
-1. **Penyimpanan Draft Jawaban (Persistensi Progres & Kebijakan Database-First)**:
-   - **Database-First Priority**: Setiap kali halaman dibuka atau siswa menekan "Lanjutkan & Sempurnakan", sistem **mengutamakan snapshot data resmi dari database Supabase (`tugas_pengumpulan.detail_jawaban`)** dan menimpanya ke memori peramban. Hal ini memastikan jika siswa berpindah dari komputer Lab ke rumah (atau sebaliknya), progres resmi selalu sinkron dan konsisten.
-   - `localStorage` berfungsi sebagai *buffer/scratchpad* sesi aktif saat pengerjaan berlangsung untuk menjaga performa (tanpa spam kueri jaringan) dan mencegah kehilangan data bila terjadi *refresh/crash* sebelum klik simpan.
+1. **Penyimpanan Jawaban & Progres (Kebijakan Lanjutkan Wajib Database - Database-Only Continuation)**:
+   - **Database-Only Continuation**: Setiap kali halaman dibuka atau siswa menekan tombol "Lanjutkan", sistem **hanya memulihkan progres dan skor dari database Supabase (`tugas_pengumpulan.detail_jawaban`)**.
+   - **Dilarang keras melanjutkan dari localStorage** jika belum ada catatan pengumpulan resmi di database `tugas_pengumpulan`. Jika belum ada di database, siswa wajib mulai dari awal dengan skor 0 di seluruh 4 misi.
+   - `localStorage` hanya dipakai sebagai *scratchpad* sementara sesi aktif pengerjaan dan langsung dibersihkan jika tidak ditemukan data di database.
+   - Jika siswa berpindah perangkat komputer, progres resmi selalu dipulihkan persis sesuai catatan terakhir di database Supabase.
 
 2. **Kebijakan Nilai Tertinggi (Highest Score Retention - `Math.max`)**:
    - Sistem menerapkan aturan keselamatan nilai siswa: Jika siswa mengumpulkan tugas untuk kedua kalinya atau seterusnya, dan nilai percobaan saat ini ternyata lebih kecil dari nilai yang pernah diperoleh sebelumnya, sistem **tidak akan menurunkan nilai**, melainkan tetap mempertahankan dan mencatat **nilai tertinggi (terbesar)** di Supabase (`tugas_pengumpulan`, `point_logs`, dan `master_siswa`).

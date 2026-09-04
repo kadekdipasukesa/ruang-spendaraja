@@ -4,9 +4,16 @@ import { INITIAL_FILES_DATA, evaluateAllMissions } from './missionsConfig';
 import { playMissionSuccessSound, triggerMissionFireworkAnimation } from '../../../../utils/missionCelebration';
 import { recordTaskPointLog } from '../../../../utils/pointLogger';
 
+const CANONICAL_TUGAS_1_ID = 'cdaa57b1-b206-4a7e-92e8-4e1422c180b0';
+
+const isUUID = (str) => {
+  if (typeof str !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str.trim());
+};
+
 export function useSimulasiFolder() {
   const [student, setStudent] = useState(null);
-  const [dbTaskId, setDbTaskId] = useState(null);
+  const [dbTaskId, setDbTaskId] = useState(CANONICAL_TUGAS_1_ID);
 
   // File System State
   const [items, setItems] = useState(INITIAL_FILES_DATA);
@@ -88,7 +95,7 @@ export function useSimulasiFolder() {
           .limit(1)
           .maybeSingle();
 
-        if (taskRecord?.id) {
+        if (taskRecord?.id && isUUID(taskRecord.id)) {
           setDbTaskId(taskRecord.id);
         }
       } catch (err) {
@@ -98,7 +105,7 @@ export function useSimulasiFolder() {
     findTask();
   }, []);
 
-  // 3. Load student-specific items & previous submission
+  // 3. Load student-specific items & previous submission ONLY from Database tugas_pengumpulan
   useEffect(() => {
     if (!student) {
       setItems(INITIAL_FILES_DATA);
@@ -108,41 +115,52 @@ export function useSimulasiFolder() {
     }
 
     const loadStudentData = async () => {
-      if (storageKey) {
-        const saved = localStorage.getItem(storageKey);
-        if (saved) {
-          try {
-            setItems(JSON.parse(saved));
-          } catch (e) {
-            setItems(INITIAL_FILES_DATA);
-          }
-        } else {
-          setItems(INITIAL_FILES_DATA);
-        }
-      } else {
-        setItems(INITIAL_FILES_DATA);
-      }
-
-      // Check if student has previous submission in Supabase
       try {
+        const numStudentId = parseInt(student.id || student.siswa_id, 10);
+        if (!numStudentId) {
+          setItems(INITIAL_FILES_DATA);
+          setPreviousSubmission(null);
+          setIsLoaded(true);
+          return;
+        }
+
+        // Resolusi ID tugas dari tugas_master jika diperlukan
+        let activeTaskId = dbTaskId;
+        if (!activeTaskId || !isUUID(activeTaskId)) {
+          const { data: taskRecord } = await supabase
+            .from('tugas_master')
+            .select('id')
+            .or('kode_tugas.eq.TUGAS-01-SIMULASI-FOLDER,tipe_tugas.eq.simulasi,urutan.eq.1')
+            .limit(1)
+            .maybeSingle();
+          if (taskRecord?.id && isUUID(taskRecord.id)) {
+            activeTaskId = taskRecord.id;
+            setDbTaskId(taskRecord.id);
+          }
+        }
+
+        // HANYA masukkan valid UUID ke kueri Supabase agar tidak memicu error PostgreSQL 22P02
         const candidateTaskIds = [
-          dbTaskId,
-          'TUGAS-01-SIMULASI-FOLDER',
-          'tugas-inf-01'
-        ].filter(Boolean);
+          activeTaskId,
+          CANONICAL_TUGAS_1_ID,
+        ].filter(Boolean).filter(isUUID);
 
         let query = supabase
           .from('tugas_pengumpulan')
           .select('*')
-          .eq('siswa_id', student.id);
+          .eq('siswa_id', numStudentId);
 
         if (candidateTaskIds.length > 0) {
           query = query.in('tugas_id', candidateTaskIds);
         }
 
-        const { data: subDataList } = await query
+        const { data: subDataList, error: queryErr } = await query
           .order('submitted_at', { ascending: false })
           .limit(1);
+
+        if (queryErr) {
+          console.warn("Kueri tugas_pengumpulan error:", queryErr);
+        }
 
         const subData = subDataList && subDataList.length > 0 ? subDataList[0] : null;
 
@@ -165,8 +183,8 @@ export function useSimulasiFolder() {
             detail_jawaban: parsedDetail || subData.detail_jawaban
           });
 
-          // UTAMAKAN DATABASE: Pulihkan snapshot struktur folder dari database
-          if (parsedDetail?.treeSnapshot) {
+          // SINKRON DATABASE: Pulihkan snapshot struktur folder murni dari database tugas_pengumpulan
+          if (parsedDetail?.treeSnapshot && Array.isArray(parsedDetail.treeSnapshot) && parsedDetail.treeSnapshot.length > 0) {
             setItems(parsedDetail.treeSnapshot);
             if (storageKey) {
               try {
@@ -175,15 +193,29 @@ export function useSimulasiFolder() {
                 console.warn("Gagal update local storage dari db:", err);
               }
             }
+          } else {
+            // Jika snapshot belum ada di detail_jawaban, fallback ke initial
+            setItems(INITIAL_FILES_DATA);
           }
         } else {
+          // Belum pernah ada data di tabel tugas_pengumpulan: MULAI DARI AWAL!
           setPreviousSubmission(null);
+          setItems(INITIAL_FILES_DATA);
+          setCurrentFolderId(null);
+          setSelectedItem(null);
+          if (storageKey) {
+            try {
+              localStorage.removeItem(storageKey);
+            } catch (e) {
+              /* ignore */
+            }
+          }
         }
       } catch (e) {
         console.warn("Cek pengumpulan sebelumnya error:", e);
+      } finally {
+        setIsLoaded(true);
       }
-
-      setIsLoaded(true);
     };
 
     loadStudentData();
@@ -432,27 +464,30 @@ export function useSimulasiFolder() {
     try {
       if (student?.id) {
         let resolvedTaskId = dbTaskId;
-        if (!resolvedTaskId) {
+        if (!resolvedTaskId || !isUUID(resolvedTaskId)) {
           const { data: tData } = await supabase
             .from('tugas_master')
             .select('id')
-            .or('kode_tugas.eq.TUGAS-01-SIMULASI-FOLDER,tipe_tugas.eq.simulasi')
+            .or('kode_tugas.eq.TUGAS-01-SIMULASI-FOLDER,tipe_tugas.eq.simulasi,urutan.eq.1')
             .limit(1)
             .maybeSingle();
 
-          if (tData?.id) {
+          if (tData?.id && isUUID(tData.id)) {
             resolvedTaskId = tData.id;
             setDbTaskId(tData.id);
+          } else {
+            resolvedTaskId = CANONICAL_TUGAS_1_ID;
           }
         }
 
-        if (resolvedTaskId) {
+        const numStudentId = parseInt(student.id || student.siswa_id, 10);
+        if (resolvedTaskId && numStudentId) {
           // Ambil skor sebelumnya jika ada untuk menghitung delta
           const { data: prevSub } = await supabase
             .from('tugas_pengumpulan')
             .select('skor')
             .eq('tugas_id', resolvedTaskId)
-            .eq('siswa_id', student.id)
+            .eq('siswa_id', numStudentId)
             .maybeSingle();
 
           const prevScore = prevSub?.skor || 0;
@@ -462,7 +497,7 @@ export function useSimulasiFolder() {
           const { error: upsertErr } = await supabase.from('tugas_pengumpulan').upsert(
             {
               tugas_id: resolvedTaskId,
-              siswa_id: student.id,
+              siswa_id: numStudentId,
               status: 'selesai',
               skor: finalScoreToSave,
               detail_jawaban: detailLog,
@@ -477,7 +512,7 @@ export function useSimulasiFolder() {
           } else {
             // 2. Catat penambahan poin ke point_logs & sinkronkan ke master_siswa
             const latestTotalPoints = await recordTaskPointLog({
-              siswaId: student.id,
+              siswaId: numStudentId,
               currentScore: scoreVal,
               previousScore: prevScore,
               activityType: 'tugas',

@@ -8,6 +8,13 @@ import { syncStudentPointsAfterTask } from '../../../../utils/pointLogger';
 // M3 (Struktur Data): Max 20 Poin
 // M4 (Representasi Data): Max 20 Poin
 // Total Max = 100 Poin
+const CANONICAL_TUGAS_2_ID = 'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0';
+
+const isUUID = (str) => {
+  if (typeof str !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str.trim());
+};
+
 const clampBKScores = (raw) => ({
   m1: Math.min(50, Math.max(0, Math.round(Number(raw?.m1) || 0))),
   m2: Math.min(10, Math.max(0, Math.round(Number(raw?.m2) || 0))),
@@ -44,7 +51,7 @@ export function useTugasBKState() {
   const [submitted, setSubmitted] = useState(false);
   const [existingSubmission, setExistingSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [dbTaskId, setDbTaskId] = useState('c2243c08-ce28-4fe7-8ff7-86f9b546ecd0');
+  const [dbTaskId, setDbTaskId] = useState(CANONICAL_TUGAS_2_ID);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submissionMeta, setSubmissionMeta] = useState({
     savedScore: 0,
@@ -72,11 +79,8 @@ export function useTugasBKState() {
       const candidateTaskIds = [
         explicitTaskId,
         dbTaskId,
-        'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0',
-        'TUGAS-02-KUIS-ALGO',
-        'TUGAS_BK_01',
-        'tugas-inf-02'
-      ].filter(Boolean);
+        CANONICAL_TUGAS_2_ID,
+      ].filter(Boolean).filter(isUUID);
 
       try {
         const { data: masterTasks } = await supabase
@@ -86,12 +90,12 @@ export function useTugasBKState() {
 
         if (masterTasks && masterTasks.length > 0) {
           masterTasks.forEach((m) => {
-            if (m?.id && !candidateTaskIds.includes(m.id)) {
+            if (m?.id && isUUID(m.id) && !candidateTaskIds.includes(m.id)) {
               candidateTaskIds.push(m.id);
             }
           });
-          const validTask = masterTasks[0];
-          if (validTask?.id && !dbTaskId) {
+          const validTask = masterTasks.find(m => m?.id && isUUID(m.id));
+          if (validTask?.id && (!dbTaskId || !isUUID(dbTaskId))) {
             setDbTaskId(validTask.id);
           }
         }
@@ -99,14 +103,24 @@ export function useTugasBKState() {
         console.warn('Cari candidate task master BK:', err);
       }
 
-      // 2. Kueri ke tugas_pengumpulan khusus Tugas 2
-      const { data: subDataList } = await supabase
+      // 2. Kueri ke tugas_pengumpulan khusus Tugas 2 (HANYA valid UUIDs!)
+      const validUuidTaskIds = candidateTaskIds.filter(isUUID);
+      let query = supabase
         .from('tugas_pengumpulan')
         .select('*')
-        .eq('siswa_id', numStudentId)
-        .in('tugas_id', candidateTaskIds)
+        .eq('siswa_id', numStudentId);
+
+      if (validUuidTaskIds.length > 0) {
+        query = query.in('tugas_id', validUuidTaskIds);
+      }
+
+      const { data: subDataList, error: queryErr } = await query
         .order('submitted_at', { ascending: false })
         .limit(1);
+
+      if (queryErr) {
+        console.warn('Kueri tugas_pengumpulan BK error:', queryErr);
+      }
 
       const subData = subDataList && subDataList.length > 0 ? subDataList[0] : null;
 
@@ -130,9 +144,25 @@ export function useTugasBKState() {
         // Pulihkan progres resmi dari snapshot database jika ada (dengan batas aman tiap misi)
         if (parsedDetail?.scores) {
           setScores(clampBKScores(parsedDetail.scores));
+        } else if (officialScore > 0) {
+          // Fallback jika detail_jawaban belum ada objek scores tapi ada skor resmi di database
+          // Bobot BK: m1 (max 50), m2 (max 10), m3 (max 20), m4 (max 20)
+          let rem = Math.min(100, Math.max(0, officialScore));
+          const m1 = Math.min(50, rem); rem -= m1;
+          const m2 = Math.min(10, rem); rem -= m2;
+          const m3 = Math.min(20, rem); rem -= m3;
+          const m4 = Math.min(20, rem);
+          setScores({ m1, m2, m3, m4 });
         }
         if (parsedDetail?.completed) {
           setCompleted(parsedDetail.completed);
+        } else if (officialScore > 0) {
+          setCompleted({
+            m1: officialScore >= 15,
+            m2: officialScore >= 60,
+            m3: officialScore >= 75,
+            m4: officialScore >= 95,
+          });
         }
 
         setExistingSubmission({
@@ -155,9 +185,18 @@ export function useTugasBKState() {
           }
         }
       } else {
-        // Database tugas 2 bersih / belum ada pengumpulan resmi
+        // Database tugas 2 bersih / belum ada pengumpulan resmi di database: MULAI DARI AWAL!
         setExistingSubmission(null);
         setSubmitted(false);
+        setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
+        setCompleted({ m1: false, m2: false, m3: false, m4: false });
+        if (currentKey) {
+          try {
+            localStorage.removeItem(currentKey);
+          } catch (e) {
+            /* ignore */
+          }
+        }
       }
     } catch (err) {
       console.error('Error cek tugas_pengumpulan BK:', err);
@@ -166,7 +205,7 @@ export function useTugasBKState() {
     }
   }, [dbTaskId]);
 
-  // Ambil sesi user dari localStorage & pulihkan progress tersimpan
+  // Ambil sesi user dari localStorage & sinkronkan HANYA DARI DATABASE
   useEffect(() => {
     const loadSession = () => {
       try {
@@ -179,35 +218,25 @@ export function useTugasBKState() {
         else if (storedSpenda) parsed = JSON.parse(storedSpenda);
         else if (storedUser) parsed = JSON.parse(storedUser);
 
+        // Inisialisasi awal ke nol (DILARANG melanjutkan dari localStorage tanpa cek database)
+        setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
+        setCompleted({ m1: false, m2: false, m3: false, m4: false });
+
         if (parsed) {
           setUser(parsed);
           const currentKey = parsed.id ? `tugas_bk_state_user_${parsed.id}` : 'tugas_bk_state_guest';
 
-          // Muat state lokal siswa jika ada (dengan batas aman tiap misi)
-          const localSaved = localStorage.getItem(currentKey);
-          if (localSaved) {
-            try {
-              const parsedLocal = JSON.parse(localSaved);
-              if (parsedLocal.scores) setScores(clampBKScores(parsedLocal.scores));
-              if (parsedLocal.completed) setCompleted(parsedLocal.completed);
-            } catch (e) {
-              console.warn('Gagal parse local saved BK state:', e);
-            }
+          if (parsed.id) {
+            checkExistingSubmission(parsed.id, currentKey, dbTaskId);
+          } else {
+            setLoading(false);
           }
-
-          if (parsed.id) checkExistingSubmission(parsed.id, currentKey, dbTaskId);
-          else setLoading(false);
         } else {
-          // Guest mode
-          const localSaved = localStorage.getItem('tugas_bk_state_guest');
-          if (localSaved) {
-            try {
-              const parsedLocal = JSON.parse(localSaved);
-              if (parsedLocal.scores) setScores(clampBKScores(parsedLocal.scores));
-              if (parsedLocal.completed) setCompleted(parsedLocal.completed);
-            } catch (e) {
-              console.warn('Gagal parse guest BK state:', e);
-            }
+          // Guest mode: Bersihkan draft dan mulai dari awal
+          try {
+            localStorage.removeItem('tugas_bk_state_guest');
+          } catch (e) {
+            /* ignore */
           }
           setLoading(false);
         }
@@ -317,26 +346,29 @@ export function useTugasBKState() {
       return;
     }
 
-    let resolvedTaskId = dbTaskId || 'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0';
-    if (!resolvedTaskId) {
+    let resolvedTaskId = dbTaskId;
+    if (!resolvedTaskId || !isUUID(resolvedTaskId)) {
       try {
         const { data: tData } = await supabase
           .from('tugas_master')
           .select('id')
-          .or('id.eq.c2243c08-ce28-4fe7-8ff7-86f9b546ecd0,kode_tugas.eq.TUGAS-02-KUIS-ALGO,kode_tugas.eq.TUGAS_BK_01,kode_tugas.eq.tugas-inf-02')
+          .or(`id.eq.${CANONICAL_TUGAS_2_ID},kode_tugas.eq.TUGAS-02-KUIS-ALGO,kode_tugas.eq.TUGAS_BK_01,kode_tugas.eq.tugas-inf-02`)
           .limit(1)
           .maybeSingle();
 
-        if (tData?.id) {
+        if (tData?.id && isUUID(tData.id)) {
           resolvedTaskId = tData.id;
           setDbTaskId(tData.id);
+        } else {
+          resolvedTaskId = CANONICAL_TUGAS_2_ID;
         }
       } catch (e) {
         console.warn('Gagal cari tugas_master BK saat submit:', e);
+        resolvedTaskId = CANONICAL_TUGAS_2_ID;
       }
     }
-    if (!resolvedTaskId) {
-      resolvedTaskId = 'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0';
+    if (!resolvedTaskId || !isUUID(resolvedTaskId)) {
+      resolvedTaskId = CANONICAL_TUGAS_2_ID;
     }
 
     try {

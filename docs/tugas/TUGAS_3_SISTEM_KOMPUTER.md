@@ -81,17 +81,18 @@ TUGAS 3: SISTEM KOMPUTER & PERKAKAS DIGITAL (100 Poin)
 
 ## 4. Mekanisme Pengumpulan, Persistensi & Sistem Perbaikan Nilai
 
-### A. Kebijakan Pemuatan Data: Database-First Priority & Isolasi Akun Siswa (User-Scoped Storage)
+### A. Kebijakan Pemuatan Data: Database-Only Continuation & Isolasi Akun Siswa (User-Scoped Storage)
 * **Isolasi Akun Siswa (Per-User Scoped Storage)**:
   - Seluruh kunci penyimpanan draft lokal (`localStorage`) pada Tugas 3 diisolasi secara ketat berdasarkan ID akun siswa (`tugas_sk_[item]_user_[siswaId]`).
   - Mencegah kebocoran data antar-siswa pada komputer/browser bersama di laboratorium sekolah, sehingga siswa yang baru pertama kali login tidak akan melihat sisa draft atau status penyelesaian dari siswa yang login sebelumnya.
   - Sistem secara otomatis membersihkan sisa key global peninggalan versi lama (`clearLegacySKStorage()`) dan membersihkan draft akun baru yang belum pernah mengumpulkan (`clearUserSKDrafts`).
-* **Pemuatan Awal (Database-First Priority)**:
-  - Saat siswa membuka halaman tugas atau menekan tombol **"Lanjutkan" / "Perbaiki Nilai"**, sistem secara ketat memuat data langsung dari database Supabase (`tugas_pengumpulan.detail_jawaban`), mengesampingkan cache lokal jika terdapat rekaman di database.
-  - Snapshot yang dimuat mencakup skor per misi, status selesai (`completed`), serta data susunan/penempatan komponen (`placements`) untuk Misi 1 (Hardware & Software), Misi 2 (Data & Aplikasi), Misi 3 (Aplikasi Perkakas), dan Misi 4 (Etika Digital).
+* **Pemuatan Awal (Kebijakan Lanjutkan Wajib Database - Database-Only Continuation)**:
+  - Saat siswa membuka halaman tugas atau menekan tombol **"Lanjutkan" / "Perbaiki Nilai"**, sistem secara ketat memuat data langsung dari database Supabase (`tugas_pengumpulan.detail_jawaban`).
+  - **Dilarang keras memulihkan dari `localStorage` jika belum ada rekaman di database**: Jika akun siswa belum memiliki data pengumpulan resmi di tabel `tugas_pengumpulan`, siswa **wajib mulai dari awal dengan skor 0 di seluruh 4 misi dan penempatan komponen kosong**. Sisa cache lokal langsung dibersihkan secara otomatis.
+  - Jika rekaman database ditemukan, snapshot yang dimuat mencakup skor per misi, status selesai (`completed`), serta data susunan/penempatan komponen (`placements`) untuk Misi 1 (Hardware & Software), Misi 2 (Data & Aplikasi), Misi 3 (Aplikasi Perkakas), dan Misi 4 (Etika Digital).
   - Snapshot database disinkronkan secara langsung ke `localStorage` khusus user tersebut pada saat pemuatan awal tanpa memicu re-render cascade atau siklus pemanggilan `useEffect` melingkar (*loop-free architecture*).
   - Hal ini menjamin progres siswa tersinkronisasi penuh saat berpindah komputer laboratorium atau berganti perangkat/peramban.
-  - Komponen sub-misi membaca langsung susunan terakhir dari `localStorage` yang telah dipulihkan dari database, menjaga performa peramban tetap ringan dan responsif.
+  - Komponen sub-misi membaca langsung susunan terakhir dari snapshot database yang telah dipulihkan, menjaga performa peramban tetap ringan dan responsif.
 * **Indikator Centang Sub-Tab & Misi**:
   - Tab navigasi utama 4 misi (`SKMissionTabs.jsx`) dan sub-tab di dalam tiap misi (Materi Visual, Praktikum Lab Drag & Drop, dan Kuis) dilengkapi lencana centang hijau (`CheckCircle2`) dan rincian skor perolehan jika misi/sub-tab telah terselesaikan.
 * **Restorasi State Interaktif**:

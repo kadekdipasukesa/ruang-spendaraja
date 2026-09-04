@@ -9,6 +9,11 @@ import { celebratePointGain } from '../../../../components/RuangBelajar/TugasKhu
 // M3 (Perkakas Digital & Software): Max 30 Poin
 // M4 (Dampak & Etika Digital TIK): Max 15 Poin
 // Total Max = 100 Poin
+const isUUID = (str) => {
+  if (typeof str !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str.trim());
+};
+
 const clampSKScores = (raw) => ({
   m1: Math.min(35, Math.max(0, Math.round(Number(raw?.m1) || 0))),
   m2: Math.min(20, Math.max(0, Math.round(Number(raw?.m2) || 0))),
@@ -132,10 +137,7 @@ export function useTugasSKState() {
         explicitTaskId,
         dbTaskIdRef.current,
         DEFAULT_SK_TASK_ID,
-        'TUGAS-03-SISTEM-KOMPUTER',
-        'tugas-inf-03',
-        'TUGAS_SK_01'
-      ].filter(Boolean);
+      ].filter(Boolean).filter(isUUID);
 
       try {
         const { data: masterTasks } = await supabase
@@ -148,6 +150,7 @@ export function useTugasSKState() {
             // Lindungi agar ID tugas 1 dan tugas 2 tidak pernah masuk ke Tugas 3
             if (
               m?.id &&
+              isUUID(m.id) &&
               m.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
               m.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
               m.kode_tugas !== 'TUGAS-02-KUIS-ALGO' &&
@@ -158,6 +161,8 @@ export function useTugasSKState() {
             }
           });
           const validMaster = masterTasks.find(m => 
+            m?.id &&
+            isUUID(m.id) &&
             m.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
             m.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
             m.kode_tugas !== 'TUGAS-02-KUIS-ALGO'
@@ -170,14 +175,24 @@ export function useTugasSKState() {
         console.warn('Cari candidate task master SK:', err);
       }
 
-      // 2. Kueri ke tugas_pengumpulan khusus Tugas 3
-      const { data: subDataList } = await supabase
+      // 2. Kueri ke tugas_pengumpulan khusus Tugas 3 (HANYA valid UUIDs!)
+      const validUuidTaskIds = candidateTaskIds.filter(isUUID);
+      let query = supabase
         .from('tugas_pengumpulan')
         .select('id, tugas_id, siswa_id, status, skor, nilai_akhir, persentase_skor, detail_jawaban, catatan_guru, submitted_at, graded_at')
-        .eq('siswa_id', numStudentId)
-        .in('tugas_id', candidateTaskIds)
+        .eq('siswa_id', numStudentId);
+
+      if (validUuidTaskIds.length > 0) {
+        query = query.in('tugas_id', validUuidTaskIds);
+      }
+
+      const { data: subDataList, error: queryErr } = await query
         .order('submitted_at', { ascending: false })
         .limit(1);
+
+      if (queryErr) {
+        console.warn('Kueri tugas_pengumpulan SK error:', queryErr);
+      }
 
       const subData = subDataList && subDataList.length > 0 ? subDataList[0] : null;
 
@@ -201,10 +216,25 @@ export function useTugasSKState() {
         // PRIORITAS DATABASE MUTLAK: Pulihkan skor dan status misi dari database
         if (parsedDetail?.scores) {
           setScores(clampSKScores(parsedDetail.scores));
+        } else if (officialScore > 0) {
+          // Bobot SK: M1 (35p), M2 (20p), M3 (30p), M4 (15p)
+          let rem = Math.min(100, Math.max(0, officialScore));
+          const m1 = Math.min(35, rem); rem -= m1;
+          const m2 = Math.min(20, rem); rem -= m2;
+          const m3 = Math.min(30, rem); rem -= m3;
+          const m4 = Math.min(15, rem);
+          setScores({ m1, m2, m3, m4 });
         }
 
         if (parsedDetail?.completed) {
           setCompleted(parsedDetail.completed);
+        } else if (officialScore > 0) {
+          setCompleted({
+            m1: officialScore >= 20,
+            m2: officialScore >= 50,
+            m3: officialScore >= 75,
+            m4: officialScore >= 95,
+          });
         }
 
         // PRIORITAS DATABASE MUTLAK: Pulihkan seluruh penempatan drag & drop dari database ke localStorage khusus user ini
@@ -297,26 +327,18 @@ export function useTugasSKState() {
           }
         }
       } else {
-        // Database tugas 3 bersih / akun siswa ini belum pernah mengumpulkan tugas 3!
+        // Database tugas 3 bersih / akun siswa ini belum pernah mengumpulkan tugas 3: MULAI DARI AWAL!
         setExistingSubmission(null);
         setSubmitted(false);
-
-        // Periksa apakah ada draft lokal yang tersimpan khusus untuk akun ini
-        const localSaved = currentKey ? localStorage.getItem(currentKey) : null;
-        if (localSaved) {
+        setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
+        setCompleted({ m1: false, m2: false, m3: false, m4: false });
+        clearUserSKDrafts(numStudentId);
+        if (currentKey) {
           try {
-            const parsedLocal = JSON.parse(localSaved);
-            if (parsedLocal.scores) setScores(clampSKScores(parsedLocal.scores));
-            if (parsedLocal.completed) setCompleted(parsedLocal.completed);
+            localStorage.removeItem(currentKey);
           } catch (e) {
-            setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
-            setCompleted({ m1: false, m2: false, m3: false, m4: false });
+            /* ignore */
           }
-        } else {
-          // Akun ini belum pernah mengerjakan: pastikan SEMUA skor dan status selesai bersih 0!
-          setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
-          setCompleted({ m1: false, m2: false, m3: false, m4: false });
-          clearUserSKDrafts(numStudentId);
         }
       }
     } catch (err) {
@@ -326,7 +348,7 @@ export function useTugasSKState() {
     }
   }, [updateDbTaskId]);
 
-  // Ambil sesi user dari localStorage & pulihkan progress tersimpan
+  // Ambil sesi user dari localStorage & sinkronkan HANYA DARI DATABASE
   useEffect(() => {
     const loadSession = () => {
       try {
@@ -340,42 +362,27 @@ export function useTugasSKState() {
         else if (storedSpenda) parsed = JSON.parse(storedSpenda);
         else if (storedUser) parsed = JSON.parse(storedUser);
 
+        // Inisialisasi awal ke nol (DILARANG melanjutkan dari localStorage tanpa cek database)
+        setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
+        setCompleted({ m1: false, m2: false, m3: false, m4: false });
+
         if (parsed) {
           setUser((prev) => (prev?.id === parsed.id ? prev : parsed));
           const currentKey = parsed.id ? `tugas_sk_state_user_${parsed.id}` : 'tugas_sk_state_guest';
 
-          // Muat state lokal siswa jika ada (dengan batas aman)
-          const localSaved = localStorage.getItem(currentKey);
-          if (localSaved) {
-            try {
-              const parsedLocal = JSON.parse(localSaved);
-              if (parsedLocal.scores) setScores(clampSKScores(parsedLocal.scores));
-              if (parsedLocal.completed) setCompleted(parsedLocal.completed);
-            } catch (e) {
-              console.warn('Gagal parse local saved SK state:', e);
-            }
-          } else {
-            // User baru belum ada draft: reset ke 0 agar tidak mewarisi sisa akun lain
-            setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
-            setCompleted({ m1: false, m2: false, m3: false, m4: false });
-          }
-
           if (parsed.id) {
             checkExistingSubmission(parsed.id, currentKey, dbTaskIdRef.current);
           } else {
+            clearUserSKDrafts('guest');
             setLoading(false);
           }
         } else {
-          // Guest mode
-          const localSaved = localStorage.getItem('tugas_sk_state_guest');
-          if (localSaved) {
-            try {
-              const parsedLocal = JSON.parse(localSaved);
-              if (parsedLocal.scores) setScores(clampSKScores(parsedLocal.scores));
-              if (parsedLocal.completed) setCompleted(parsedLocal.completed);
-            } catch (e) {
-              console.warn('Gagal parse guest SK state:', e);
-            }
+          // Guest mode: Bersihkan draft dan mulai dari awal
+          clearUserSKDrafts('guest');
+          try {
+            localStorage.removeItem('tugas_sk_state_guest');
+          } catch (e) {
+            /* ignore */
           }
           setLoading(false);
         }
@@ -500,30 +507,34 @@ export function useTugasSKState() {
     }
 
     let resolvedTaskId = dbTaskId;
-    if (!resolvedTaskId) {
+    if (!resolvedTaskId || !isUUID(resolvedTaskId)) {
       try {
         const { data: tData } = await supabase
           .from('tugas_master')
           .select('id, kode_tugas')
-          .or('kode_tugas.eq.TUGAS-03-SISTEM-KOMPUTER,kode_tugas.eq.TUGAS_SK_01,kode_tugas.eq.tugas-inf-03,custom_route.ilike.%sistem-komputer%,judul.ilike.%Sistem Komputer & Perkakas Digital%')
+          .or(`id.eq.${DEFAULT_SK_TASK_ID},kode_tugas.eq.TUGAS-03-SISTEM-KOMPUTER,kode_tugas.eq.TUGAS_SK_01,kode_tugas.eq.tugas-inf-03,custom_route.ilike.%sistem-komputer%,judul.ilike.%Sistem Komputer & Perkakas Digital%`)
           .limit(1)
           .maybeSingle();
 
         if (
           tData?.id &&
+          isUUID(tData.id) &&
           tData.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
           tData.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
           tData.kode_tugas !== 'TUGAS-02-KUIS-ALGO'
         ) {
           resolvedTaskId = tData.id;
-          setDbTaskId(tData.id);
+          updateDbTaskId(tData.id);
+        } else {
+          resolvedTaskId = DEFAULT_SK_TASK_ID;
         }
       } catch (e) {
         console.warn('Gagal cari tugas_master SK saat submit:', e);
+        resolvedTaskId = DEFAULT_SK_TASK_ID;
       }
     }
-    if (!resolvedTaskId) {
-      resolvedTaskId = '489b0d1e-8fd0-4bfa-9759-3996773347f3';
+    if (!resolvedTaskId || !isUUID(resolvedTaskId)) {
+      resolvedTaskId = DEFAULT_SK_TASK_ID;
     }
 
     try {

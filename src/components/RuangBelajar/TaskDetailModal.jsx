@@ -71,11 +71,6 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
                 <Award className="w-3 h-3 text-amber-600" />
                 Tersimpan ({task.earnedScore}/{points} Poin)
               </span>
-            ) : task.localDraftScore ? (
-              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 flex items-center gap-1 border border-indigo-200">
-                <Clock className="w-3 h-3 text-indigo-600" />
-                Draft ({task.localDraftScore}/{points} Poin)
-              </span>
             ) : (
               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
                 Bobot: {points} Poin
@@ -199,7 +194,7 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
                 className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-xl shadow-2xs transition ${
                   isCompleted && (task.earnedScore ?? 0) >= points
                     ? 'bg-slate-800 hover:bg-slate-900'
-                    : (task.earnedScore ?? 0) > 0 || task.status === 'sedang'
+                    : (task.earnedScore ?? 0) > 0
                     ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'
                     : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'
                 }`}
@@ -208,8 +203,8 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
                 <span>
                   {isCompleted && (task.earnedScore ?? 0) >= points
                     ? 'Buka Kembali Simulasi (100 Poin)'
-                    : (task.earnedScore ?? 0) > 0 || task.status === 'sedang'
-                    ? 'Lanjutkan Praktik Simulasi'
+                    : (task.earnedScore ?? 0) > 0
+                    ? `Lanjutkan Praktik Simulasi (${task.earnedScore}/${points} Poin)`
                     : 'Mulai Praktik Simulasi Sekarang'}
                 </span>
               </button>
@@ -228,7 +223,7 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
                   className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-xl shadow-2xs transition ${
                     isCompleted && (task.earnedScore ?? 0) >= points
                       ? 'bg-emerald-700 hover:bg-emerald-800'
-                      : (task.earnedScore ?? 0) > 0 || task.status === 'sedang'
+                      : (task.earnedScore ?? 0) > 0
                       ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'
                       : isSK
                       ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-amber-600/20'
@@ -239,8 +234,8 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
                   <span>
                     {isCompleted && (task.earnedScore ?? 0) >= points
                       ? `Lihat / Ulangi Petualangan ${taskShortName} (100 Poin)`
-                      : (task.earnedScore ?? 0) > 0 || task.status === 'sedang'
-                      ? `Lanjutkan Petualangan ${taskShortName} (${task.earnedScore || task.localDraftScore || 0}/${points} Poin)`
+                      : (task.earnedScore ?? 0) > 0
+                      ? `Lanjutkan Petualangan ${taskShortName} (${task.earnedScore}/${points} Poin)`
                       : `Mulai Petualangan ${taskShortName} (4 Misi)`}
                   </span>
                 </button>
