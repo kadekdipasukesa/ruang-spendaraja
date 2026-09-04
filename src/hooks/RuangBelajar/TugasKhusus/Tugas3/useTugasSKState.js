@@ -1,9 +1,15 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../../../../lib/supabaseClient';
 import { syncStudentPointsAfterTask } from '../../../../utils/pointLogger';
 import { celebratePointGain } from '../../../../components/RuangBelajar/TugasKhusus/Tugas3/skAssets';
 
+const isValidUUID = (str) =>
+  typeof str === 'string' &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+
 export function useTugasSKState() {
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [activeMission, setActiveMission] = useState(1);
 
@@ -32,13 +38,13 @@ export function useTugasSKState() {
   const [submitted, setSubmitted] = useState(false);
   const [existingSubmission, setExistingSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
-  const DEFAULT_SK_TASK_ID = '489b0d1e-8fd0-4bfa-9759-3996773347f3';
+  const DEFAULT_SK_TASK_ID = '595d2d95-d16f-4582-9be5-93d9db451f47';
   const [dbTaskId, setDbTaskId] = useState(DEFAULT_SK_TASK_ID);
   const dbTaskIdRef = useRef(DEFAULT_SK_TASK_ID);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const updateDbTaskId = useCallback((newId) => {
-    if (newId && dbTaskIdRef.current !== newId) {
+    if (newId && isValidUUID(newId) && dbTaskIdRef.current !== newId) {
       dbTaskIdRef.current = newId;
       setDbTaskId(newId);
     }
@@ -74,22 +80,20 @@ export function useTugasSKState() {
         explicitTaskId,
         dbTaskIdRef.current,
         DEFAULT_SK_TASK_ID,
-        'TUGAS-03-SISTEM-KOMPUTER',
-        'tugas-inf-03',
-        'TUGAS_SK_01'
-      ].filter(Boolean);
+      ].filter(isValidUUID);
 
       try {
         const { data: masterTasks } = await supabase
           .from('tugas_master')
           .select('id, kode_tugas, judul, custom_route')
-          .or('kode_tugas.eq.TUGAS-03-SISTEM-KOMPUTER,kode_tugas.eq.TUGAS_SK_01,kode_tugas.eq.tugas-inf-03,custom_route.ilike.%sistem-komputer%,judul.ilike.%Sistem Komputer & Perkakas Digital%');
+          .or('kode_tugas.eq.TUGAS-03-SISTEM-KOMPUTER,kode_tugas.eq.TUGAS_SK_01,kode_tugas.eq.tugas-inf-03,custom_route.ilike.%sistem-komputer%,judul.ilike.%Sistem Komputer%');
 
         if (masterTasks && masterTasks.length > 0) {
           masterTasks.forEach((m) => {
             // Lindungi agar ID tugas 1 dan tugas 2 tidak pernah masuk ke Tugas 3
             if (
               m?.id &&
+              isValidUUID(m.id) &&
               m.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
               m.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
               m.kode_tugas !== 'TUGAS-02-KUIS-ALGO' &&
@@ -102,7 +106,8 @@ export function useTugasSKState() {
           const validMaster = masterTasks.find(m => 
             m.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
             m.kode_tugas !== 'TUGAS-02-BERPIKIR-KOMPUTASIONAL' &&
-            m.kode_tugas !== 'TUGAS-02-KUIS-ALGO'
+            m.kode_tugas !== 'TUGAS-02-KUIS-ALGO' &&
+            isValidUUID(m.id)
           );
           if (validMaster?.id) {
             updateDbTaskId(validMaster.id);
@@ -112,14 +117,19 @@ export function useTugasSKState() {
         console.warn('Cari candidate task master SK:', err);
       }
 
-      // 2. Kueri ke tugas_pengumpulan khusus Tugas 3
-      const { data: subDataList } = await supabase
+      // 2. Kueri ke tugas_pengumpulan khusus Tugas 3 (hanya kolom nyata, TANPA nilai_akhir)
+      const validQueryIds = candidateTaskIds.filter(isValidUUID);
+      const { data: subDataList, error: subErr } = await supabase
         .from('tugas_pengumpulan')
-        .select('id, tugas_id, siswa_id, status, skor, nilai_akhir, persentase_skor, detail_jawaban, catatan_guru, submitted_at, graded_at')
+        .select('id, tugas_id, siswa_id, status, skor, persentase_skor, detail_jawaban, catatan_guru, submitted_at, graded_at')
         .eq('siswa_id', numStudentId)
-        .in('tugas_id', candidateTaskIds)
+        .in('tugas_id', validQueryIds.length > 0 ? validQueryIds : [DEFAULT_SK_TASK_ID])
         .order('submitted_at', { ascending: false })
         .limit(1);
+
+      if (subErr) {
+        console.warn('Kueri tugas_pengumpulan SK returned error:', subErr);
+      }
 
       const subData = subDataList && subDataList.length > 0 ? subDataList[0] : null;
 
@@ -138,7 +148,7 @@ export function useTugasSKState() {
           }
         }
 
-        const officialScore = Number(subData.nilai_akhir ?? subData.skor) || 0;
+        const officialScore = Number(subData.skor) || 0;
 
         // PRIORITAS DATABASE MUTLAK: Pulihkan skor dan status misi dari database
         if (parsedDetail?.scores) {
@@ -154,6 +164,16 @@ export function useTugasSKState() {
 
         if (parsedDetail?.completed) {
           setCompleted(parsedDetail.completed);
+          // Bila melanjutkan petualangan, langsung arahkan ke misi yang belum tuntas
+          if (!parsedDetail.completed.m1) {
+            setActiveMission(1);
+          } else if (!parsedDetail.completed.m2) {
+            setActiveMission(2);
+          } else if (!parsedDetail.completed.m3) {
+            setActiveMission(3);
+          } else if (!parsedDetail.completed.m4) {
+            setActiveMission(4);
+          }
         }
 
         // PRIORITAS DATABASE MUTLAK: Pulihkan seluruh penempatan drag & drop dari database ke localStorage
@@ -287,8 +307,11 @@ export function useTugasSKState() {
             }
           }
 
+          const routeTaskId = location?.state?.taskId || new URLSearchParams(location?.search).get('taskId');
+          const resolvedTargetTaskId = (routeTaskId && isValidUUID(routeTaskId)) ? routeTaskId : dbTaskIdRef.current;
+
           if (parsed.id) {
-            checkExistingSubmission(parsed.id, currentKey, dbTaskIdRef.current);
+            checkExistingSubmission(parsed.id, currentKey, resolvedTargetTaskId);
           } else {
             setLoading(false);
           }
@@ -441,8 +464,8 @@ export function useTugasSKState() {
         console.warn('Gagal cari tugas_master SK saat submit:', e);
       }
     }
-    if (!resolvedTaskId) {
-      resolvedTaskId = '489b0d1e-8fd0-4bfa-9759-3996773347f3';
+    if (!resolvedTaskId || !isValidUUID(resolvedTaskId)) {
+      resolvedTaskId = DEFAULT_SK_TASK_ID;
     }
 
     try {
@@ -451,19 +474,19 @@ export function useTugasSKState() {
       // 1. Cek skor terbaik sebelumnya dari database tugas_pengumpulan
       let previousBestScore = 0;
       if (existingSubmission && (existingSubmission.tugas_id === resolvedTaskId || !existingSubmission.tugas_id)) {
-        previousBestScore = Number(existingSubmission.skor ?? existingSubmission.nilai_akhir ?? 0) || 0;
+        previousBestScore = Number(existingSubmission.skor ?? 0) || 0;
       }
 
       try {
         const { data: dbSub } = await supabase
           .from('tugas_pengumpulan')
-          .select('id, skor, nilai_akhir, detail_jawaban')
+          .select('id, skor, detail_jawaban')
           .eq('siswa_id', studentIdInt)
           .eq('tugas_id', resolvedTaskId)
           .maybeSingle();
 
         if (dbSub) {
-          const dbScore = Number(dbSub.nilai_akhir ?? dbSub.skor ?? 0) || 0;
+          const dbScore = Number(dbSub.skor ?? 0) || 0;
           previousBestScore = Math.max(previousBestScore, dbScore);
         }
       } catch (e) {

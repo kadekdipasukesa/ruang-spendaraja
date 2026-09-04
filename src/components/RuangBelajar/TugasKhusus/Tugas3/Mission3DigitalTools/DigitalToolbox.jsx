@@ -132,12 +132,15 @@ const QUIZ_QUESTIONS = [
   },
 ];
 
-export default function DigitalToolbox({ currentScore, onComplete, onNextMission }) {
+export default function DigitalToolbox({ currentScore, onComplete, onNextMission, initialPlacements }) {
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'tools_drag' | 'kuis'
   const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
 
-  // Penempatan 20 Aplikasi: Cek localStorage (sinkron dengan database), lalu default
+  // Penempatan 20 Aplikasi: Cek initialPlacements, lalu localStorage, lalu default
   const [appPlacements, setAppPlacements] = useState(() => {
+    if (initialPlacements?.appPlacements && typeof initialPlacements.appPlacements === 'object') {
+      return initialPlacements.appPlacements;
+    }
     try {
       const saved = localStorage.getItem('tugas_sk_m3_app_placements');
       if (saved) {
@@ -165,6 +168,9 @@ export default function DigitalToolbox({ currentScore, onComplete, onNextMission
   );
   const [selectedAppItem, setSelectedAppItem] = useState(null);
   const [appChecked, setAppChecked] = useState(() => {
+    if (initialPlacements?.appPlacements && Object.values(initialPlacements.appPlacements).some(Boolean)) {
+      return true;
+    }
     try {
       return Boolean(localStorage.getItem('tugas_sk_m3_app_placements')) || Number(currentScore) >= 20;
     } catch (e) {
@@ -183,6 +189,9 @@ export default function DigitalToolbox({ currentScore, onComplete, onNextMission
 
   // Kuis State (No individual answer reveal, reset required)
   const [quizAnswers, setQuizAnswers] = useState(() => {
+    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
+      return initialPlacements.quizAnswers;
+    }
     try {
       const savedQ = localStorage.getItem('tugas_sk_m3_quiz_answers');
       if (savedQ) {
@@ -202,12 +211,31 @@ export default function DigitalToolbox({ currentScore, onComplete, onNextMission
     return {};
   });
   const [quizChecked, setQuizChecked] = useState(() => {
+    if (initialPlacements?.quizAnswers && Object.values(initialPlacements.quizAnswers).some(Boolean)) {
+      return true;
+    }
     try {
       return Boolean(localStorage.getItem('tugas_sk_m3_quiz_answers')) || Number(currentScore) >= 10;
     } catch (e) {
       return Number(currentScore) >= 10;
     }
   });
+
+  // Sinkronkan prop initialPlacements bila tiba dari database Supabase
+  useEffect(() => {
+    if (initialPlacements?.appPlacements && typeof initialPlacements.appPlacements === 'object') {
+      setAppPlacements(initialPlacements.appPlacements);
+      if (Object.values(initialPlacements.appPlacements).some(Boolean)) {
+        setAppChecked(true);
+      }
+    }
+    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
+      setQuizAnswers(initialPlacements.quizAnswers);
+      if (Object.values(initialPlacements.quizAnswers).some(Boolean)) {
+        setQuizChecked(true);
+      }
+    }
+  }, [initialPlacements]);
 
   useEffect(() => {
     try {

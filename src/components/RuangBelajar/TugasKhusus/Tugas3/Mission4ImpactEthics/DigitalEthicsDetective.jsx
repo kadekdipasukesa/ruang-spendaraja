@@ -160,10 +160,13 @@ const QUIZ_QUESTIONS = [
   },
 ];
 
-export default function DigitalEthicsDetective({ currentScore, onComplete, onSubmitAll, isSubmitting }) {
+export default function DigitalEthicsDetective({ currentScore, onComplete, onSubmitAll, isSubmitting, initialPlacements }) {
   const [activeTab, setActiveTab] = useState('materi');
   const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
   const [caseAnswers, setCaseAnswers] = useState(() => {
+    if (initialPlacements?.caseAnswers && typeof initialPlacements.caseAnswers === 'object') {
+      return initialPlacements.caseAnswers;
+    }
     try {
       const saved = localStorage.getItem('tugas_sk_m4_case_answers');
       if (saved) {
@@ -189,6 +192,9 @@ export default function DigitalEthicsDetective({ currentScore, onComplete, onSub
     };
   });
   const [casesChecked, setCasesChecked] = useState(() => {
+    if (initialPlacements?.caseAnswers && Object.values(initialPlacements.caseAnswers).some(c => c && (c.action || c.impact))) {
+      return true;
+    }
     try {
       return Boolean(localStorage.getItem('tugas_sk_m4_case_answers')) || Number(currentScore) >= 10;
     } catch (e) {
@@ -197,6 +203,9 @@ export default function DigitalEthicsDetective({ currentScore, onComplete, onSub
   });
 
   const [quizAnswers, setQuizAnswers] = useState(() => {
+    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
+      return initialPlacements.quizAnswers;
+    }
     try {
       const savedQ = localStorage.getItem('tugas_sk_m4_quiz_answers');
       if (savedQ) {
@@ -216,12 +225,31 @@ export default function DigitalEthicsDetective({ currentScore, onComplete, onSub
     return {};
   });
   const [quizChecked, setQuizChecked] = useState(() => {
+    if (initialPlacements?.quizAnswers && Object.values(initialPlacements.quizAnswers).some(Boolean)) {
+      return true;
+    }
     try {
       return Boolean(localStorage.getItem('tugas_sk_m4_quiz_answers')) || Number(currentScore) >= 5;
     } catch (e) {
       return Number(currentScore) >= 5;
     }
   });
+
+  // Sinkronkan prop initialPlacements bila tiba dari database Supabase
+  useEffect(() => {
+    if (initialPlacements?.caseAnswers && typeof initialPlacements.caseAnswers === 'object') {
+      setCaseAnswers(initialPlacements.caseAnswers);
+      if (Object.values(initialPlacements.caseAnswers).some(c => c && (c.action || c.impact))) {
+        setCasesChecked(true);
+      }
+    }
+    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
+      setQuizAnswers(initialPlacements.quizAnswers);
+      if (Object.values(initialPlacements.quizAnswers).some(Boolean)) {
+        setQuizChecked(true);
+      }
+    }
+  }, [initialPlacements]);
 
   useEffect(() => {
     try {

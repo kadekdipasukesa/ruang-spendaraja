@@ -153,10 +153,13 @@ const QUIZ_QUESTIONS = [
   },
 ];
 
-export default function DataAppPipeline({ currentScore, onComplete, onNextMission }) {
+export default function DataAppPipeline({ currentScore, onComplete, onNextMission, initialPlacements }) {
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'pipeline' | 'kuis'
   const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
   const [pipelineAnswers, setPipelineAnswers] = useState(() => {
+    if (initialPlacements?.pipelineAnswers && typeof initialPlacements.pipelineAnswers === 'object') {
+      return initialPlacements.pipelineAnswers;
+    }
     try {
       const saved = localStorage.getItem('tugas_sk_m2_pipeline_answers');
       if (saved) {
@@ -180,6 +183,9 @@ export default function DataAppPipeline({ currentScore, onComplete, onNextMissio
     };
   });
   const [pipelineChecked, setPipelineChecked] = useState(() => {
+    if (initialPlacements?.pipelineAnswers && Object.values(initialPlacements.pipelineAnswers).some(p => p && (p.input || p.app || p.output))) {
+      return true;
+    }
     try {
       return Boolean(localStorage.getItem('tugas_sk_m2_pipeline_answers')) || Number(currentScore) >= 10;
     } catch (e) {
@@ -188,6 +194,9 @@ export default function DataAppPipeline({ currentScore, onComplete, onNextMissio
   });
 
   const [quizAnswers, setQuizAnswers] = useState(() => {
+    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
+      return initialPlacements.quizAnswers;
+    }
     try {
       const savedQ = localStorage.getItem('tugas_sk_m2_quiz_answers');
       if (savedQ) {
@@ -207,12 +216,31 @@ export default function DataAppPipeline({ currentScore, onComplete, onNextMissio
     return {};
   });
   const [quizChecked, setQuizChecked] = useState(() => {
+    if (initialPlacements?.quizAnswers && Object.values(initialPlacements.quizAnswers).some(Boolean)) {
+      return true;
+    }
     try {
       return Boolean(localStorage.getItem('tugas_sk_m2_quiz_answers')) || Number(currentScore) >= 10;
     } catch (e) {
       return Number(currentScore) >= 10;
     }
   });
+
+  // Sinkronkan prop initialPlacements bila tiba dari database Supabase
+  useEffect(() => {
+    if (initialPlacements?.pipelineAnswers && typeof initialPlacements.pipelineAnswers === 'object') {
+      setPipelineAnswers(initialPlacements.pipelineAnswers);
+      if (Object.values(initialPlacements.pipelineAnswers).some(p => p && (p.input || p.app || p.output))) {
+        setPipelineChecked(true);
+      }
+    }
+    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
+      setQuizAnswers(initialPlacements.quizAnswers);
+      if (Object.values(initialPlacements.quizAnswers).some(Boolean)) {
+        setQuizChecked(true);
+      }
+    }
+  }, [initialPlacements]);
 
   useEffect(() => {
     try {

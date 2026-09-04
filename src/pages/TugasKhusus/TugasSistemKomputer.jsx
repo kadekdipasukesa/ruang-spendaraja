@@ -72,6 +72,7 @@ export default function TugasSistemKomputer() {
           {activeMission === 1 && (
             <HardwareExplorer
               currentScore={scores.m1}
+              initialPlacements={existingSubmission?.detail_jawaban?.placements?.m1 || existingSubmission?.detail_jawaban?.missionData?.m1}
               onComplete={handleMissionComplete}
               onNextMission={() => setActiveMission(2)}
             />
@@ -79,6 +80,7 @@ export default function TugasSistemKomputer() {
           {activeMission === 2 && (
             <DataAppPipeline
               currentScore={scores.m2}
+              initialPlacements={existingSubmission?.detail_jawaban?.placements?.m2 || existingSubmission?.detail_jawaban?.missionData?.m2}
               onComplete={handleMissionComplete}
               onNextMission={() => setActiveMission(3)}
             />
@@ -86,6 +88,7 @@ export default function TugasSistemKomputer() {
           {activeMission === 3 && (
             <DigitalToolbox
               currentScore={scores.m3}
+              initialPlacements={existingSubmission?.detail_jawaban?.placements?.m3 || existingSubmission?.detail_jawaban?.missionData?.m3}
               onComplete={handleMissionComplete}
               onNextMission={() => setActiveMission(4)}
             />
@@ -93,6 +96,7 @@ export default function TugasSistemKomputer() {
           {activeMission === 4 && (
             <DigitalEthicsDetective
               currentScore={scores.m4}
+              initialPlacements={existingSubmission?.detail_jawaban?.placements?.m4 || existingSubmission?.detail_jawaban?.missionData?.m4}
               onComplete={handleMissionComplete}
               onSubmitAll={handleSubmitAll}
               isSubmitting={submitting}

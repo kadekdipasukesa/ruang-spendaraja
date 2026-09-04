@@ -170,12 +170,15 @@ const QUIZ_QUESTIONS = [
   },
 ];
 
-export default function HardwareExplorer({ currentScore, onComplete, onNextMission }) {
+export default function HardwareExplorer({ currentScore, onComplete, onNextMission, initialPlacements }) {
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'hw_drag' | 'sw_drag' | 'kuis'
   const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
 
-  // State Penempatan 20 Komponen Hardware: Cek localStorage (sinkron dengan database), lalu default
+  // State Penempatan 20 Komponen Hardware: Cek initialPlacements, lalu localStorage, lalu default
   const [hwPlacements, setHwPlacements] = useState(() => {
+    if (initialPlacements?.hwPlacements && typeof initialPlacements.hwPlacements === 'object') {
+      return initialPlacements.hwPlacements;
+    }
     try {
       const saved = localStorage.getItem('tugas_sk_m1_hw_placements');
       if (saved) {
@@ -203,15 +206,26 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
   );
   const [selectedHwItem, setSelectedHwItem] = useState(null);
   const [hwChecked, setHwChecked] = useState(() => {
+    if (initialPlacements?.hwPlacements && Object.values(initialPlacements.hwPlacements).some(Boolean)) {
+      return true;
+    }
     try {
-      return Boolean(localStorage.getItem('tugas_sk_m1_hw_placements')) || Number(currentScore) >= 15;
+      const saved = localStorage.getItem('tugas_sk_m1_hw_placements');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && Object.values(parsed).some(Boolean)) return true;
+      }
+      return Number(currentScore) >= 15;
     } catch (e) {
       return Number(currentScore) >= 15;
     }
   });
 
-  // State Penempatan 20 Perangkat Lunak: Cek localStorage (sinkron dengan database), lalu default
+  // State Penempatan 20 Perangkat Lunak: Cek initialPlacements, lalu localStorage, lalu default
   const [swPlacements, setSwPlacements] = useState(() => {
+    if (initialPlacements?.swPlacements && typeof initialPlacements.swPlacements === 'object') {
+      return initialPlacements.swPlacements;
+    }
     try {
       const saved = localStorage.getItem('tugas_sk_m1_sw_placements');
       if (saved) {
@@ -239,12 +253,42 @@ export default function HardwareExplorer({ currentScore, onComplete, onNextMissi
   );
   const [selectedSwItem, setSelectedSwItem] = useState(null);
   const [swChecked, setSwChecked] = useState(() => {
+    if (initialPlacements?.swPlacements && Object.values(initialPlacements.swPlacements).some(Boolean)) {
+      return true;
+    }
     try {
-      return Boolean(localStorage.getItem('tugas_sk_m1_sw_placements')) || Number(currentScore) >= 25;
+      const saved = localStorage.getItem('tugas_sk_m1_sw_placements');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && Object.values(parsed).some(Boolean)) return true;
+      }
+      return Number(currentScore) >= 25;
     } catch (e) {
       return Number(currentScore) >= 25;
     }
   });
+
+  // Sinkronkan prop initialPlacements bila tiba dari kueri database Supabase
+  useEffect(() => {
+    if (initialPlacements?.hwPlacements && typeof initialPlacements.hwPlacements === 'object') {
+      setHwPlacements(initialPlacements.hwPlacements);
+      if (Object.values(initialPlacements.hwPlacements).some(Boolean)) {
+        setHwChecked(true);
+      }
+    }
+    if (initialPlacements?.swPlacements && typeof initialPlacements.swPlacements === 'object') {
+      setSwPlacements(initialPlacements.swPlacements);
+      if (Object.values(initialPlacements.swPlacements).some(Boolean)) {
+        setSwChecked(true);
+      }
+    }
+    if (initialPlacements?.quizAnswers && typeof initialPlacements.quizAnswers === 'object') {
+      setQuizAnswers(initialPlacements.quizAnswers);
+      if (Object.values(initialPlacements.quizAnswers).some(Boolean)) {
+        setQuizChecked(true);
+      }
+    }
+  }, [initialPlacements]);
 
   // Simpan draft penempatan ke localStorage agar aman saat berpindah tab/misi
   useEffect(() => {

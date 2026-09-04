@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../../../../lib/supabaseClient';
 import { syncStudentPointsAfterTask } from '../../../../utils/pointLogger';
 
+const isValidUUID = (str) =>
+  typeof str === 'string' &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+
 export function useTugasBKState() {
   const [user, setUser] = useState(null);
   const [activeMission, setActiveMission] = useState(1);
@@ -59,12 +63,8 @@ export function useTugasBKState() {
       const candidateTaskIds = [
         explicitTaskId,
         dbTaskId,
-        '595d2d95-d16f-4582-9be5-93d9db451f47',
         'c2243c08-ce28-4fe7-8ff7-86f9b546ecd0',
-        'TUGAS-02-BERPIKIR-KOMPUTASIONAL',
-        'tugas-inf-02',
-        'TUGAS_BK_01'
-      ].filter(Boolean);
+      ].filter(isValidUUID);
 
       try {
         const { data: masterTasks } = await supabase
@@ -76,9 +76,11 @@ export function useTugasBKState() {
           masterTasks.forEach((m) => {
             if (
               m?.id &&
+              isValidUUID(m.id) &&
               m.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
               m.kode_tugas !== 'TUGAS-03-SISTEM-KOMPUTER' &&
               m.kode_tugas !== 'tugas-inf-03' &&
+              m.id !== '595d2d95-d16f-4582-9be5-93d9db451f47' &&
               !candidateTaskIds.includes(m.id)
             ) {
               candidateTaskIds.push(m.id);
@@ -87,7 +89,8 @@ export function useTugasBKState() {
           const validTask = masterTasks.find(m => 
             m.kode_tugas !== 'TUGAS-01-SIMULASI-FOLDER' &&
             m.kode_tugas !== 'TUGAS-03-SISTEM-KOMPUTER' &&
-            m.kode_tugas !== 'tugas-inf-03'
+            m.kode_tugas !== 'tugas-inf-03' &&
+            isValidUUID(m.id)
           );
           if (validTask?.id && !dbTaskId) {
             setDbTaskId(validTask.id);
@@ -97,14 +100,19 @@ export function useTugasBKState() {
         console.warn('Cari candidate task master BK:', err);
       }
 
-      // 2. Kueri ke tugas_pengumpulan khusus Tugas 2
-      const { data: subDataList } = await supabase
+      // 2. Kueri ke tugas_pengumpulan khusus Tugas 2 (hanya kolom nyata, tanpa nilai_akhir)
+      const validQueryIds = candidateTaskIds.filter(isValidUUID);
+      const { data: subDataList, error: subErr } = await supabase
         .from('tugas_pengumpulan')
-        .select('id, tugas_id, siswa_id, status, skor, nilai_akhir, persentase_skor, detail_jawaban, catatan_guru, submitted_at, graded_at')
+        .select('id, tugas_id, siswa_id, status, skor, persentase_skor, detail_jawaban, catatan_guru, submitted_at, graded_at')
         .eq('siswa_id', numStudentId)
-        .in('tugas_id', candidateTaskIds)
+        .in('tugas_id', validQueryIds.length > 0 ? validQueryIds : ['c2243c08-ce28-4fe7-8ff7-86f9b546ecd0'])
         .order('submitted_at', { ascending: false })
         .limit(1);
+
+      if (subErr) {
+        console.warn('Kueri tugas_pengumpulan BK returned error:', subErr);
+      }
 
       const subData = subDataList && subDataList.length > 0 ? subDataList[0] : null;
 
@@ -123,7 +131,7 @@ export function useTugasBKState() {
           }
         }
 
-        const officialScore = Number(subData.nilai_akhir ?? subData.skor) || 0;
+        const officialScore = Number(subData.skor) || 0;
 
         // UTAMAKAN DATABASE: Pulihkan progres resmi dari snapshot database
         if (parsedDetail?.scores) {
@@ -335,19 +343,19 @@ export function useTugasBKState() {
       // 1. Cek skor terbaik sebelumnya HANYA dari tugas_pengumpulan untuk tugas ini
       let previousBestScore = 0;
       if (existingSubmission && (existingSubmission.tugas_id === resolvedTaskId || !existingSubmission.tugas_id)) {
-        previousBestScore = Number(existingSubmission.skor ?? existingSubmission.nilai_akhir ?? 0) || 0;
+        previousBestScore = Number(existingSubmission.skor ?? 0) || 0;
       }
 
       try {
         const { data: dbSub } = await supabase
           .from('tugas_pengumpulan')
-          .select('id, skor, nilai_akhir')
+          .select('id, skor')
           .eq('siswa_id', studentIdInt)
           .eq('tugas_id', resolvedTaskId)
           .maybeSingle();
 
         if (dbSub) {
-          const dbScore = Number(dbSub.nilai_akhir ?? dbSub.skor ?? 0) || 0;
+          const dbScore = Number(dbSub.skor ?? 0) || 0;
           previousBestScore = Math.max(previousBestScore, dbScore);
         }
       } catch (e) {
