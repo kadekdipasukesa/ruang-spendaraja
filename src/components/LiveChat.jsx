@@ -5,15 +5,16 @@ import ChatHeader from './LiveChat/ChatHeader';
 import ChatMessageItem from './LiveChat/ChatMessageItem';
 import ChatInputForm from './LiveChat/ChatInputForm';
 import { isMessageInRoom } from './LiveChat/chatHelpers';
-import { Users, GraduationCap, MessageSquareOff } from 'lucide-react';
+import { Users, GraduationCap, MessageSquareOff, Trash2 } from 'lucide-react';
 
-export default function LiveChat({ student, externalTrigger, setExternalTrigger, setUnreadExternal }) {
+export default function LiveChat({ student, externalTrigger, setExternalTrigger, setUnreadExternal, onlineCount = 0, onOpenStats }) {
     // ==========================================
     // 1. STATE & USER PERMISSION
     // ==========================================
     const userRole = String(student?.role || '').toLowerCase().trim();
-    const isUserGuru = userRole === 'guru';
-    const isUserAdmin = userRole === 'admin';
+    const userRole2 = String(student?.role_2 || '').toLowerCase().trim();
+    const isUserGuru = userRole === 'guru' || userRole2 === 'guru';
+    const isUserAdmin = userRole === 'admin' || userRole2 === 'admin';
 
     // Kamar aktif: default 'guru' untuk guru, default 'siswa' untuk siswa & admin
     const [activeRoom, setActiveRoom] = useState(isUserGuru ? 'guru' : 'siswa');
@@ -31,6 +32,11 @@ export default function LiveChat({ student, externalTrigger, setExternalTrigger,
     const [hasMore, setHasMore] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [showEmoji, setShowEmoji] = useState(false);
+
+    // State dialog konfirmasi hapus khusus Admin (bebas dari pemblokiran window.confirm di iframe)
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState(null);
 
     // Cache profil sender: { [sender_id]: { id, NAMA, Kelas, role } }
     const [senderMap, setSenderMap] = useState({});
@@ -309,15 +315,32 @@ export default function LiveChat({ student, externalTrigger, setExternalTrigger,
 
         // Skema baru: sender_id, pesan, target_type, target_id, is_read
         const targetRoomId = effectiveRoom === 'guru' ? 'group_guru' : 'group_siswa';
-        const senderId = String(student.id || student.NISN || '');
+        const senderId = String(student?.id || student?.NISN || student?.NAMA || 'user');
 
-        await supabase.from('livechat').insert([{
+        const { data, error } = await supabase.from('livechat').insert([{
             sender_id: senderId,
             pesan: cleanMessage,
             target_type: 'group',
             target_id: targetRoomId,
             is_read: false
-        }]);
+        }]).select();
+
+        if (error) {
+            console.error("Gagal kirim pesan ke livechat:", error);
+            // Kembalikan teks ke input agar tulisan pengguna tidak hilang
+            setNewMessage(messageText);
+            alert(`Pesan gagal dikirim ke database: ${error.message}\n\n(Pastikan RLS / Policy INSERT pada tabel public.livechat sudah diizinkan di Supabase)`);
+            return;
+        }
+
+        // Tampilkan langsung di layar jika data berhasil dibuat (sebelum atau tanpa menunggu realtime)
+        if (data && data.length > 0) {
+            const inserted = data[0];
+            setMessages((prev) => {
+                if (prev.some(m => m.id === inserted.id)) return prev;
+                return [...prev, inserted];
+            });
+        }
     };
 
     const toggleLockAction = async () => {
@@ -329,17 +352,62 @@ export default function LiveChat({ student, externalTrigger, setExternalTrigger,
         }, { onConflict: 'game_id, class_name' });
     };
 
-    const handleDeleteAllInRoom = async () => {
+    // Buka modal konfirmasi hapus pesan tunggal (kebal dari pemblokiran browser/iframe)
+    const handleDeleteSingleMessage = (messageId) => {
+        if (!messageId) return;
+        setDeleteError(null);
+        setDeleteTarget({
+            type: 'single',
+            id: messageId,
+            title: 'Hapus Pesan Ini?',
+            description: 'Pesan akan dihapus secara permanen dari database.'
+        });
+    };
+
+    // Buka modal konfirmasi hapus seluruh riwayat obrolan di kamar aktif
+    const handleDeleteAllInRoom = () => {
         const targetRoomName = effectiveRoom === 'guru' ? 'Ruang Guru' : 'Ruang Siswa';
         const targetRoomId = effectiveRoom === 'guru' ? 'group_guru' : 'group_siswa';
+        setDeleteError(null);
+        setDeleteTarget({
+            type: 'room',
+            id: targetRoomId,
+            title: `Hapus Riwayat ${targetRoomName}?`,
+            description: `Semua pesan di ${targetRoomName} akan dihapus secara permanen dari database.`
+        });
+    };
 
-        if (window.confirm(`Hapus semua riwayat obrolan di ${targetRoomName}?`)) {
-            await supabase
-                .from('livechat')
-                .delete()
-                .or(`target_id.eq.${targetRoomId},and(target_id.is.null,${effectiveRoom === 'guru' ? 'role.eq.guru' : 'not.role.eq.guru'})`);
+    // Eksekusi penghapusan di Supabase setelah dikonfirmasi via modal
+    const executeConfirmDelete = async () => {
+        if (!deleteTarget || isDeleting) return;
+        setIsDeleting(true);
+        setDeleteError(null);
 
-            setMessages(prev => prev.filter(msg => !isMessageInRoom(msg, effectiveRoom)));
+        try {
+            if (deleteTarget.type === 'single') {
+                const { error } = await supabase
+                    .from('livechat')
+                    .delete()
+                    .eq('id', deleteTarget.id);
+
+                if (error) throw error;
+                setMessages(prev => prev.filter(m => m.id !== deleteTarget.id));
+            } else if (deleteTarget.type === 'room') {
+                const { error } = await supabase
+                    .from('livechat')
+                    .delete()
+                    .eq('target_id', deleteTarget.id);
+
+                if (error) throw error;
+                setMessages(prev => prev.filter(msg => !isMessageInRoom(msg, effectiveRoom)));
+            }
+
+            setDeleteTarget(null);
+        } catch (err) {
+            console.error("Gagal menghapus pesan livechat:", err);
+            setDeleteError(err.message || 'Gagal menghapus dari database');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -375,6 +443,8 @@ export default function LiveChat({ student, externalTrigger, setExternalTrigger,
                         setSelectedClass={setSelectedClass}
                         allLockStatuses={allLockStatuses}
                         onToggleLock={toggleLockAction}
+                        onlineCount={onlineCount}
+                        onOpenStats={onOpenStats}
                     />
 
                     {/* Chat Messages List */}
@@ -415,6 +485,8 @@ export default function LiveChat({ student, externalTrigger, setExternalTrigger,
                                     currentUserId={student.id || student.NISN}
                                     currentStudent={student}
                                     senderMap={senderMap}
+                                    isUserAdmin={isUserAdmin}
+                                    onDeleteMessage={handleDeleteSingleMessage}
                                 />
                             ))
                         )}
@@ -431,6 +503,51 @@ export default function LiveChat({ student, externalTrigger, setExternalTrigger,
                         setShowEmoji={setShowEmoji}
                         onEmojiClick={onEmojiClick}
                     />
+
+                    {/* Modal Dialog Konfirmasi Hapus Khusus Admin (Bebas dari limitasi iframe) */}
+                    {deleteTarget && (
+                        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+                            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 w-full max-w-[280px] shadow-2xl text-center space-y-3">
+                                <div className="w-12 h-12 mx-auto rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400">
+                                    <Trash2 size={22} />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-bold text-white">{deleteTarget.title}</h4>
+                                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">{deleteTarget.description}</p>
+                                </div>
+                                {deleteError && (
+                                    <div className="text-[11px] text-red-300 bg-red-500/15 p-2 rounded-xl border border-red-500/30 leading-snug">
+                                        {deleteError}
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-2 pt-1">
+                                    <button
+                                        type="button"
+                                        disabled={isDeleting}
+                                        onClick={() => {
+                                            setDeleteTarget(null);
+                                            setDeleteError(null);
+                                        }}
+                                        className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors cursor-pointer"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={isDeleting}
+                                        onClick={executeConfirmDelete}
+                                        className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-500 text-white transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-red-600/30 active:scale-95"
+                                    >
+                                        {isDeleting ? (
+                                            <span className="inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            'Ya, Hapus'
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

@@ -22,7 +22,8 @@ export default function LiveChat({
     student, 
     externalTrigger, 
     setExternalTrigger, 
-    setUnreadExternal 
+    setUnreadExternal,
+    onlineCount = 0
 })
 ```
 
@@ -32,6 +33,7 @@ export default function LiveChat({
 | `externalTrigger` | `Boolean` | Pemicu eksternal dari `FloatingOnline` untuk membuka modal chat. |
 | `setExternalTrigger` | `Function` | Callback untuk mengembalikan nilai `externalTrigger` menjadi `false` setelah jendela obrolan berhasil dibuka. |
 | `setUnreadExternal` | `Function` | Callback untuk mengirimkan jumlah pesan belum dibaca (*unread count*) ke komponen induk `FloatingOnline`. |
+| `onlineCount` | `Number` | Jumlah total pengguna yang sedang aktif/online dari Supabase Presence `FloatingOnline`. |
 
 ---
 
@@ -147,9 +149,17 @@ Alur Kontrol Kunci Kelas (GAME_CONTROLS):
   - Hanya muncul jika `student.role === 'admin'`.
   - Admin dapat memilih kelas dari dropdown dan menekan tombol gembok untuk toggle status kunci (`Lock` / `Unlock`) yang disimpan menggunakan operasi `.upsert()` pada `game_controls`.
 
-### C. Hapus Seluruh Riwayat Chat (Admin Only)
-* Ikon tempat sampah (`Trash2`) di header hanya muncul untuk admin.
-* Melakukan konfirmasi `window.confirm` dan mengeksekusi `.delete().neq('id', '00000000-0000-0000-0000-000000000000')` pada tabel `livechat`.
+### C. Hapus Riwayat Chat & Pesan Tunggal (Admin Only)
+* **Hapus Semua Riwayat Obrolan per Kamar**:
+  - Ikon tempat sampah (`Trash2`) di header hanya muncul untuk admin (`isUserAdmin = true`).
+  - Menampilkan modal dialog konfirmasi in-app elegan (bebas dari pemblokiran dialog `window.confirm` di lingkungan browser/iframe).
+  - Mengeksekusi `.delete().eq('target_id', targetRoomId)` pada tabel `livechat` (di mana `targetRoomId` bernilai `'group_siswa'` atau `'group_guru'`).
+  - State lokal langsung menyaring pesan di kamar tersebut, dan Supabase realtime menyiarkan event DELETE ke seluruh klien.
+* **Hapus Pesan Tunggal (Per-Item)**:
+  - Khusus akun admin, setiap item pesan di `ChatMessageItem.jsx` dilengkapi tombol hapus (`Trash2` kecil) di sisi bubble pesan.
+  - Menampilkan modal dialog konfirmasi in-app elegan.
+  - Mengeksekusi `.delete().eq('id', messageId)` pada tabel `livechat`.
+  - Menghapus pesan tersebut seketika dari layar pengirim dan secara realtime di seluruh layar pengguna lain.
 
 ---
 
@@ -256,7 +266,7 @@ Komponen pratinjau tautan dipecah menjadi tiga sub-modul terstruktur untuk menja
      - Seluruh kartu `LinkPreviewCard` lain di dalam obrolan yang sedang memutar video otomatis mendengarkan event ini dan menutup pemutarnya (`setIsPlaying(false)`). Hal ini menjamin **tidak ada dua video yang berbunyi atau berputar bersamaan**.
 
 * **Deteksi Instan Sisi Klien**:
-  - **YouTube**: Menangkap ID video (`v=...`, `youtu.be/...`, atau `/shorts/...`) dan langsung menyediakan thumbnail resmi dan judul "Video YouTube".
+  - **YouTube**: Menangkap ID video dari berbagai format URL (`v=...`, `youtu.be/...`, `/shorts/...`, `/embed/...`, `/live/...`, dan parameter campuran seperti playlist/radio mix), membersihkan entitas URL (`&amp;` -> `&`), menggunakan domain aman `https://www.youtube-nocookie.com/embed/...` untuk pemutaran video tanpa terhalang isolasi iframe, serta menyediakan tombol aksi cepat `Buka` untuk menonton langsung di YouTube.
   - **TikTok**: Mengenali URL `tiktok.com` maupun shortlink `vt.tiktok.com` / `vm.tiktok.com`.
   - **Instagram**: Mengenali URL Reel (`/reel/`), Postingan (`/p/`), dan TV (`/tv/`).
   - **Scratch**: Mendeteksi ID proyek dan memuat thumbnail poster Scratch `https://cdn2.scratch.mit.edu/get_image/project/${projectId}_480x360.png`.
@@ -324,7 +334,7 @@ Untuk menjaga keterbacaan kode (*clean code*), kemudahan pemeliharaan, serta per
    - Menangani sinkronisasi profil pengirim via kueri dinamis `master_siswa`.
    - Mengelola logika auto-scroll dan load more riwayat obrolan.
 2. **`src/components/LiveChat/ChatHeader.jsx`**:
-   - Menampilkan judul, indikator status online, tombol hapus riwayat per-kamar (khusus admin), dan tombol tutup.
+   - Menampilkan judul "Live Chat", indikator pulse hijau, ikon `Users` beserta jumlah total pengguna online (`onlineCount`) tanpa label tambahan, tombol hapus riwayat per-kamar (khusus admin), dan tombol tutup.
    - Menyediakan tombol tab switcher kamar (`Ruang Siswa` vs `Ruang Guru`) dan kontrol kunci chat kelas untuk Admin.
 3. **`src/components/LiveChat/ChatMessageItem.jsx`**:
    - Merender setiap baris bubble pesan dengan format nama Title Case 2 kata (`Dipa Sukesa`), role badge (`Admin`, `Guru`, atau kelas seperti `7.1`), ikon verifikasi (`ShieldCheck` / `GraduationCap`), teks aman sensor, jam kirim, serta kartu preview link/video.

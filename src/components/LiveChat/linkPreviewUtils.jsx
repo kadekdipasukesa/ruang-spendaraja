@@ -30,7 +30,12 @@ export const extractFirstUrl = (text) => {
  */
 export const getYouTubeVideoId = (urlStr) => {
     try {
-        const url = new URL(urlStr);
+        if (!urlStr || typeof urlStr !== 'string') return null;
+        let formattedUrl = urlStr.trim().replace(/&amp;/g, '&');
+        if (!/^https?:\/\//i.test(formattedUrl)) {
+            formattedUrl = `https://${formattedUrl}`;
+        }
+        const url = new URL(formattedUrl);
         const hostname = url.hostname.toLowerCase().replace(/^www\./, '');
 
         if (hostname === 'youtu.be') {
@@ -38,9 +43,9 @@ export const getYouTubeVideoId = (urlStr) => {
         }
         if (hostname.includes('youtube.com')) {
             if (url.searchParams.get('v')) return url.searchParams.get('v');
-            if (url.pathname.includes('/shorts/')) return url.pathname.split('/shorts/')[1]?.split('/')[0]?.split('?')[0];
-            if (url.pathname.includes('/embed/')) return url.pathname.split('/embed/')[1]?.split('/')[0]?.split('?')[0];
-            if (url.pathname.includes('/live/')) return url.pathname.split('/live/')[1]?.split('/')[0]?.split('?')[0];
+            if (url.pathname.includes('/shorts/')) return url.pathname.split('/shorts/')[1]?.split('/')[0]?.split('?')[0] || null;
+            if (url.pathname.includes('/embed/')) return url.pathname.split('/embed/')[1]?.split('/')[0]?.split('?')[0] || null;
+            if (url.pathname.includes('/live/')) return url.pathname.split('/live/')[1]?.split('/')[0]?.split('?')[0] || null;
         }
         return null;
     } catch {

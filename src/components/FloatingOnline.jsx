@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import LiveChat from './LiveChat'; // Pastikan path file benar
+import ModalDetailStatistik from './ModalDetailStatistik';
 import { MessageCircle } from 'lucide-react';
 
 // NAMA CHANNEL HARUS SAMA UNTUK SEMUA USER AGAR BERADA DI DALAM SATU ROOM
@@ -198,35 +199,13 @@ export default function FloatingOnline({ user, activeTab }) {
                 </div>
             </div>
 
-            {/* Modal Detail Statistik */}
-            {showDetail && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-slate-900 border border-emerald-500/30 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                        <div className="p-5 border-b border-emerald-500/20 flex justify-between items-center bg-emerald-500/5">
-                            <h3 className="font-bold text-emerald-400 text-sm">User Online</h3>
-                            <button onClick={() => setShowDetail(false)} className="text-slate-400 p-2 hover:text-white">✕</button>
-                        </div>
-                        <div className="max-h-80 overflow-y-auto p-2 scrollbar-hide">
-                            {onlineUsers.map((u, index) => (
-                                <div key={index} className="flex justify-between items-center p-3 hover:bg-emerald-500/5 rounded-2xl border-b border-slate-800/50 last:border-0 transition-all">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-[10px] font-bold text-emerald-500 border border-emerald-500/20 uppercase">
-                                            {u.nama?.charAt(0)}
-                                        </div>
-                                        <div className="flex flex-col text-left">
-                                            <span className="text-xs font-semibold text-slate-200">{u.nama}</span>
-                                            <span className="text-[8px] text-emerald-500/60 font-medium">📍 {u.posisi || 'Beranda'}</span>
-                                        </div>
-                                    </div>
-                                    <span className="text-[9px] px-2 py-1 bg-slate-800 text-emerald-400 rounded-lg border border-emerald-500/20 font-bold">
-                                        {u.kelas}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Modal Detail Statistik (Komponen Terpisah di Lapisan Paling Depan via Portal) */}
+            <ModalDetailStatistik 
+                isOpen={showDetail}
+                onClose={() => setShowDetail(false)}
+                onlineUsers={onlineUsers}
+                onlineCount={onlineCount}
+            />
 
             {/* RENDER LIVE CHAT */}
             {/* HUBUNGKAN setUnreadExternal dengan setUnreadCount agar fungsi terdeteksi */}
@@ -235,6 +214,8 @@ export default function FloatingOnline({ user, activeTab }) {
                 externalTrigger={triggerChat} 
                 setExternalTrigger={setTriggerChat} 
                 setUnreadExternal={setUnreadCount} 
+                onlineCount={onlineCount}
+                onOpenStats={() => setShowDetail(true)}
             />
         </>
     );

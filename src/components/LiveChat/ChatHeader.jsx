@@ -11,15 +11,31 @@ export default function ChatHeader({
     selectedClass,
     setSelectedClass,
     allLockStatuses,
-    onToggleLock
+    onToggleLock,
+    onlineCount = 0,
+    onOpenStats
 }) {
     return (
         <div className="p-3 bg-slate-800 border-b border-slate-700">
             <div className="flex justify-between items-center">
                 <div>
-                    <div className="flex items-center gap-1.5">
-                        <h3 className="text-sm font-bold text-white tracking-wide">Live Chat</h3>
-                        <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
+                            <h3 className="text-sm font-bold text-white tracking-wide">Live Chat</h3>
+                            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        </div>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenStats?.();
+                            }}
+                            title="Lihat Detail Statistik Pengguna Online"
+                            className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 active:scale-95 px-1.5 py-0.5 rounded-full border border-emerald-500/30 transition-all cursor-pointer shadow-xs"
+                        >
+                            <Users size={12} />
+                            <span>{onlineCount}</span>
+                        </button>
                     </div>
                     <p className="text-[10px] text-slate-400">
                         {effectiveRoom === 'guru' ? 'Diskusi Guru' : 'Obrolan Siswa'}
@@ -28,14 +44,19 @@ export default function ChatHeader({
                 <div className="flex items-center gap-1">
                     {isUserAdmin && (
                         <button
-                            onClick={onDeleteAllInRoom}
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteAllInRoom?.();
+                            }}
                             title={`Hapus riwayat ${effectiveRoom === 'guru' ? 'Ruang Guru' : 'Ruang Siswa'}`}
-                            className="p-1.5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-lg transition-colors cursor-pointer"
+                            className="p-1.5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-lg transition-colors cursor-pointer active:scale-95"
                         >
                             <Trash2 size={16} />
                         </button>
                     )}
                     <button
+                        type="button"
                         onClick={onClose}
                         title="Tutup Chat"
                         className="p-1.5 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"

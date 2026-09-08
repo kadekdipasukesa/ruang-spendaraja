@@ -136,15 +136,26 @@ async function startServer() {
           if (ytRes.ok) {
             const ytData = (await ytRes.json()) as any;
             clearTimeout(timeout);
+            let videoId: string | null = null;
+            if (hostname === "youtu.be") {
+              videoId = parsedUrl.pathname.slice(1).split("/")[0]?.split("?")[0] || null;
+            } else if (parsedUrl.searchParams.get("v")) {
+              videoId = parsedUrl.searchParams.get("v");
+            } else if (parsedUrl.pathname.includes("/shorts/")) {
+              videoId = parsedUrl.pathname.split("/shorts/")[1]?.split("/")[0]?.split("?")[0] || null;
+            } else if (parsedUrl.pathname.includes("/embed/")) {
+              videoId = parsedUrl.pathname.split("/embed/")[1]?.split("/")[0]?.split("?")[0] || null;
+            }
             return res.json({
               url: targetUrl,
               domain: "youtube.com",
               title: ytData.title || "Video YouTube",
               description: ytData.author_name ? `Channel: ${ytData.author_name}` : "Tonton video di YouTube",
-              image: ytData.thumbnail_url || null,
+              image: ytData.thumbnail_url || (videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null),
               siteName: "YouTube",
               isVideo: true,
               platform: "youtube",
+              videoId: videoId || undefined,
             });
           }
         } catch {

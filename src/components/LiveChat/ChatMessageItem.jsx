@@ -1,9 +1,9 @@
 import React from 'react';
-import { ShieldCheck, GraduationCap } from 'lucide-react';
+import { ShieldCheck, GraduationCap, Trash2 } from 'lucide-react';
 import LinkPreviewCard, { extractFirstUrl, renderMessageText } from './LinkPreviewCard';
 import { getShortName, getNameColor, getSenderRoleOrClass } from './chatHelpers';
 
-export default function ChatMessageItem({ msg, currentUserId, currentStudent, senderMap }) {
+export default function ChatMessageItem({ msg, currentUserId, currentStudent, senderMap, isUserAdmin, onDeleteMessage }) {
     const isMe = String(msg.sender_id || msg.student_id) === String(currentUserId);
     const sender = senderMap[String(msg.sender_id || msg.student_id)] || (isMe ? currentStudent : null);
 
@@ -25,7 +25,7 @@ export default function ChatMessageItem({ msg, currentUserId, currentStudent, se
                     <span>{getShortName(senderName)}{senderRoleOrClass ? ` • ${senderRoleOrClass}` : ''}</span>
                 </span>
             )}
-            <div className="flex items-end gap-x-3 min-w-0 max-w-full">
+            <div className={`flex items-end gap-1.5 min-w-0 max-w-full group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                 <div
                     className={`max-w-[260px] text-xs px-3 py-2 rounded-2xl break-words leading-relaxed overflow-hidden ${
                         isMe
@@ -38,7 +38,7 @@ export default function ChatMessageItem({ msg, currentUserId, currentStudent, se
                     </p>
                     {hasUrl && (
                         <div className="mt-2 -mx-1">
-                            <LinkPreviewCard text={msg.pesan} isMe={isMe} />
+                            <LinkPreviewCard url={extractFirstUrl(msg.pesan)} text={msg.pesan} isMe={isMe} />
                         </div>
                     )}
                     <p className={`text-[9px] mt-1 text-right ${
@@ -47,6 +47,19 @@ export default function ChatMessageItem({ msg, currentUserId, currentStudent, se
                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                 </div>
+                {isUserAdmin && onDeleteMessage && (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteMessage?.(msg.id);
+                        }}
+                        title="Hapus pesan ini (Admin)"
+                        className="opacity-70 hover:opacity-100 p-1.5 rounded-md hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all cursor-pointer mb-1 shrink-0 active:scale-90"
+                    >
+                        <Trash2 size={14} />
+                    </button>
+                )}
             </div>
         </div>
     );

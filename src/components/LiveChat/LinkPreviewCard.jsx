@@ -23,8 +23,9 @@ const previewCache = new Map();
  * Komponen Kartu Preview Link ala WhatsApp dengan Thumbnail & Pemutar Video Eksklusif
  * (Jika satu video diputar, video lain di chat otomatis tertutup agar tidak berbunyi bersamaan)
  */
-export default function LinkPreviewCard({ url }) {
-    const targetUrl = cleanUrl(url);
+export default function LinkPreviewCard({ url, text, isMe }) {
+    const rawUrl = url || (text ? extractFirstUrl(text) : '');
+    const targetUrl = cleanUrl(rawUrl);
 
     // ID unik untuk setiap kartu preview agar event playback eksklusif dapat saling berkoordinasi
     const cardId = useId();
@@ -62,6 +63,10 @@ export default function LinkPreviewCard({ url }) {
         }
 
         const instantData = getInstantPlatformPreview(targetUrl);
+        if (instantData) {
+            setPreview((prev) => prev || instantData);
+        }
+
         let isMounted = true;
 
         const fetchPreview = async () => {
@@ -78,8 +83,9 @@ export default function LinkPreviewCard({ url }) {
                     const merged = {
                         ...instantData,
                         ...data,
+                        url: targetUrl,
                         image: effectiveImage,
-                        isVideo: !!ytId || data.isVideo || instantData?.isVideo,
+                        isVideo: !!ytId || Boolean(data.isVideo) || Boolean(instantData?.isVideo),
                         platform: data.platform || instantData?.platform || (ytId ? 'youtube' : ''),
                         videoId: data.videoId || ytId || instantData?.videoId,
                         isImage: isDirectImageUrl(targetUrl) || data.isImage
@@ -104,11 +110,16 @@ export default function LinkPreviewCard({ url }) {
         };
     }, [targetUrl]);
 
-    if (!preview || !targetUrl) return null;
+    if (!targetUrl) return null;
 
-    const faviconUrl = `https://www.google.com/s2/favicons?domain=${preview.domain || 'google.com'}&sz=64`;
-    const isVideo = preview.isVideo || !!preview.videoId;
-    const platform = preview.platform || (getYouTubeVideoId(targetUrl) ? 'youtube' : '');
+    const ytVideoId = getYouTubeVideoId(targetUrl);
+    const activePreview = preview || getInstantPlatformPreview(targetUrl);
+    if (!activePreview) return null;
+
+    const faviconUrl = `https://www.google.com/s2/favicons?domain=${activePreview.domain || 'google.com'}&sz=64`;
+    const isVideo = Boolean(activePreview.isVideo || activePreview.videoId || ytVideoId);
+    const platform = activePreview.platform || (ytVideoId ? 'youtube' : '');
+    const displayImage = activePreview.image || (ytVideoId ? getYouTubeThumbnail(ytVideoId) : null);
 
     // Fungsi untuk memutar video dengan menyiarkan event penutup video lain
     const handleStartPlayback = (e) => {
@@ -131,20 +142,20 @@ export default function LinkPreviewCard({ url }) {
             {isPlaying && isVideo ? (
                 // Komponen Pemutar Video Inline (YouTube, TikTok, Instagram, Scratch)
                 <VideoPlayerEmbed
-                    preview={preview}
+                    preview={activePreview}
                     onClose={() => setIsPlaying(false)}
                 />
             ) : (
                 // Tampilan Thumbnail (Video / Halaman Web / Gambar Langsung)
-                (preview.image && !imgFailed) && (
+                (displayImage && !imgFailed) && (
                     <div className="w-full aspect-video max-h-40 sm:max-h-44 bg-slate-950 relative overflow-hidden group/thumb border-b border-slate-800">
                         <img
-                            src={preview.image}
-                            alt={preview.title || 'Thumbnail Pratinjau'}
+                            src={displayImage}
+                            alt={activePreview.title || 'Thumbnail Pratinjau'}
                             referrerPolicy="no-referrer"
                             className="w-full h-full object-cover object-top group-hover/thumb:scale-105 transition-transform duration-300"
                             onError={(e) => {
-                                const ytId = preview.videoId || getYouTubeVideoId(targetUrl);
+                                const ytId = activePreview.videoId || getYouTubeVideoId(targetUrl);
                                 if (ytId && !e.currentTarget.src.includes('hqdefault')) {
                                     e.currentTarget.src = getYouTubeThumbnail(ytId);
                                 } else if (!e.currentTarget.src.includes('mshots')) {
@@ -193,7 +204,7 @@ export default function LinkPreviewCard({ url }) {
                                     <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                                     <span>Video</span>
                                 </>
-                            ) : preview.isImage ? (
+                            ) : activePreview.isImage ? (
                                 <>
                                     <ImageIcon size={10} className="text-sky-400" />
                                     <span>Gambar</span>
@@ -224,17 +235,17 @@ export default function LinkPreviewCard({ url }) {
                         className="w-3.5 h-3.5 rounded-xs shrink-0 bg-white/10"
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
-                    <span className="truncate">{preview.domain || preview.siteName}</span>
+                    <span className="truncate">{activePreview.domain || activePreview.siteName}</span>
                     <ExternalLink size={10} className="shrink-0 text-slate-400 ml-auto group-hover:text-white transition-colors" />
                 </div>
 
                 <div className="text-xs font-bold text-slate-100 line-clamp-2 leading-snug group-hover:text-sky-300 transition-colors break-words [overflow-wrap:anywhere]">
-                    {preview.title || preview.domain}
+                    {activePreview.title || activePreview.domain}
                 </div>
 
-                {preview.description ? (
+                {activePreview.description ? (
                     <div className="text-[11px] text-slate-300/90 line-clamp-2 leading-relaxed break-words [overflow-wrap:anywhere]">
-                        {preview.description}
+                        {activePreview.description}
                     </div>
                 ) : null}
             </a>

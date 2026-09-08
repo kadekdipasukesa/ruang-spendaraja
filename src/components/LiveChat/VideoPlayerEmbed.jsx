@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ExternalLink, Maximize2, Minimize2 } from 'lucide-react';
+import { getYouTubeVideoId } from './linkPreviewUtils';
 
 /**
  * Komponen Pemutar Video Inline Terpadu (YouTube, TikTok, Instagram, Scratch)
@@ -27,9 +28,9 @@ export default function VideoPlayerEmbed({ preview, onClose }) {
 
     if (!preview) return null;
 
-    const platform = preview.platform || '';
-    const videoId = preview.videoId;
-    const targetUrl = preview.url;
+    const targetUrl = preview.url || (preview.videoId ? `https://www.youtube.com/watch?v=${preview.videoId}` : '');
+    const videoId = preview.videoId || (targetUrl ? getYouTubeVideoId(targetUrl) : null);
+    const platform = preview.platform || (videoId ? 'youtube' : '');
 
     // Toggle fullscreen menggunakan Fullscreen API browser
     const toggleFullscreen = async (e) => {
@@ -82,7 +83,7 @@ export default function VideoPlayerEmbed({ preview, onClose }) {
             return (
                 <div className={`w-full bg-black relative flex items-center justify-center ${isFullscreen ? 'h-full' : 'aspect-video'}`}>
                     <iframe
-                        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1&fs=1`}
+                        src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&enablejsapi=1&fs=1&rel=0`}
                         title={preview.title || 'Pemutar Video YouTube'}
                         className="w-full h-full border-0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
@@ -185,6 +186,7 @@ export default function VideoPlayerEmbed({ preview, onClose }) {
 
             {/* Baris Tombol Aksi Melayang di Kanan Atas: Layar Penuh & Tutup */}
             <div className="absolute top-2 right-2 flex items-center gap-1.5 z-30 pointer-events-auto">
+
                 {/* Tombol Fullscreen / Layar Penuh */}
                 <button
                     type="button"
