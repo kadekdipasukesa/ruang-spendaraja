@@ -212,18 +212,41 @@ Alur Kontrol Kunci Kelas (GAME_CONTROLS):
   - Sebelum perbaikan, flex item tanpa `min-w-0` membuat string URL panjang (misal >80 karakter tanpa spasi) mempertahankan lebar *min-content*, sehingga menembus batas jendela obrolan (350px).
   - Diperbaiki dengan menetapkan `min-w-0`, `max-w-full`, `overflow-x-hidden`, serta utilitas `break-all [overflow-wrap:anywhere]` pada pembungkus teks dan tag `<a>`. Hal ini menjamin tautan panjang terputus rapi di dalam batas bubble dan tidak pernah merusak layout jendela chat.
 
-### B. Komponen Kartu Preview Link (`src/components/LiveChat/LinkPreviewCard.jsx`)
-* Jika pesan mengandung tautan, tautan pertama diambil via `extractFirstUrl(msg.pesan)` untuk menampilkan kartu preview interaktif di bawah teks bubble, menyerupai kartu tautan WhatsApp.
+### B. Komponen Kartu Preview Link Modular (`src/components/LiveChat/`)
+Komponen pratinjau tautan dipecah menjadi tiga sub-modul terstruktur untuk menjaga kebersihan dan modularitas kode:
+1. **`linkPreviewUtils.jsx`**:
+   - Berisi fungsi utilitas deteksi tautan (`URL_REGEX`, `cleanUrl`, `extractFirstUrl`).
+   - Ekstraksi platform instan (`getYouTubeVideoId`, `getYouTubeThumbnail`, `getInstagramInfo`, `getTikTokInfo`, `getWebpageThumbnail`, `isDirectImageUrl`, `getInstantPlatformPreview`).
+   - Perender teks tautan anti-tembus jendela (`renderMessageText`).
+2. **`VideoPlayerEmbed.jsx`**:
+   - Pemutar video inline terpadu untuk YouTube, TikTok, Instagram, dan Scratch.
+   - Dilengkapi tombol Tutup (X) melayang dengan kontras tinggi di pojok kanan atas.
+   - Iframe player responsif dengan aspect-ratio yang sesuai (16:9 untuk YouTube, 9:16 untuk TikTok/Instagram Reels).
+3. **`LinkPreviewCard.jsx`**:
+   - Komponen visual kartu preview ala WhatsApp dengan thumbnail, badge kategori (TikTok, Instagram, Video, Gambar, Scratch, Web), dan teks metadata yang dapat diklik.
+   - **Fitur Pemutar Video Eksklusif (Exclusive Video Playback)**:
+     - Setiap kartu memiliki ID unik berbasis `useId()`.
+     - Saat pengguna memutar salah satu video di chat, kartu memancarkan event browser `livechat-active-video-play` dengan ID kartu tersebut.
+     - Seluruh kartu `LinkPreviewCard` lain di dalam obrolan yang sedang memutar video otomatis mendengarkan event ini dan menutup pemutarnya (`setIsPlaying(false)`). Hal ini menjamin **tidak ada dua video yang berbunyi atau berputar bersamaan**.
+
 * **Deteksi Instan Sisi Klien**:
-  - **YouTube**: Menangkap ID video (`v=...`, `youtu.be/...`, atau `/shorts/...`) dan langsung menyediakan thumbnail `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` dan judul "Video YouTube".
+  - **YouTube**: Menangkap ID video (`v=...`, `youtu.be/...`, atau `/shorts/...`) dan langsung menyediakan thumbnail resmi dan judul "Video YouTube".
+  - **TikTok**: Mengenali URL `tiktok.com` maupun shortlink `vt.tiktok.com` / `vm.tiktok.com`.
+  - **Instagram**: Mengenali URL Reel (`/reel/`), Postingan (`/p/`), dan TV (`/tv/`).
   - **Scratch**: Mendeteksi ID proyek dan memuat thumbnail poster Scratch `https://cdn2.scratch.mit.edu/get_image/project/${projectId}_480x360.png`.
   - **Google Workspace**: Mengenali tautan Google Drive, Google Formulir, Google Dokumen, Google Spreadsheet, dan Google Slides.
-* **Server-Side OpenGraph Scraper (`/api/link-preview` di `server.ts`)**:
-  - Endpoint server mengambil metadata OpenGraph (`og:title`, `og:description`, `og:image`, `og:site_name`, dan tag `<title>`).
+
+* **Server-Side Metadata Scraper (`/api/link-preview` di `server.ts`)**:
+  - **TikTok**: Menggunakan endpoint resmi publik `https://www.tiktok.com/oembed?url=...` untuk mengekstrak judul video/caption, nama kreator, username (`@...`), thumbnail cover jernih dari CDN TikTok, dan ID video untuk pemutaran inline tanpa login.
+  - **Instagram**: Mengakses endpoint publik `https://www.instagram.com/p/${shortcode}/embed/captioned/` menggunakan client identity aman untuk mengekstrak username kreator (`@username`), foto cover reel dari CDN Instagram, deskripsi, dan tipe konten (Reel/Postingan) tanpa terhalang dinding login Instagram.
+  - **YouTube**: Menggunakan YouTube oEmbed API resmi.
+  - **Website Umum**: Mengambil metadata OpenGraph (`og:title`, `og:description`, `og:image`, `og:site_name`, dan tag `<title>`) dengan fallback screenshot halaman web via WordPress mShots.
   - Dilengkapi proteksi keamanan SSRF (menolak host lokal/private) dan timeout 4 detik.
   - Hasil fetch disimpan di memori klien (`previewCache`) untuk mencegah request berulang saat menelusuri chat.
+
 * **Gaya Visual Kartu**:
-  - Banner gambar responsif (rasio 16:9 / aspect cover) dengan proteksi fallback jika gambar gagal dimuat.
+  - Banner gambar responsif (rasio 16:9 / aspect cover) dengan tombol Play interaktif (merah untuk YouTube, gelap/cyan untuk TikTok, gradasi sunset untuk Instagram).
+  - Badge kategori dinamis di sudut kanan bawah (TikTok, Instagram, Video, Gambar, Scratch, Halaman Web).
   - Favicon domain resmi via Google S2 Favicon API (`https://www.google.com/s2/favicons?domain=...`).
   - Judul tebal maksimal 2 baris (`line-clamp-2`), deskripsi ringkas, nama domain, dan ikon eksternal tautan (`ExternalLink`).
 

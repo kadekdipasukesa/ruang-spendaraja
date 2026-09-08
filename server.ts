@@ -144,10 +144,97 @@ async function startServer() {
               image: ytData.thumbnail_url || null,
               siteName: "YouTube",
               isVideo: true,
+              platform: "youtube",
             });
           }
         } catch {
           // Lanjutkan jika oEmbed gagal
+        }
+      }
+
+      // Penanganan khusus TikTok melalui oEmbed API resmi publik
+      if (hostname.includes("tiktok.com")) {
+        try {
+          const ttRes = await fetch(
+            `https://www.tiktok.com/oembed?url=${encodeURIComponent(targetUrl)}`,
+            { signal: controller.signal }
+          );
+          if (ttRes.ok) {
+            const ttData = (await ttRes.json()) as any;
+            clearTimeout(timeout);
+            return res.json({
+              url: targetUrl,
+              domain: "tiktok.com",
+              title: ttData.title || (ttData.author_name ? `Video TikTok oleh ${ttData.author_name}` : "Video TikTok"),
+              description: ttData.author_name
+                ? `Kreator: ${ttData.author_name} (@${ttData.author_unique_id || "tiktok"})`
+                : "Tonton video di TikTok",
+              image: ttData.thumbnail_url || null,
+              siteName: "TikTok",
+              isVideo: true,
+              platform: "tiktok",
+              videoId: ttData.embed_product_id || null,
+            });
+          }
+        } catch {
+          // Lanjutkan jika oEmbed gagal
+        }
+      }
+
+      // Penanganan khusus Instagram (Reel, Post, TV) melalui embed resmi tanpa login
+      if (hostname.includes("instagram.com")) {
+        try {
+          const igMatch = targetUrl.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/i);
+          if (igMatch) {
+            const shortcode = igMatch[1];
+            const isReel = targetUrl.includes("/reel/");
+            const igRes = await fetch(
+              `https://www.instagram.com/p/${shortcode}/embed/captioned/`,
+              {
+                signal: controller.signal,
+                headers: {
+                  "User-Agent": "curl/7.88.1",
+                  "Accept": "*/*",
+                },
+              }
+            );
+            if (igRes.ok) {
+              const html = await igRes.text();
+              const userMatch =
+                html.match(/class="UsernameText">([^<]+)<\/span>/i) ||
+                html.match(/alt="[^"]*&#064;([^"\s]+)/i) ||
+                html.match(/"username":\s*"([^"]+)"/);
+              const username = userMatch ? userMatch[1] : null;
+
+              const imgMatch = html.match(
+                /<img[^>]+class="[^"]*EmbeddedMediaImage[^"]*"[^>]+src="([^"]+)"/i
+              );
+              let image = imgMatch ? imgMatch[1].replace(/&amp;/g, "&") : null;
+
+              const captionMatch = html.match(/<div class="Caption"[^>]*>([\s\S]*?)<\/div>/i);
+              let caption = "";
+              if (captionMatch) {
+                caption = captionMatch[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+              }
+
+              clearTimeout(timeout);
+              return res.json({
+                url: targetUrl,
+                domain: "instagram.com",
+                title: username
+                  ? `${isReel ? "Reel Instagram" : "Postingan Instagram"} • @${username}`
+                  : (isReel ? "Reel Instagram" : "Postingan Instagram"),
+                description: caption || (username ? `Lihat postingan dari @${username} di Instagram` : "Tonton postingan di Instagram"),
+                image: image || `https://s0.wp.com/mshots/v1/${encodeURIComponent(targetUrl)}?w=600`,
+                siteName: "Instagram",
+                isVideo: isReel || html.includes("video_url") || html.includes('product_type":"clips'),
+                platform: "instagram",
+                videoId: shortcode,
+              });
+            }
+          }
+        } catch {
+          // Lanjutkan jika scraping Instagram gagal
         }
       }
 
