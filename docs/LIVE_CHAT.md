@@ -39,16 +39,34 @@ export default function LiveChat({
 
 Komponen berinteraksi secara aktif dengan 2 (dua) tabel di Supabase:
 
-### A. Tabel `livechat` (Penyimpanan Obrolan)
+### A. Tabel `livechat` (Penyimpanan Obrolan Ternormalisasi)
+Tabel `livechat` telah disederhanakan dan dinormalisasi sehingga tidak lagi menyimpan redundansi `full_name` dan `kelas`, melainkan menautkan langsung akun pengirim melalui `sender_id` ke `master_siswa`:
+
+```sql
+create table public.livechat (
+  id uuid not null default gen_random_uuid (),
+  created_at timestamp with time zone not null default now(),
+  sender_id text not null,
+  pesan text not null,
+  target_type text not null default 'group'::text,
+  target_id text not null,
+  is_read boolean not null default false,
+  constraint livechat_pkey primary key (id)
+) TABLESPACE pg_default;
+
+create index IF not exists idx_livechat_target on public.livechat using btree (target_type, target_id, created_at desc) TABLESPACE pg_default;
+create index IF not exists idx_livechat_sender on public.livechat using btree (sender_id) TABLESPACE pg_default;
+```
+
 | Kolom | Tipe Data | Keterangan |
 |---|---|---|
-| `id` | `uuid` (PK) | Identifier unik pesan. |
-| `full_name` | `text` | Nama lengkap pengirim (`student.NAMA`). |
-| `kelas` | `text` | Kelas siswa pengirim (`student.Kelas`). |
-| `role` | `text` | Peran pengirim: `'siswa'`, `'guru'`, atau `'admin'`. |
-| `pesan` | `text` | Konten pesan teks yang telah disensor dari kata kasar. |
-| `student_id` | `text` | ID unik akun siswa pengirim. |
+| `id` | `uuid` (PK) | Identifier unik pesan obrolan. |
 | `created_at` | `timestamptz` | Waktu pengiriman pesan (default: `now()`). |
+| `sender_id` | `text` | ID unik akun siswa/guru/admin dari `master_siswa.id` (Single Source of Truth identitas). |
+| `pesan` | `text` | Konten pesan teks yang telah disaring dari kata kasar (*sensor moderation*). |
+| `target_type` | `text` | Tipe target obrolan: `'group'` (grup kelas/ruang) atau `'personal'` (pesan langsung / DM masa depan). |
+| `target_id` | `text` | Alamat tujuan: `'group_siswa'` (ruang siswa), `'group_guru'` (ruang guru), atau ID pengguna jika DM. |
+| `is_read` | `boolean` | Status keterbacaan pesan (default: `false`). |
 
 ### B. Tabel `game_controls` (Kontrol Kunci Chat Per-Kelas)
 | Kolom | Tipe Data | Keterangan |
@@ -278,22 +296,48 @@ Fitur LiveChat memisahkan alur komunikasi menjadi dua kamar yang terisolasi seca
    - Dapat berpindah kamar kapan saja untuk memonitor kedua kelompok.
    - Memiliki kendali hapus riwayat per-kamar (`handleDeleteAllInRoom`).
 
-### B. Tiga Lapisan Pengaman Anti-Salah Kamar untuk Admin
-1. **Banner Target Dinamis**:
-   Tepat di atas kolom teks input, terdapat badge status mencolok:
-   - Ruang Siswa: `[ 👥 Target: Ruang Siswa (Publik) — Terbaca Seluruh Siswa ]` (Aksen Biru).
-   - Ruang Guru: `[ 👨‍🏫 Target: Ruang Guru (Privat) — Khusus Dewan Guru ]` (Aksen Amber/Emas).
+### B. Tampilan Kompak & Proteksi Anti-Salah Kamar untuk Admin
+1. **Desain Kompak Maksimal**:
+   - Menghilangkan badge label tebal ("Ruang Khusus Dewan Guru" dan "Ruang Obrolan Siswa") serta banner target yang memakan tinggi jendela, sehingga area scrolling chat tetap luas dan lega baik untuk Admin maupun Siswa/Guru.
+   - Status ruang aktif cukup diwakili oleh teks sub-judul di bawah judul Live Chat ("Diskusi Guru" / "Obrolan Siswa").
 2. **Penyesuaian Warna UI & Placeholder**:
    - Ruang Siswa: Placeholder *"Tulis pesan untuk siswa..."*, tombol kirim Biru, border fokus Biru.
-   - Ruang Guru: Placeholder *"Tulis pesan untuk dewan guru..."*, tombol kirim Amber, border fokus Amber.
-3. **Payload Database Presisi**:
+   - Ruang Guru: Placeholder *"Tulis pesan untuk guru..."*, tombol kirim Amber, border fokus Amber.
+3. **Format Label Pengirim Admin / Dev (`getSenderRoleOrClass`)**:
+   - Jika data pesan memiliki `role: 'admin'` atau nilai kolom `kelas` adalah `'Ruang Guru'` maupun `'Ruang Siswa'`, sistem secara otomatis menampilkan label **`Admin`** (misal: `"Dipa Sukesa • Admin"`), bukan menampilkan teks mentah "Ruang Guru" atau "Ruang Siswa".
+4. **Isolasi 100% Mutlak Ruang Guru (`effectiveRoom`)**:
+   - Akun dengan role guru secara terprogram dikunci ke ruang `'guru'` (`effectiveRoom = isUserGuru ? 'guru' : ...`), sehingga obrolan siswa sama sekali tidak dapat masuk atau tertampil di layar guru dalam kondisi apapun.
+5. **Payload Database Presisi**:
    - Pesan yang dikirim Admin saat membuka Ruang Guru otomatis ditandai `kelas: 'Ruang Guru'` dan `role: 'admin'`.
    - Pesan yang dikirim Admin saat membuka Ruang Siswa otomatis ditandai `kelas: 'Ruang Siswa'` dan `role: 'admin'`.
    - Hal ini menjamin pesan Admin tidak pernah bocor atau salah tampil di kamar yang tidak dimaksudkan.
 
 ---
 
-## 11. Aturan Pemeliharaan (*Maintenance Rules*)
+## 11. Struktur Modular Sub-Komponen (`src/components/LiveChat/`)
+
+Untuk menjaga keterbacaan kode (*clean code*), kemudahan pemeliharaan, serta performa rendering, `LiveChat` dipecah menjadi modul-modul terfokus:
+
+1. **`src/components/LiveChat.jsx` (Orchestrator)**:
+   - Mengelola state global chat (`messages`, `senderMap`, `unreadCount`, `limit`, `activeRoom`, `isLocked`).
+   - Berlangganan ke Supabase Realtime (`livechat` dan `game_controls`).
+   - Menangani sinkronisasi profil pengirim via kueri dinamis `master_siswa`.
+   - Mengelola logika auto-scroll dan load more riwayat obrolan.
+2. **`src/components/LiveChat/ChatHeader.jsx`**:
+   - Menampilkan judul, indikator status online, tombol hapus riwayat per-kamar (khusus admin), dan tombol tutup.
+   - Menyediakan tombol tab switcher kamar (`Ruang Siswa` vs `Ruang Guru`) dan kontrol kunci chat kelas untuk Admin.
+3. **`src/components/LiveChat/ChatMessageItem.jsx`**:
+   - Merender setiap baris bubble pesan dengan format nama Title Case 2 kata (`Dipa Sukesa`), role badge (`Admin`, `Guru`, atau kelas seperti `7.1`), ikon verifikasi (`ShieldCheck` / `GraduationCap`), teks aman sensor, jam kirim, serta kartu preview link/video.
+4. **`src/components/LiveChat/ChatInputForm.jsx`**:
+   - Area input pesan, toggle emoji picker (`emoji-picker-react`), tombol kirim, dan tampilan banner proteksi saat chat kelas dikunci.
+5. **`src/components/LiveChat/chatHelpers.js`**:
+   - Fungsi pembantu: `getShortName`, `getNameColor`, `isMessageInRoom`, `getSenderRoleOrClass`, dan daftar kelas `CLASSES`.
+6. **`src/components/LiveChat/LinkPreviewCard.jsx`**:
+   - Modul kartu preview tautan dan inline media embed (YouTube, TikTok, Instagram, Twitter, Spotify).
+
+---
+
+## 12. Aturan Pemeliharaan (*Maintenance Rules*)
 
 1. **Anti-Race Condition pada State Update**:
    - Selalu pertahankan pola `setTimeout(..., 0)` saat memanggil `setUnreadExternal` dari dalam listener Supabase agar tidak menimbulkan error React *setState during existing render cycle*.
