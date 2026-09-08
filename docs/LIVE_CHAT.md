@@ -194,11 +194,17 @@ Alur Kontrol Kunci Kelas (GAME_CONTROLS):
 
 ---
 
-## 8. Integrasi Emoji Picker
+## 8. Integrasi Emoji Picker & Format Nama Pengirim
 
-* Menggunakan pustaka `emoji-picker-react` dengan tema gelap (`theme="dark"`).
-* Posisi picker melayang di atas formulir input (`absolute bottom-full right-0 mb-2 z-[110]`).
-* Mengetuk kolom input teks otomatis menutup emoji picker (`onFocus={() => setShowEmoji(false)}`).
+* **Emoji Picker**:
+  - Menggunakan pustaka `emoji-picker-react` dengan tema gelap (`theme="dark"`).
+  - Posisi picker melayang di atas formulir input (`absolute bottom-full right-0 mb-2 z-[110]`).
+  - Mengetuk kolom input teks otomatis menutup emoji picker (`onFocus={() => setShowEmoji(false)}`).
+
+* **Format Nama Pengirim 2 Kata (`getShortName`)**:
+  - Menampilkan 2 kata nama (nama tengah dan belakang) yang diformat otomatis ke Title Case (misal: `"KADEK DIPA SUKESA"` atau `"kadek dipa sukesa"` menjadi `"Dipa Sukesa"`).
+  - Teks nama pengirim di bubble chat menggunakan bobot normal (`font-normal`) tanpa penebalan (*non-bold*) dan tanpa transformasi kapital paksa (`uppercase` dihilangkan) agar tampilan lebih bersih, nyaman dibaca, dan proporsional.
+  - Jika nama terdiri dari 1 atau 2 kata, nama tetap ditampilkan utuh. Jika terdiri dari 3 kata atau lebih (umum pada nama dengan urutan kelahiran Bali seperti *Putu*, *Kadek*, *Komang*, *Ketut*, *I*, *Ni*), sistem secara otomatis mengambil 2 kata terakhir (`parts.slice(-2).join(' ')`) agar ringkas namun tetap jelas mengenali siswa.
 
 ---
 
@@ -220,7 +226,9 @@ Komponen pratinjau tautan dipecah menjadi tiga sub-modul terstruktur untuk menja
    - Perender teks tautan anti-tembus jendela (`renderMessageText`).
 2. **`VideoPlayerEmbed.jsx`**:
    - Pemutar video inline terpadu untuk YouTube, TikTok, Instagram, dan Scratch.
-   - Dilengkapi tombol Tutup (X) melayang dengan kontras tinggi di pojok kanan atas.
+   - Dilengkapi tombol **Layar Penuh (Fullscreen / Maximize)** dan **Kecilkan (Minimize)** menggunakan Fullscreen API browser (`requestFullscreen()` & `exitFullscreen()`), mempermudah pengguna di perangkat desktop maupun mobile untuk menonton video dalam tampilan satu layar penuh tanpa terbatasi oleh ukuran jendela chat yang kecil.
+   - Memastikan atribut iframe menyertakan permission policy `fullscreen` lengkap (`allow="... fullscreen"`) dan `allowFullScreen`.
+   - Dilengkapi tombol Tutup (X) melayang dengan kontras tinggi di pojok kanan atas yang otomatis keluar dari mode fullscreen sebelum menutup player.
    - Iframe player responsif dengan aspect-ratio yang sesuai (16:9 untuk YouTube, 9:16 untuk TikTok/Instagram Reels).
 3. **`LinkPreviewCard.jsx`**:
    - Komponen visual kartu preview ala WhatsApp dengan thumbnail, badge kategori (TikTok, Instagram, Video, Gambar, Scratch, Web), dan teks metadata yang dapat diklik.
@@ -252,7 +260,40 @@ Komponen pratinjau tautan dipecah menjadi tiga sub-modul terstruktur untuk menja
 
 ---
 
-## 10. Aturan Pemeliharaan (*Maintenance Rules*)
+## 10. Arsitektur Pemisahan Ruang (Ruang Siswa vs. Ruang Guru) & Proteksi Anti-Salah Kamar
+
+Fitur LiveChat memisahkan alur komunikasi menjadi dua kamar yang terisolasi secara logis:
+
+### A. Hak Akses & Keterisolasian Ruang
+1. **Siswa & OSIS (`role: 'siswa'` / `'osis'`)**:
+   - Terkunci permanen di **👥 Ruang Siswa**.
+   - Tidak memiliki tombol pengalih kamar dan **sama sekali tidak dapat melihat obrolan dewan guru**.
+   - Notifikasi suara dan unread counter hanya aktif untuk pesan yang dikirim ke Ruang Siswa.
+2. **Guru (`role: 'guru'`)**:
+   - Terkunci permanen di **👨‍🏫 Ruang Guru**.
+   - Bebas dari kebisingan obrolan siswa. Obrolan bersifat privat untuk dewan guru.
+   - Tidak terpengaruh oleh fitur penguncian kelas (`game_controls`) yang ditujukan untuk jam pelajaran siswa.
+3. **Admin (`role: 'admin'`)**:
+   - Memiliki tab switcher di header: `[ 👥 Ruang Siswa ]` dan `[ 👨‍🏫 Ruang Guru ]`.
+   - Dapat berpindah kamar kapan saja untuk memonitor kedua kelompok.
+   - Memiliki kendali hapus riwayat per-kamar (`handleDeleteAllInRoom`).
+
+### B. Tiga Lapisan Pengaman Anti-Salah Kamar untuk Admin
+1. **Banner Target Dinamis**:
+   Tepat di atas kolom teks input, terdapat badge status mencolok:
+   - Ruang Siswa: `[ 👥 Target: Ruang Siswa (Publik) — Terbaca Seluruh Siswa ]` (Aksen Biru).
+   - Ruang Guru: `[ 👨‍🏫 Target: Ruang Guru (Privat) — Khusus Dewan Guru ]` (Aksen Amber/Emas).
+2. **Penyesuaian Warna UI & Placeholder**:
+   - Ruang Siswa: Placeholder *"Tulis pesan untuk siswa..."*, tombol kirim Biru, border fokus Biru.
+   - Ruang Guru: Placeholder *"Tulis pesan untuk dewan guru..."*, tombol kirim Amber, border fokus Amber.
+3. **Payload Database Presisi**:
+   - Pesan yang dikirim Admin saat membuka Ruang Guru otomatis ditandai `kelas: 'Ruang Guru'` dan `role: 'admin'`.
+   - Pesan yang dikirim Admin saat membuka Ruang Siswa otomatis ditandai `kelas: 'Ruang Siswa'` dan `role: 'admin'`.
+   - Hal ini menjamin pesan Admin tidak pernah bocor atau salah tampil di kamar yang tidak dimaksudkan.
+
+---
+
+## 11. Aturan Pemeliharaan (*Maintenance Rules*)
 
 1. **Anti-Race Condition pada State Update**:
    - Selalu pertahankan pola `setTimeout(..., 0)` saat memanggil `setUnreadExternal` dari dalam listener Supabase agar tidak menimbulkan error React *setState during existing render cycle*.

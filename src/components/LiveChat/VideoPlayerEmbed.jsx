@@ -1,28 +1,91 @@
-import React from 'react';
-import { X, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, ExternalLink, Maximize2, Minimize2 } from 'lucide-react';
 
 /**
  * Komponen Pemutar Video Inline Terpadu (YouTube, TikTok, Instagram, Scratch)
- * Dilengkapi tombol Tutup (X) dan kontrol eksklusif agar tidak tumpang tindih
+ * Dilengkapi tombol Layar Penuh (Fullscreen) untuk desktop/HP dan tombol Tutup (X)
  */
 export default function VideoPlayerEmbed({ preview, onClose }) {
+    const containerRef = useRef(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    // Memantau perubahan status fullscreen dari browser (termasuk tombol ESC di keyboard)
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            const isCurrentElem = document.fullscreenElement === containerRef.current || 
+                                  document.webkitFullscreenElement === containerRef.current;
+            setIsFullscreen(isCurrentElem);
+        };
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+        };
+    }, []);
+
     if (!preview) return null;
 
     const platform = preview.platform || '';
     const videoId = preview.videoId;
     const targetUrl = preview.url;
 
+    // Toggle fullscreen menggunakan Fullscreen API browser
+    const toggleFullscreen = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        try {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (containerRef.current?.requestFullscreen) {
+                    await containerRef.current.requestFullscreen();
+                } else if (containerRef.current?.webkitRequestFullscreen) {
+                    await containerRef.current.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    await document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    await document.webkitExitFullscreen();
+                }
+            }
+        } catch (err) {
+            console.warn('Gagal mengubah mode fullscreen:', err);
+        }
+    };
+
+    // Handler penutup player, keluar fullscreen terlebih dahulu jika sedang fullscreen
+    const handleClose = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            try {
+                if (document.exitFullscreen) {
+                    await document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    await document.webkitExitFullscreen();
+                }
+            } catch {
+                // Abaikan jika exit fullscreen gagal
+            }
+        }
+
+        if (onClose) onClose();
+    };
+
     // Render iframe berdasarkan platform
     const renderEmbedContent = () => {
         // 1. YouTube Player
         if (platform === 'youtube' || (!platform && videoId)) {
             return (
-                <div className="w-full aspect-video bg-black relative">
+                <div className={`w-full bg-black relative flex items-center justify-center ${isFullscreen ? 'h-full' : 'aspect-video'}`}>
                     <iframe
-                        src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+                        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1&fs=1`}
                         title={preview.title || 'Pemutar Video YouTube'}
                         className="w-full h-full border-0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                         allowFullScreen
                     />
                 </div>
@@ -33,20 +96,19 @@ export default function VideoPlayerEmbed({ preview, onClose }) {
         if (platform === 'tiktok') {
             if (videoId) {
                 return (
-                    <div className="w-full bg-black flex justify-center py-1">
-                        <div className="w-full max-w-[340px] aspect-[9/16] max-h-[440px] bg-black">
+                    <div className={`w-full bg-black flex justify-center items-center py-1 ${isFullscreen ? 'h-full' : ''}`}>
+                        <div className={`w-full max-w-[340px] aspect-[9/16] bg-black ${isFullscreen ? 'max-h-[85vh]' : 'max-h-[440px]'}`}>
                             <iframe
                                 src={`https://www.tiktok.com/embed/v2/${videoId}`}
                                 title={preview.title || 'Pemutar TikTok'}
                                 className="w-full h-full border-0 rounded-lg"
-                                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                                 allowFullScreen
                             />
                         </div>
                     </div>
                 );
             }
-            // Fallback jika tidak ada videoId langsung
             return (
                 <div className="w-full p-4 bg-slate-950 text-center space-y-2">
                     <p className="text-xs text-slate-300 font-medium">Buka langsung di aplikasi TikTok untuk memutar video lengkap</p>
@@ -68,8 +130,8 @@ export default function VideoPlayerEmbed({ preview, onClose }) {
             const shortcode = videoId;
             if (shortcode) {
                 return (
-                    <div className="w-full bg-black flex justify-center py-1">
-                        <div className="w-full max-w-[340px] aspect-[9/16] max-h-[440px] bg-black">
+                    <div className={`w-full bg-black flex justify-center items-center py-1 ${isFullscreen ? 'h-full' : ''}`}>
+                        <div className={`w-full max-w-[340px] aspect-[9/16] bg-black ${isFullscreen ? 'max-h-[85vh]' : 'max-h-[440px]'}`}>
                             <iframe
                                 src={`https://www.instagram.com/p/${shortcode}/embed/captioned/`}
                                 title={preview.title || 'Instagram Post'}
@@ -99,39 +161,61 @@ export default function VideoPlayerEmbed({ preview, onClose }) {
         // 4. Scratch Player
         if (platform === 'scratch' && videoId) {
             return (
-                <div className="w-full aspect-[4/3] bg-black relative">
+                <div className={`w-full bg-black relative flex items-center justify-center ${isFullscreen ? 'h-full' : 'aspect-[4/3]'}`}>
                     <iframe
                         src={`https://scratch.mit.edu/projects/${videoId}/embed`}
                         title={preview.title || 'Proyek Scratch'}
                         className="w-full h-full border-0"
+                        allow="fullscreen"
                         allowFullScreen
                     />
                 </div>
             );
         }
 
-        // Fallback Umum
         return null;
     };
 
     return (
-        <div className="w-full bg-black relative border-b border-slate-800">
+        <div 
+            ref={containerRef} 
+            className={`w-full bg-black relative border-b border-slate-800 ${isFullscreen ? 'fixed inset-0 z-[999999] h-screen w-screen flex items-center justify-center' : ''}`}
+        >
             {renderEmbedContent()}
 
-            {/* Tombol Tutup Player Melayang di Kanan Atas */}
-            <button
-                type="button"
-                onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (onClose) onClose();
-                }}
-                title="Tutup pemutar video"
-                className="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-black/80 hover:bg-red-600 text-white text-[10px] font-bold flex items-center gap-1 shadow-lg transition-colors z-30 cursor-pointer border border-white/20"
-            >
-                <X size={12} />
-                <span>Tutup</span>
-            </button>
+            {/* Baris Tombol Aksi Melayang di Kanan Atas: Layar Penuh & Tutup */}
+            <div className="absolute top-2 right-2 flex items-center gap-1.5 z-30 pointer-events-auto">
+                {/* Tombol Fullscreen / Layar Penuh */}
+                <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    title={isFullscreen ? 'Keluar dari layar penuh' : 'Tonton layar penuh (Fullscreen)'}
+                    className="px-2 py-1 rounded-full bg-black/80 hover:bg-slate-700 text-white text-[10px] font-bold flex items-center gap-1 shadow-lg transition-colors cursor-pointer border border-white/20 backdrop-blur-xs"
+                >
+                    {isFullscreen ? (
+                        <>
+                            <Minimize2 size={12} />
+                            <span className="hidden sm:inline">Kecilkan</span>
+                        </>
+                    ) : (
+                        <>
+                            <Maximize2 size={12} />
+                            <span className="hidden sm:inline"></span>
+                        </>
+                    )}
+                </button>
+
+                {/* Tombol Tutup Player */}
+                <button
+                    type="button"
+                    onClick={handleClose}
+                    title="Tutup pemutar video"
+                    className="px-2.5 py-1 rounded-full bg-black/80 hover:bg-red-600 text-white text-[10px] font-bold flex items-center gap-1 shadow-lg transition-colors cursor-pointer border border-white/20 backdrop-blur-xs"
+                >
+                    <X size={12} />
+                    <span></span>
+                </button>
+            </div>
         </div>
     );
 }
