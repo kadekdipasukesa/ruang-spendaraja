@@ -24,7 +24,7 @@ export default function FloatingOnline({ user, activeTab })
 | Nama Prop | Tipe Data | Keterangan & Fallback |
 |---|---|---|
 | `user` | `Object` | Data sesi siswa aktif dari `localStorage` atau state login. Mendukung properti: `NAMA` / `nama`, `KELAS` / `Kelas` / `kelas`, `id`. Jika null/falsy, sistem menganggap pengguna sebagai tamu (`Tamu-[random]`). |
-| `activeTab` | `String` | Nama tab/halaman tempat pengguna berada saat ini (misal: `'Ruang Belajar'`, `'Home'`, `'Ulangan'`). Default: `'Ruang Belajar'`. |
+| `activeTab` | `String` | Nama tab/halaman tempat pengguna berada saat ini yang ditentukan otomatis oleh `getActiveTabLabel()` di `src/App.jsx` (misal: `'Home'`, `'Ruang Belajar TIK'`, `'Tugas 1: Simulasi Folder'`, `'Tugas 2: Berpikir Komputasional'`, `'Tugas 3: Sistem Komputer'`, `'Jurnal Lab Komputer'`, `'Mengisi Agenda Guru'`, `'Mengerjakan Ulangan'`, `'Mengerjakan Remidi'`, `'Kelola Akun Siswa'`, dll.). Default fallback: `'Menjelajah Portal'`. |
 
 ---
 

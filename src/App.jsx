@@ -62,41 +62,51 @@ function AppContent() {
     // 1. Root Home (Daftar Aplikasi)
     if (path === '/') return 'Home';
 
-    // 2. Ruang Belajar Informatika (Eks Home.jsx lama)
+    // 2. Ruang Belajar Informatika
     if (path === '/ruang-belajar') return 'Ruang Belajar TIK';
 
-    // 3. Halaman Gempitas
+    // 📚 Tugas Khusus Praktikum & Modul Pembelajaran
+    if (path.includes('/tugas/simulasi-folder')) return 'Tugas 1: Simulasi Folder';
+    if (path.includes('/tugas/berpikir-komputasional') || path.includes('/tugas/kuis-algoritma')) return 'Tugas 2: Berpikir Komputasional';
+    if (path.includes('/tugas/sistem-komputer') || path.includes('/tugas/perkakas-digital')) return 'Tugas 3: Sistem Komputer';
+
+    // 🗓️ Laboratorium & Agenda
+    if (path === '/jurnal-lab') return 'Jurnal Lab Komputer';
+    if (path === '/agenda-guru') return 'Mengisi Agenda Guru';
+
+    // 3. Halaman Gempitas & Expo
     if (path === '/gempitas') return 'Gempitas 2026';
-
-    // 4. Halaman Pelanggaran
-    if (path === '/pelanggaran') return 'Catatan Disiplin';
-
-    if (path === '/admin-ujian') return 'Control Ujian';
-    if (path === '/ulangan') return 'Ulangan';
-
-    if (path === '/admin-remidi') return 'Control Remidi';
-    if (path === '/remidi') return 'Remidi';
-
-    if (path === '/typing-challenge') return 'Typing Challenge';
     if (path === '/bee-2026') return 'Melihat Expo BEE';
-    if (path === '/guru') return 'dasboard guru';
+
+    // 4. Halaman Kedisiplinan & Pelanggaran
+    if (path === '/pelanggaran') return 'Catatan Disiplin';
     if (path === '/analisis-pelanggaran') return 'Analisis Pelanggaran';
+
+    // 5. Ulangan & Remedial
+    if (path === '/ulangan') return 'Mengerjakan Ulangan';
+    if (path === '/admin-ujian') return 'Control Ujian';
+    if (path === '/remidi') return 'Mengerjakan Remidi';
+    if (path === '/admin-remidi') return 'Control Remidi';
+
+    // 6. Mini Game & Praktik
+    if (path === '/typing-challenge') return 'Typing Challenge';
+
+    // 7. Guru & Admin
+    if (path === '/guru') return 'Dashboard Guru';
+    if (path === '/admin/kelola-siswa') return 'Kelola Akun Siswa';
+    if (path.startsWith('/admin_ruangspendara/')) return 'Admin Spendaraja';
+
+    // 8. Modul Khusus Lainnya
     if (path === '/monitoring-realtime') return 'Monitoring Realtime';
     if (path === '/simulasi-interaktif') return 'Simulasi Interaktif';
     if (path === '/portfolio-leaderboard') return 'Portfolio Leaderboard';
     if (path === '/analisis-nilai') return 'Analisis Nilai';
     if (path === '/face-absen') return 'Face Absen';
     if (path === '/input-nilai') return 'Input Nilai';
-
     if (path === '/pengumuman-sas') return 'Pengumuman SAS';
-    if (path === '/admin_ruangspendara/reset-password') return 'Admin Spendaraja';
-    if (path === '/admin_ruangspendara/reset-remidi') return 'Admin Spendaraja';
-    if (path === '/agenda-guru') return 'lagi ngisi agenda';
 
-
-    // 5. Default jika tidak ada yang cocok
-
-    return 'Lagi Gabut';
+    // 9. Default jika berada di halaman lain
+    return 'Menjelajah Portal';
   };
 
   return (

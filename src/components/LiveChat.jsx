@@ -3,6 +3,7 @@ import { X, Send, Trash2, Lock, Unlock, MessageSquareOff } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { filterBadWords } from '../utils/bannedWordsPool';
 import EmojiPicker from 'emoji-picker-react';
+import LinkPreviewCard, { extractFirstUrl, renderMessageText } from './LiveChat/LinkPreviewCard';
 
 // --- FUNGSI PEMBANTU (Helper Functions) ---
 const getMiddleName = (fullName) => {
@@ -238,7 +239,7 @@ export default function LiveChat({ student, externalTrigger, setExternalTrigger,
     return (
         <div className="fixed bottom-6 right-6 z-[100]">
             {isOpen && (
-                <div className="absolute bottom-20 right-0 w-[350px] h-[550px] bg-[#1e293b] border border-slate-700 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
+                <div className="absolute bottom-20 right-0 w-[350px] max-w-[calc(100vw-24px)] h-[550px] max-h-[calc(100vh-120px)] bg-[#1e293b] border border-slate-700 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
 
                     {/* Header */}
                     <div className="p-4 bg-slate-800 border-b border-slate-700">
@@ -286,7 +287,7 @@ export default function LiveChat({ student, externalTrigger, setExternalTrigger,
                     </div>
 
                     {/* Messages Area */}
-                    <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-1 bg-[#0f172a]/30">
+                    <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-1 bg-[#0f172a]/30">
                         {hasMore && (
                             <div className="flex justify-center pb-4">
                                 <button onClick={() => setLimit(prev => prev + 10)} className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
@@ -301,6 +302,7 @@ export default function LiveChat({ student, externalTrigger, setExternalTrigger,
                             const isSameSender = index > 0 && messages[index - 1].full_name === msg.full_name;
                             const msgDate = new Date(msg.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' });
                             const prevMsgDate = index > 0 ? new Date(messages[index - 1].created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' }) : null;
+                            const firstUrl = extractFirstUrl(msg.pesan);
 
                             return (
                                 <React.Fragment key={msg.id}>
@@ -311,19 +313,26 @@ export default function LiveChat({ student, externalTrigger, setExternalTrigger,
                                             </span>
                                         </div>
                                     )}
-                                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${isSameSender ? 'mt-0.5' : 'mt-3'}`}>
-                                        <div className={`relative max-w-[85%] px-3 py-1.5 shadow-md flex flex-col ${isMe ? 'rounded-2xl rounded-tr-none bg-blue-600 text-white' : 'rounded-2xl rounded-tl-none bg-slate-700 text-slate-100'} ${isAdmin ? 'bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600' : ''}`}>
+                                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${isSameSender ? 'mt-0.5' : 'mt-3'} max-w-full`}>
+                                        <div className={`relative max-w-[85%] min-w-0 px-3 py-1.5 shadow-md flex flex-col overflow-hidden ${isMe ? 'rounded-2xl rounded-tr-none bg-blue-600 text-white' : 'rounded-2xl rounded-tl-none bg-slate-700 text-slate-100'} ${isAdmin ? 'bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600' : ''}`}>
                                             {!isMe && !isSameSender && (
                                                 <span className={`text-[10px] font-black uppercase mb-0.5 ${isAdmin ? 'text-white/90' : getNameColor(msg.full_name)}`}>
                                                     {getMiddleName(msg.full_name)} • {msg.kelas}
                                                 </span>
                                             )}
-                                            <div className="flex items-end gap-x-4">
-                                                <div className="text-sm break-words leading-relaxed flex-1">{msg.pesan}</div>
-                                                <span className={`text-[9px] ${isAdmin ? 'text-white/70' : 'text-slate-400'}`}>
+                                            <div className="flex items-end gap-x-3 min-w-0 max-w-full">
+                                                <div className="text-sm break-all [overflow-wrap:anywhere] leading-relaxed flex-1 min-w-0">
+                                                    {renderMessageText(msg.pesan, isMe)}
+                                                </div>
+                                                <span className={`text-[9px] shrink-0 self-end ml-1 ${isAdmin ? 'text-white/70' : 'text-slate-400'}`}>
                                                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             </div>
+
+                                            {/* Preview Link ala WhatsApp */}
+                                            {firstUrl && (
+                                                <LinkPreviewCard url={firstUrl} />
+                                            )}
                                         </div>
                                     </div>
                                 </React.Fragment>

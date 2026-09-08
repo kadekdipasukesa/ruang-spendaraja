@@ -202,7 +202,34 @@ Alur Kontrol Kunci Kelas (GAME_CONTROLS):
 
 ---
 
-## 9. Aturan Pemeliharaan (*Maintenance Rules*)
+## 9. Penanganan Tautan (Link) & Kartu Preview Ala WhatsApp
+
+### A. Deteksi & Penguraian Tautan Teks (`renderMessageText`)
+* Teks pesan diuraikan menggunakan ekspresi reguler `/(?:https?:\/\/|www\.)[^\s<>"']+/gi`.
+* Tanda baca di akhir tautan (seperti titik, koma, tanda kurung) otomatis dibersihkan (`cleanUrl`) sehingga tidak merusak target URL. Tautan dengan awalan `www.` dinormalisasi menjadi protokol aman `https://`.
+* Tautan dirender menggunakan elemen `<a>` dengan atribut keamanan `target="_blank"` dan `rel="noopener noreferrer"`.
+* **Solusi Anti-Tembus Jendela (Anti-Overflow)**:
+  - Sebelum perbaikan, flex item tanpa `min-w-0` membuat string URL panjang (misal >80 karakter tanpa spasi) mempertahankan lebar *min-content*, sehingga menembus batas jendela obrolan (350px).
+  - Diperbaiki dengan menetapkan `min-w-0`, `max-w-full`, `overflow-x-hidden`, serta utilitas `break-all [overflow-wrap:anywhere]` pada pembungkus teks dan tag `<a>`. Hal ini menjamin tautan panjang terputus rapi di dalam batas bubble dan tidak pernah merusak layout jendela chat.
+
+### B. Komponen Kartu Preview Link (`src/components/LiveChat/LinkPreviewCard.jsx`)
+* Jika pesan mengandung tautan, tautan pertama diambil via `extractFirstUrl(msg.pesan)` untuk menampilkan kartu preview interaktif di bawah teks bubble, menyerupai kartu tautan WhatsApp.
+* **Deteksi Instan Sisi Klien**:
+  - **YouTube**: Menangkap ID video (`v=...`, `youtu.be/...`, atau `/shorts/...`) dan langsung menyediakan thumbnail `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` dan judul "Video YouTube".
+  - **Scratch**: Mendeteksi ID proyek dan memuat thumbnail poster Scratch `https://cdn2.scratch.mit.edu/get_image/project/${projectId}_480x360.png`.
+  - **Google Workspace**: Mengenali tautan Google Drive, Google Formulir, Google Dokumen, Google Spreadsheet, dan Google Slides.
+* **Server-Side OpenGraph Scraper (`/api/link-preview` di `server.ts`)**:
+  - Endpoint server mengambil metadata OpenGraph (`og:title`, `og:description`, `og:image`, `og:site_name`, dan tag `<title>`).
+  - Dilengkapi proteksi keamanan SSRF (menolak host lokal/private) dan timeout 4 detik.
+  - Hasil fetch disimpan di memori klien (`previewCache`) untuk mencegah request berulang saat menelusuri chat.
+* **Gaya Visual Kartu**:
+  - Banner gambar responsif (rasio 16:9 / aspect cover) dengan proteksi fallback jika gambar gagal dimuat.
+  - Favicon domain resmi via Google S2 Favicon API (`https://www.google.com/s2/favicons?domain=...`).
+  - Judul tebal maksimal 2 baris (`line-clamp-2`), deskripsi ringkas, nama domain, dan ikon eksternal tautan (`ExternalLink`).
+
+---
+
+## 10. Aturan Pemeliharaan (*Maintenance Rules*)
 
 1. **Anti-Race Condition pada State Update**:
    - Selalu pertahankan pola `setTimeout(..., 0)` saat memanggil `setUnreadExternal` dari dalam listener Supabase agar tidak menimbulkan error React *setState during existing render cycle*.
@@ -210,3 +237,6 @@ Alur Kontrol Kunci Kelas (GAME_CONTROLS):
    - Wajib memanggil `supabase.removeChannel(channel)` di fungsi pembersih `useEffect`.
 3. **Z-Index Konsisten**:
    - Jendela LiveChat berada di `z-[100]` dan Emoji Picker di `z-[110]` agar tidak tertutup oleh modal lain.
+4. **Anti-Tembus & Batas Responsif**:
+   - Jendela chat memiliki batas `max-w-[calc(100vw-24px)]` dan `max-h-[calc(100vh-120px)]`.
+   - Seluruh kontainer flex pembungkus pesan wajib menyertakan `min-w-0` dan `break-all [overflow-wrap:anywhere]` agar konten dinamis seperti tautan tidak pernah melebihi lebar bubble.
