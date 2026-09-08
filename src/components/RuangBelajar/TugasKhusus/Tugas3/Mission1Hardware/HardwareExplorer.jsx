@@ -1,174 +1,34 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Cpu,
-  HardDrive,
   Layers,
-  Monitor,
-  Keyboard,
-  Mouse,
-  Mic,
-  Camera,
-  Scan,
-  QrCode,
-  Tv,
-  Printer,
-  Volume2,
-  Zap,
   CheckCircle2,
   HelpCircle,
-  RefreshCw,
-  Sparkles,
-  BookOpen,
-  ArrowRight,
-  ShieldCheck,
-  Radio,
-  FileCode2,
-  AppWindow,
-  Globe,
-  MessageSquare,
-  Music,
-  Video,
-  Palette,
-  Compass,
-  FileSpreadsheet,
-  FileText,
-  Gamepad2,
-  GraduationCap,
-  RotateCcw
+  BookOpen
 } from 'lucide-react';
-import { RealAssetThumbnail, celebratePointGain } from '../skAssets';
-import { soundEffects } from '../../../../../utils/gameAudio';
+import { celebratePointGain } from '../skAssets';
 
-// ==========================================
-// DATA 20 KOMPONEN PERANGKAT KERAS (HARDWARE)
-// ==========================================
-export const HARDWARE_20_ITEMS = [
-  { id: 'hw_keyboard', name: 'Keyboard (Papan Ketik)', category: 'input', icon: Keyboard, hint: 'Memasukkan karakter teks, angka, dan kombinasi shortcut perintah.' },
-  { id: 'hw_mouse', name: 'Mouse Optik', category: 'input', icon: Mouse, hint: 'Menggerakkan pointer kursor dan memilih objek di layar secara presisi.' },
-  { id: 'hw_mic', name: 'Mikrofon (Microphone)', category: 'input', icon: Mic, hint: 'Menangkap gelombang suara analog menjadi sinyal audio digital komputer.' },
-  { id: 'hw_webcam', name: 'Webcam (Kamera Web)', category: 'input', icon: Camera, hint: 'Menangkap gambar video wajah secara langsung untuk panggilan daring.' },
-  { id: 'hw_scanner', name: 'Scanner Dokumen', category: 'input', icon: Scan, hint: 'Memindai lembaran kertas fisik menjadi berkas dokumen PDF/gambar.' },
-  { id: 'hw_barcode', name: 'Barcode & QR Scanner', category: 'input', icon: QrCode, hint: 'Membaca kode optik barcode kasir/kartu ujian ke dalam sistem.' },
-  
-  { id: 'hw_cpu', name: 'Processor (CPU)', category: 'process', icon: Cpu, hint: 'Otak komputasi utama yang mengeksekusi instruksi aritmatika & logika.' },
-  { id: 'hw_gpu', name: 'VGA Card (GPU Grafis)', category: 'process', icon: Tv, hint: 'Memproses rendering gambar 3D, grafis game berat, dan video visual.' },
-  { id: 'hw_mobo', name: 'Motherboard (Mainboard)', category: 'process', icon: Radio, hint: 'Papan sirkuit induk yang menghubungkan seluruh komponen agar berkomunikasi.' },
-  { id: 'hw_soundcard', name: 'Sound Card Audio', category: 'process', icon: Volume2, hint: 'Chip pengolah sinyal suara digital menjadi gelombang audio berkualitas.' },
-  
-  { id: 'hw_ram', name: 'RAM (Random Access Memory)', category: 'storage', icon: Layers, hint: 'Memori kerja berkecepatan tinggi yang aktif saat komputer menyala (volatile).' },
-  { id: 'hw_ssd', name: 'SSD NVMe / SATA', category: 'storage', icon: HardDrive, hint: 'Penyimpanan non-volatile berkecepatan tinggi untuk booting OS dan data.' },
-  { id: 'hw_hdd', name: 'Harddisk Drive (HDD)', category: 'storage', icon: HardDrive, hint: 'Penyimpanan piringan magnetik berkapasitas besar untuk arsip data jangka panjang.' },
-  { id: 'hw_flashdisk', name: 'Flashdisk USB', category: 'storage', icon: HardDrive, hint: 'Media penyimpanan portabel yang mudah dipindah-pindahkan antar komputer.' },
-  
-  { id: 'hw_monitor', name: 'Monitor LED / Layar', category: 'output', icon: Monitor, hint: 'Menampilkan antarmuka visual grafik dan hasil proses komputer.' },
-  { id: 'hw_speaker', name: 'Speaker Audio Stereo', category: 'output', icon: Volume2, hint: 'Mengeluarkan suara nada, musik, dan efek audio dari komputer.' },
-  { id: 'hw_printer', name: 'Printer Inkjet / Laser', category: 'output', icon: Printer, hint: 'Mencetak dokumen digital dan gambar ke atas media kertas fisik.' },
-  { id: 'hw_projector', name: 'Proyektor InFocus', category: 'output', icon: Monitor, hint: 'Memproyeksikan tampilan layar ke dinding/layar besar di kelas.' },
-  
-  { id: 'hw_psu', name: 'Power Supply Unit (PSU)', category: 'auxiliary', icon: Zap, hint: 'Mengubah arus listrik AC PLN menjadi daya DC untuk semua komponen.' },
-  { id: 'hw_cooler', name: 'Heatsink & Fan Cooler', category: 'auxiliary', icon: Zap, hint: 'Mendinginkan dan menjaga suhu processor agar tidak terjadi overheat.' },
-];
+import {
+  HARDWARE_20_ITEMS,
+  HW_CATEGORIES,
+  SOFTWARE_20_ITEMS,
+  SW_CATEGORIES,
+  QUIZ_QUESTIONS
+} from './hardwareData';
 
-export const HW_CATEGORIES = [
-  { id: 'input', label: '1. Perangkat Masukan (Input)', icon: Keyboard, color: 'border-blue-500/40 bg-blue-950/20 text-blue-400', desc: 'Memasukkan data/sinyal dari pengguna ke komputer' },
-  { id: 'process', label: '2. Perangkat Pemrosesan (Process)', icon: Cpu, color: 'border-amber-500/40 bg-amber-950/20 text-amber-400', desc: 'Mengolah logika instruksi dan perhitungan data' },
-  { id: 'storage', label: '3. Perangkat Penyimpanan (Storage)', icon: HardDrive, color: 'border-emerald-500/40 bg-emerald-950/20 text-emerald-400', desc: 'Menyimpan data sementara (RAM) maupun permanen (SSD/HDD)' },
-  { id: 'output', label: '4. Perangkat Keluaran (Output)', icon: Monitor, color: 'border-purple-500/40 bg-purple-950/20 text-purple-400', desc: 'Menampilkan hasil olahan data ke bentuk visual/suara/cetak' },
-  { id: 'auxiliary', label: '5. Perangkat Pendukung (Power & Cooler)', icon: Zap, color: 'border-rose-500/40 bg-rose-950/20 text-rose-400', desc: 'Mendukung daya listrik, pendinginan, dan stabilitas perangkat' },
-];
+import TabMateriVisual from './TabMateriVisual';
+import TabLabHardware from './TabLabHardware';
+import TabLabSoftware from './TabLabSoftware';
+import TabKuisKomputer from './TabKuisKomputer';
 
-// ==========================================
-// DATA 20 PERANGKAT LUNAK (OS vs APLIKASI)
-// ==========================================
-export const SOFTWARE_20_ITEMS = [
-  { id: 'sw_win11', name: 'Windows 11', type: 'os', icon: AppWindow, desc: 'Sistem operasi desktop populer buatan Microsoft.' },
-  { id: 'sw_linux', name: 'Linux Ubuntu', type: 'os', icon: FileCode2, desc: 'Sistem operasi open-source yang tangguh dan gratis.' },
-  { id: 'sw_macos', name: 'Apple macOS', type: 'os', icon: AppWindow, desc: 'Sistem operasi eksklusif komputer Apple Mac.' },
-  { id: 'sw_android', name: 'Android OS', type: 'os', icon: Globe, desc: 'Sistem operasi paling banyak digunakan di smartphone & tablet.' },
-  { id: 'sw_ios', name: 'Apple iOS', type: 'os', icon: AppWindow, desc: 'Sistem operasi mobile untuk iPhone dan iPad.' },
-  { id: 'sw_chromeos', name: 'ChromeOS', type: 'os', icon: Globe, desc: 'Sistem operasi ringan berbasis web browser dari Google.' },
-
-  { id: 'sw_word', name: 'Microsoft Word', type: 'app', icon: FileText, desc: 'Aplikasi pengolah kata untuk membuat makalah & naskah.' },
-  { id: 'sw_excel', name: 'Microsoft Excel', type: 'app', icon: FileSpreadsheet, desc: 'Aplikasi spreadsheet pengolah angka, rumus, dan tabel.' },
-  { id: 'sw_chrome', name: 'Google Chrome', type: 'app', icon: Globe, desc: 'Aplikasi peramban web browser untuk menjelajah internet.' },
-  { id: 'sw_wa', name: 'WhatsApp', type: 'app', icon: MessageSquare, desc: 'Aplikasi komunikasi berkirim pesan dan panggilan daring.' },
-  { id: 'sw_photoshop', name: 'Adobe Photoshop', type: 'app', icon: Palette, desc: 'Aplikasi profesional untuk manipulasi dan edit grafis foto.' },
-  { id: 'sw_vlc', name: 'VLC Media Player', type: 'app', icon: Video, desc: 'Aplikasi pemutar video dan musik serbaguna.' },
-  { id: 'sw_capcut', name: 'CapCut Video Editor', type: 'app', icon: Video, desc: 'Aplikasi penyuntingan video kreatif dengan efek modern.' },
-  { id: 'sw_spotify', name: 'Spotify Music', type: 'app', icon: Music, desc: 'Aplikasi streaming lagu dan siaran siniar (podcast).' },
-  { id: 'sw_canva', name: 'Canva', type: 'app', icon: Palette, desc: 'Aplikasi desain grafis berbasis web untuk poster dan slide.' },
-  { id: 'sw_zoom', name: 'Zoom Meetings', type: 'app', icon: Video, desc: 'Aplikasi telekonferensi video tatap muka jarak jauh.' },
-  { id: 'sw_scratch', name: 'Scratch 3.0', type: 'app', icon: FileCode2, desc: 'Aplikasi pemrograman visual berbasis blok blok koding.' },
-  { id: 'sw_roblox', name: 'Roblox / Game Studio', type: 'app', icon: Gamepad2, desc: 'Aplikasi permainan kreasi simulasi dunia virtual.' },
-  { id: 'sw_duolingo', name: 'Duolingo', type: 'app', icon: GraduationCap, desc: 'Aplikasi edukasi interaktif untuk belajar bahasa asing.' },
-  { id: 'sw_maps', name: 'Google Maps', type: 'app', icon: Compass, desc: 'Aplikasi navigasi rute jalan dan pemetaan peta digital.' },
-];
-
-export const SW_CATEGORIES = [
-  { id: 'os', label: '🖥️ Sistem Operasi (Operating System / OS)', color: 'border-amber-500/40 bg-amber-950/20 text-amber-300', desc: 'Perangkat lunak dasar yang mengelola perangkat keras dan menjadi pondasi bagi aplikasi lain.' },
-  { id: 'app', label: '📱 Perangkat Lunak Aplikasi (Application Software)', color: 'border-blue-500/40 bg-blue-950/20 text-blue-300', desc: 'Perangkat lunak yang dirancang untuk menyelesaikan tugas spesifik kebutuhan pengguna.' },
-];
-
-// ==========================================
-// SOAL KUIS SISTEM KOMPUTER
-// ==========================================
-const QUIZ_QUESTIONS = [
-  {
-    id: 1,
-    question: 'Jika komputer tiba-tiba padam karena pemadaman listrik, data yang sedang aktif di RAM seketika hilang. Karakteristik memori tersebut disebut...',
-    options: [
-      { id: 'a', text: 'Non-volatile yang menyimpan berkas secara permanen' },
-      { id: 'b', text: 'Read-only memory yang hanya dapat dibaca prosesor' },
-      { id: 'c', text: 'Volatile yang memerlukan daya listrik konstan aktif' },
-      { id: 'd', text: 'Virtual storage yang tersinkronisasi server awan' },
-    ],
-    correct: 'c',
-  },
-  {
-    id: 2,
-    question: 'Komponen perangkat keras yang bertindak sebagai pusat pemrosesan logika, kontrol instruksi, dan perhitungan matematis adalah...',
-    options: [
-      { id: 'a', text: 'Central Processing Unit sebagai otak utama pemroses' },
-      { id: 'b', text: 'Power Supply Unit sebagai penyuplai arus daya listrik' },
-      { id: 'c', text: 'Heatsink Fan Cooler pendingin temperatur sirkuit' },
-      { id: 'd', text: 'Solid State Drive penyimpan berkas sistem digital' },
-    ],
-    correct: 'a',
-  },
-  {
-    id: 3,
-    question: 'Di antara kelompok perangkat berikut, manakah deretan yang seluruhnya berfungsi mengirimkan data masukan ke sistem komputer?',
-    options: [
-      { id: 'a', text: 'Monitor LCD, Proyektor Digital, dan Speaker Stereo' },
-      { id: 'b', text: 'Printer Laser, Plotter Grafis, dan Monitor Layar' },
-      { id: 'c', text: 'Solid State Drive, Flashdisk USB, dan Random RAM' },
-      { id: 'd', text: 'Keyboard USB, Mouse Optik, Scanner, dan Mikrofon' },
-    ],
-    correct: 'd',
-  },
-  {
-    id: 4,
-    question: 'Manakah pernyataan yang paling tepat dalam membedakan peran Sistem Operasi dengan Perangkat Lunak Aplikasi?',
-    options: [
-      { id: 'a', text: 'Aplikasi mengontrol sirkuit fisik, sedangkan Sistem Operasi mengetik naskah' },
-      { id: 'b', text: 'Sistem Operasi mengelola sumber daya dasar, sedangkan Aplikasi melayani tugas spesifik' },
-      { id: 'c', text: 'Aplikasi bekerja mandiri tanpa OS, sedangkan Sistem Operasi butuh browser' },
-      { id: 'd', text: 'Sistem Operasi berupa kabel jaringan, sedangkan Aplikasi berupa papan ketik' },
-    ],
-    correct: 'b',
-  },
-  {
-    id: 5,
-    question: 'Papan sirkuit utama terintegrasi yang menjadi jalur komunikasi dan penghubung antara CPU, RAM, GPU, dan storage adalah...',
-    options: [
-      { id: 'a', text: 'Sound Card audio kontroler' },
-      { id: 'b', text: 'Network Interface Card LAN' },
-      { id: 'c', text: 'Motherboard papan sirkuit induk' },
-      { id: 'd', text: 'Power Distribution Unit PSU' },
-    ],
-    correct: 'c',
-  },
-];
+// Re-ekspor data agar kompatibilitas tetap 100% terjaga bagi komponen luar
+export {
+  HARDWARE_20_ITEMS,
+  HW_CATEGORIES,
+  SOFTWARE_20_ITEMS,
+  SW_CATEGORIES,
+  QUIZ_QUESTIONS
+};
 
 export default function HardwareExplorer({ userId, currentScore, onComplete, onNextMission }) {
   const uid = userId ? String(userId) : 'guest';
@@ -177,7 +37,7 @@ export default function HardwareExplorer({ userId, currentScore, onComplete, onN
   const QUIZ_KEY = `tugas_sk_m1_quiz_answers_user_${uid}`;
 
   const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'hw_drag' | 'sw_drag' | 'kuis'
-  const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0));
+  const [materiRead, setMateriRead] = useState(() => (Number(currentScore) > 0 || Boolean(localStorage.getItem(HW_KEY))));
 
   // State Penempatan 20 Komponen Hardware: Cek localStorage (sinkron dengan database), lalu default
   const [hwPlacements, setHwPlacements] = useState(() => {
@@ -203,6 +63,7 @@ export default function HardwareExplorer({ userId, currentScore, onComplete, onN
     });
     return init;
   });
+
   const [shuffledHwList, setShuffledHwList] = useState(() =>
     [...HARDWARE_20_ITEMS].sort(() => Math.random() - 0.5)
   );
@@ -235,6 +96,7 @@ export default function HardwareExplorer({ userId, currentScore, onComplete, onN
     });
     return init;
   });
+
   const [shuffledSwList, setShuffledSwList] = useState(() =>
     [...SOFTWARE_20_ITEMS].sort(() => Math.random() - 0.5)
   );
@@ -298,58 +160,55 @@ export default function HardwareExplorer({ userId, currentScore, onComplete, onN
       const savedHw = localStorage.getItem(HW_KEY);
       if (savedHw) {
         const parsed = JSON.parse(savedHw);
-        if (parsed && typeof parsed === 'object') {
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
           setHwPlacements(parsed);
+          const placedCount = Object.values(parsed).filter(Boolean).length;
+          if (placedCount >= 10 || Number(currentScore) >= 15) {
+            setHwChecked(true);
+          }
         }
       } else if (Number(currentScore) >= 15) {
         const init = {};
         HARDWARE_20_ITEMS.forEach((item) => { init[item.id] = item.category; });
         setHwPlacements(init);
-      } else {
-        const init = {};
-        HARDWARE_20_ITEMS.forEach((item) => { init[item.id] = ''; });
-        setHwPlacements(init);
-        setHwChecked(false);
+        setHwChecked(true);
       }
-    } catch (e) {
-      /* ignore */
-    }
 
-    try {
       const savedSw = localStorage.getItem(SW_KEY);
       if (savedSw) {
         const parsed = JSON.parse(savedSw);
-        if (parsed && typeof parsed === 'object') {
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
           setSwPlacements(parsed);
+          const placedCount = Object.values(parsed).filter(Boolean).length;
+          if (placedCount >= 10 || Number(currentScore) >= 25) {
+            setSwChecked(true);
+          }
         }
       } else if (Number(currentScore) >= 25) {
         const init = {};
         SOFTWARE_20_ITEMS.forEach((item) => { init[item.id] = item.type; });
         setSwPlacements(init);
-      } else {
-        const init = {};
-        SOFTWARE_20_ITEMS.forEach((item) => { init[item.id] = ''; });
-        setSwPlacements(init);
-        setSwChecked(false);
+        setSwChecked(true);
       }
-    } catch (e) {
-      /* ignore */
-    }
 
-    try {
       const savedQ = localStorage.getItem(QUIZ_KEY);
       if (savedQ) {
         const parsed = JSON.parse(savedQ);
-        if (parsed && typeof parsed === 'object') {
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
           setQuizAnswers(parsed);
+          if (Object.keys(parsed).length === 5 || Number(currentScore) >= 35) {
+            setQuizChecked(true);
+          }
         }
       } else if (Number(currentScore) >= 35) {
         const initQ = {};
         QUIZ_QUESTIONS.forEach((q) => { initQ[q.id] = q.correct; });
         setQuizAnswers(initQ);
-      } else {
-        setQuizAnswers({});
-        setQuizChecked(false);
+        setQuizChecked(true);
+      }
+
+      if (Number(currentScore) > 0 || savedHw || savedSw || savedQ) {
+        setMateriRead(true);
       }
     } catch (e) {
       /* ignore */
@@ -357,7 +216,7 @@ export default function HardwareExplorer({ userId, currentScore, onComplete, onN
   }, [HW_KEY, SW_KEY, QUIZ_KEY, currentScore]);
 
   // ====================================================
-  // PERHITUNGAN SKOR BARU (Total 35 Poin untuk Misi 1):
+  // PERHITUNGAN SKOR (Total 35 Poin untuk Misi 1):
   // - Lab Hardware (20 item): 15 Poin (0.75 poin per item benar)
   // - Lab Software (20 item): 10 Poin (0.5 poin per item benar)
   // - Kuis Komputer (5 soal): 10 Poin (2 poin per soal benar)
@@ -381,7 +240,7 @@ export default function HardwareExplorer({ userId, currentScore, onComplete, onN
   const calculatedScore = Math.round(hwScore + swScore + quizScore);
   const totalM1Score = Math.min(35, Math.max(Number(currentScore) || 0, calculatedScore));
 
-  // Handler Hardware Placement (Tanpa petasan per klik)
+  // Handler Hardware Placement
   const handleAssignHw = (itemId, targetCategory) => {
     const isUnassigning = !targetCategory || hwPlacements[itemId] === targetCategory;
     const nextCategory = isUnassigning ? '' : targetCategory;
@@ -393,7 +252,16 @@ export default function HardwareExplorer({ userId, currentScore, onComplete, onN
     setHwChecked(false);
   };
 
-  // Handler Software Placement (Tanpa petasan per klik)
+  const handleClearHw = () => {
+    const cleared = {};
+    HARDWARE_20_ITEMS.forEach((h) => { cleared[h.id] = ''; });
+    setHwPlacements(cleared);
+    setSelectedHwItem(null);
+    setHwChecked(false);
+    setShuffledHwList([...HARDWARE_20_ITEMS].sort(() => Math.random() - 0.5));
+  };
+
+  // Handler Software Placement
   const handleAssignSw = (itemId, targetType) => {
     const isUnassigning = !targetType || swPlacements[itemId] === targetType;
     const nextType = isUnassigning ? '' : targetType;
@@ -405,42 +273,24 @@ export default function HardwareExplorer({ userId, currentScore, onComplete, onN
     setSwChecked(false);
   };
 
-  // Drag and drop HTML5 handlers for Hardware
-  const handleHwDragStart = (e, itemId) => {
-    e.dataTransfer.setData('text/plain', itemId);
-    e.dataTransfer.setData('type', 'hw');
+  const handleClearSw = () => {
+    const cleared = {};
+    SOFTWARE_20_ITEMS.forEach((s) => { cleared[s.id] = ''; });
+    setSwPlacements(cleared);
+    setSelectedSwItem(null);
+    setSwChecked(false);
+    setShuffledSwList([...SOFTWARE_20_ITEMS].sort(() => Math.random() - 0.5));
   };
 
-  const handleHwDrop = (e, categoryId) => {
-    e.preventDefault();
-    const itemId = e.dataTransfer.getData('text/plain');
-    if (itemId && HARDWARE_20_ITEMS.some((h) => h.id === itemId)) {
-      handleAssignHw(itemId, categoryId);
-    }
-  };
-
-  // Drag and drop HTML5 handlers for Software
-  const handleSwDragStart = (e, itemId) => {
-    e.dataTransfer.setData('text/plain', itemId);
-    e.dataTransfer.setData('type', 'sw');
-  };
-
-  const handleSwDrop = (e, typeId) => {
-    e.preventDefault();
-    const itemId = e.dataTransfer.getData('text/plain');
-    if (itemId && SOFTWARE_20_ITEMS.some((s) => s.id === itemId)) {
-      handleAssignSw(itemId, typeId);
-    }
-  };
-
-  const allowDrop = (e) => {
-    e.preventDefault();
-  };
-
-  // Check hardware with sound & petasan/confetti
+  // Check hardware with sound & confetti
   const handleCheckHw = () => {
     setHwChecked(true);
     celebratePointGain(true);
+    try {
+      localStorage.setItem(HW_KEY, JSON.stringify(hwPlacements));
+    } catch (e) {
+      /* ignore */
+    }
     const newHwCount = HARDWARE_20_ITEMS.filter((item) => hwPlacements[item.id] === item.category).length;
     const newHwScore = Math.round((newHwCount / 20) * 15 * 10) / 10;
     const newTotal = Math.min(35, Math.max(Number(currentScore) || 0, Math.round(newHwScore + swScore + quizScore)));
@@ -449,10 +299,15 @@ export default function HardwareExplorer({ userId, currentScore, onComplete, onN
     }
   };
 
-  // Check software with sound & petasan/confetti
+  // Check software with sound & confetti
   const handleCheckSw = () => {
     setSwChecked(true);
     celebratePointGain(true);
+    try {
+      localStorage.setItem(SW_KEY, JSON.stringify(swPlacements));
+    } catch (e) {
+      /* ignore */
+    }
     const newSwCount = SOFTWARE_20_ITEMS.filter((item) => swPlacements[item.id] === item.type).length;
     const newSwScore = Math.round((newSwCount / 20) * 10 * 10) / 10;
     const newTotal = Math.min(35, Math.max(Number(currentScore) || 0, Math.round(hwScore + newSwScore + quizScore)));
@@ -466,6 +321,11 @@ export default function HardwareExplorer({ userId, currentScore, onComplete, onN
     setQuizChecked(true);
     if (quizCorrectCount > 0) {
       celebratePointGain(quizCorrectCount === 5);
+    }
+    try {
+      localStorage.setItem(QUIZ_KEY, JSON.stringify(quizAnswers));
+    } catch (e) {
+      /* ignore */
     }
     const newQuizScore = quizCorrectCount * 2;
     const newTotal = Math.min(35, Math.max(Number(currentScore) || 0, Math.round(hwScore + swScore + newQuizScore)));
@@ -586,815 +446,64 @@ export default function HardwareExplorer({ userId, currentScore, onComplete, onN
         </div>
       </div>
 
-      {/* ========================================================= */}
-      {/* TAB 1: MATERI SISTEM KOMPUTER */}
-      {/* ========================================================= */}
+      {/* TAB 1: MATERI VISUAL */}
       {activeTab === 'materi' && (
-        <div className="space-y-6">
-          <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black">
-                💻
-              </div>
-              <div>
-                <h3 className="text-base font-black text-white">
-                  Pengertian Sistem Komputer
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Kombinasi harmonis antara Perangkat Keras, Perangkat Lunak, dan Manusia.
-                </p>
-              </div>
-            </div>
-
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              <strong>Sistem Komputer</strong> adalah sekumpulan elemen komputasi terpadu yang saling terhubung untuk menerima data masukan (input), memproses data secara matematis & logika (process), menyimpan hasil (storage), dan menyajikannya sebagai informasi bermanfaat (output) bagi pengguna (brainware).
-            </p>
-
-            {/* 3 Pilar Utama Sistem Komputer */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-              <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-blue-500/30">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-400">Pilar 1</span>
-                <h4 className="text-xs font-black text-white mt-0.5">Hardware (Perangkat Keras)</h4>
-                <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                  Komponen fisik nyata yang dapat dilihat, disentuh, dan dialiri daya listrik (misal: CPU, RAM, Layar).
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-amber-500/30">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400">Pilar 2</span>
-                <h4 className="text-xs font-black text-white mt-0.5">Software (Perangkat Lunak)</h4>
-                <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                  Kumpulan instruksi kode program digital yang memberi perintah kerja pada perangkat keras (OS & Aplikasi).
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-emerald-500/30">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">Pilar 3</span>
-                <h4 className="text-xs font-black text-white mt-0.5">Brainware (Pengguna)</h4>
-                <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                  Manusia (siswa, programmer, operator) yang mengoperasikan dan mengendalikan jalannya komputer.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 5 Kelompok Hardware Utama */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              1. Klasifikasi 5 Kategori Perangkat Keras (Hardware)
-            </h4>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {/* Input */}
-              <div className="bg-slate-950/90 border border-blue-500/30 rounded-2xl p-4 space-y-2">
-                <div className="flex items-center gap-2 text-blue-400 font-bold text-sm">
-                  <Keyboard className="w-4 h-4" />
-                  <span>Perangkat Masukan (Input)</span>
-                </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Alat untuk memasukkan data teks, suara, gambar, atau perintah ke dalam sistem komputer.
-                </p>
-                <div className="flex flex-wrap gap-1 pt-1">
-                  <span className="text-[10px] bg-blue-950 text-blue-300 border border-blue-800/80 px-2 py-0.5 rounded-md font-semibold">Keyboard</span>
-                  <span className="text-[10px] bg-blue-950 text-blue-300 border border-blue-800/80 px-2 py-0.5 rounded-md font-semibold">Mouse</span>
-                  <span className="text-[10px] bg-blue-950 text-blue-300 border border-blue-800/80 px-2 py-0.5 rounded-md font-semibold">Mikrofon</span>
-                  <span className="text-[10px] bg-blue-950 text-blue-300 border border-blue-800/80 px-2 py-0.5 rounded-md font-semibold">Webcam</span>
-                  <span className="text-[10px] bg-blue-950 text-blue-300 border border-blue-800/80 px-2 py-0.5 rounded-md font-semibold">Scanner</span>
-                  <span className="text-[10px] bg-blue-950 text-blue-300 border border-blue-800/80 px-2 py-0.5 rounded-md font-semibold">Barcode</span>
-                </div>
-              </div>
-
-              {/* Process */}
-              <div className="bg-slate-950/90 border border-amber-500/30 rounded-2xl p-4 space-y-2">
-                <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
-                  <Cpu className="w-4 h-4" />
-                  <span>Perangkat Pemrosesan (Process)</span>
-                </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Pusat komputasi yang mengeksekusi rumus logika, kalkulasi, pengolahan gambar, dan koordinasi lalu lintas data.
-                </p>
-                <div className="flex flex-wrap gap-1 pt-1">
-                  <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-800/80 px-2 py-0.5 rounded-md font-semibold">Processor (CPU)</span>
-                  <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-800/80 px-2 py-0.5 rounded-md font-semibold">VGA Card (GPU)</span>
-                  <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-800/80 px-2 py-0.5 rounded-md font-semibold">Motherboard</span>
-                  <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-800/80 px-2 py-0.5 rounded-md font-semibold">Sound Card</span>
-                </div>
-              </div>
-
-              {/* Storage */}
-              <div className="bg-slate-950/90 border border-emerald-500/30 rounded-2xl p-4 space-y-2">
-                <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
-                  <HardDrive className="w-4 h-4" />
-                  <span>Perangkat Penyimpanan (Storage)</span>
-                </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Menyimpan instruksi sementara yang sedang berjalan (RAM) atau berkas dokumen secara permanen (SSD/HDD).
-                </p>
-                <div className="flex flex-wrap gap-1 pt-1">
-                  <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800/80 px-2 py-0.5 rounded-md font-semibold">RAM (Volatile)</span>
-                  <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800/80 px-2 py-0.5 rounded-md font-semibold">SSD NVMe</span>
-                  <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800/80 px-2 py-0.5 rounded-md font-semibold">Harddisk (HDD)</span>
-                  <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800/80 px-2 py-0.5 rounded-md font-semibold">Flashdisk USB</span>
-                </div>
-              </div>
-
-              {/* Output */}
-              <div className="bg-slate-950/90 border border-purple-500/30 rounded-2xl p-4 space-y-2">
-                <div className="flex items-center gap-2 text-purple-400 font-bold text-sm">
-                  <Monitor className="w-4 h-4" />
-                  <span>Perangkat Keluaran (Output)</span>
-                </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Menyajikan hasil proses komputer ke bentuk visual layar, suara speaker, atau lembaran cetak.
-                </p>
-                <div className="flex flex-wrap gap-1 pt-1">
-                  <span className="text-[10px] bg-purple-950 text-purple-300 border border-purple-800/80 px-2 py-0.5 rounded-md font-semibold">Monitor</span>
-                  <span className="text-[10px] bg-purple-950 text-purple-300 border border-purple-800/80 px-2 py-0.5 rounded-md font-semibold">Speaker</span>
-                  <span className="text-[10px] bg-purple-950 text-purple-300 border border-purple-800/80 px-2 py-0.5 rounded-md font-semibold">Printer</span>
-                  <span className="text-[10px] bg-purple-950 text-purple-300 border border-purple-800/80 px-2 py-0.5 rounded-md font-semibold">Proyektor</span>
-                </div>
-              </div>
-
-              {/* Auxiliary */}
-              <div className="bg-slate-950/90 border border-rose-500/30 rounded-2xl p-4 space-y-2 sm:col-span-2 lg:col-span-2">
-                <div className="flex items-center gap-2 text-rose-400 font-bold text-sm">
-                  <Zap className="w-4 h-4" />
-                  <span>Perangkat Pendukung & Daya (Power & Cooler)</span>
-                </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Menjamin ketersediaan arus listrik stabil (PSU) dan membuang panas berlebih (Heatsink Fan Cooler) agar komputer tidak rusak / mati mendadak.
-                </p>
-                <div className="flex flex-wrap gap-1 pt-1">
-                  <span className="text-[10px] bg-rose-950 text-rose-300 border border-rose-800/80 px-2 py-0.5 rounded-md font-semibold">Power Supply Unit (PSU)</span>
-                  <span className="text-[10px] bg-rose-950 text-rose-300 border border-rose-800/80 px-2 py-0.5 rounded-md font-semibold">Heatsink & Fan Cooler</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Pembagian Software OS vs Aplikasi */}
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-3">
-            <h4 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              2. Pembagian Perangkat Lunak (Software)
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="bg-slate-900/90 border border-amber-500/30 p-4 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
-                  <AppWindow className="w-4 h-4" />
-                  <span>Sistem Operasi (OS)</span>
-                </div>
-                <p className="text-slate-400 leading-relaxed">
-                  Pondasi utama yang menghubungkan pengguna dengan perangkat keras. Tanpa OS, komputer tidak bisa dinyalakan atau menjalankan aplikasi apapun.
-                </p>
-                <div className="text-[11px] text-slate-300 font-medium">
-                  Contoh: <strong>Windows 11, Linux Ubuntu, macOS, Android, iOS, ChromeOS</strong>.
-                </div>
-              </div>
-
-              <div className="bg-slate-900/90 border border-blue-500/30 p-4 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-blue-300 font-bold text-sm">
-                  <Palette className="w-4 h-4" />
-                  <span>Perangkat Lunak Aplikasi</span>
-                </div>
-                <p className="text-slate-400 leading-relaxed">
-                  Program siap pakai yang dibuat khusus untuk memenuhi kebutuhan tugas manusia (mengetik, mengedit, menggambar, komunikasi, belajar, dan hiburan).
-                </p>
-                <div className="text-[11px] text-slate-300 font-medium">
-                  Contoh: <strong>Word, Excel, Photoshop, WhatsApp, Canva, Zoom, Spotify, Scratch, Roblox</strong>.
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <button
-              onClick={() => {
-                setMateriRead(true);
-                setActiveTab('hw_drag');
-              }}
-              className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20"
-            >
-              <span>Lanjut ke Praktikum 20 Komponen Hardware</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <TabMateriVisual
+          onNextTab={() => {
+            setMateriRead(true);
+            setActiveTab('hw_drag');
+          }}
+        />
       )}
 
-      {/* ========================================================= */}
       {/* TAB 2: LAB DRAG & DROP 20 KOMPONEN HARDWARE */}
-      {/* ========================================================= */}
       {activeTab === 'hw_drag' && (
-        <div className="space-y-5">
-          {/* Petunjuk & Progress */}
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-black text-white flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-400" />
-                Tantangan Drag & Drop 20 Komponen Hardware (Gambar Asli)
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Tarik (drag) atau klik kartu komponen berfoto asli, lalu letakkan ke dalam zona kategori perangkat keras yang sesuai.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300">
-                Terpasang: <span className="text-amber-400">{Object.values(hwPlacements).filter(Boolean).length}/20</span>
-              </div>
-              <button
-                onClick={handleCheckHw}
-                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95 transition-all"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Cek Hasil ({hwScore}/15p)</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Tata Letak Berdampingan (Side-by-Side): Bank Komponen Kiri & Dropzones Kanan */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-            {/* Kolom Kiri (Bank Komponen Hardware) */}
-            <div className="lg:col-span-4 bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-3 lg:sticky lg:top-20">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  Bank Hardware ({HARDWARE_20_ITEMS.filter((h) => !hwPlacements[h.id]).length} Sisa)
-                </span>
-                <button
-                  onClick={() => {
-                    const cleared = {};
-                    HARDWARE_20_ITEMS.forEach((h) => { cleared[h.id] = ''; });
-                    setHwPlacements(cleared);
-                    setSelectedHwItem(null);
-                    setHwChecked(false);
-                    setShuffledHwList([...HARDWARE_20_ITEMS].sort(() => Math.random() - 0.5));
-                  }}
-                  className="text-[11px] text-slate-400 hover:text-white flex items-center gap-1"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  <span>Reset</span>
-                </button>
-              </div>
-
-              {/* Mobile / Tap Selection Banner */}
-              {selectedHwItem && (
-                <div className="p-2 px-3 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center justify-between animate-pulse">
-                  <span className="truncate pr-1">👉 Terpilih: <strong>{HARDWARE_20_ITEMS.find((h) => h.id === selectedHwItem)?.name}</strong></span>
-                  <button
-                    onClick={() => setSelectedHwItem(null)}
-                    className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-900 text-slate-300 border border-slate-700 hover:text-white flex-shrink-0"
-                  >
-                    Batal
-                  </button>
-                </div>
-              )}
-
-              {/* Daftar Scrollable 1 Kolom */}
-              <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-                {shuffledHwList.map((item) => {
-                  const placedCat = hwPlacements[item.id];
-                  const isSelected = selectedHwItem === item.id;
-
-                  if (placedCat) {
-                    return (
-                      <div
-                        key={item.id}
-                        className="p-2 rounded-xl border border-dashed border-slate-800/80 bg-slate-950/40 opacity-30 grayscale cursor-not-allowed select-none text-left flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <RealAssetThumbnail
-                            id={item.id}
-                            name={item.name}
-                            fallbackIcon={item.icon}
-                            isSoftware={false}
-                            size="sm"
-                          />
-                          <span className="text-xs font-bold truncate text-slate-500">{item.name}</span>
-                        </div>
-                        <span className="text-[10px] text-slate-600 font-semibold px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800/60">✓ Terpasang</span>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div
-                      key={item.id}
-                      draggable
-                      onDragStart={(e) => handleHwDragStart(e, item.id)}
-                      onClick={() => setSelectedHwItem(isSelected ? null : item.id)}
-                      className={`p-2.5 rounded-xl border text-left transition-all cursor-grab active:cursor-grabbing select-none relative ${
-                        isSelected
-                          ? 'border-amber-400 bg-amber-500/20 ring-2 ring-amber-400/40 shadow-lg'
-                          : 'border-slate-800 bg-slate-900/70 hover:border-amber-500/50 hover:bg-slate-900 text-slate-200'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <RealAssetThumbnail
-                          id={item.id}
-                          name={item.name}
-                          fallbackIcon={item.icon}
-                          isSoftware={false}
-                          size="md"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold leading-tight truncate">{item.name}</span>
-                            <span className="text-[10px] text-amber-400/80 font-medium ml-1">Tarik / Klik</span>
-                          </div>
-                          <span className="text-[10px] text-slate-400 block line-clamp-1 mt-0.5">{item.hint}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Kolom Kanan (Kotak-Kotak Dropzone Kategori Hardware) */}
-            <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {HW_CATEGORIES.map((cat) => {
-                const assignedItems = HARDWARE_20_ITEMS.filter(
-                  (h) => hwPlacements[h.id] === cat.id
-                );
-
-                return (
-                  <div
-                    key={cat.id}
-                    onDragOver={allowDrop}
-                    onDrop={(e) => handleHwDrop(e, cat.id)}
-                    onClick={() => {
-                      if (selectedHwItem) {
-                        handleAssignHw(selectedHwItem, cat.id);
-                        setSelectedHwItem(null);
-                      }
-                    }}
-                    className={`border rounded-2xl p-3.5 transition-all min-h-[175px] flex flex-col justify-between ${cat.color} ${
-                      selectedHwItem ? 'ring-2 ring-amber-400/40 cursor-pointer bg-slate-900/60' : ''
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2 font-black text-xs text-white">
-                          <cat.icon className="w-4 h-4 text-amber-400" />
-                          <span>{cat.label}</span>
-                        </div>
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-900/80 border border-slate-800 text-slate-300">
-                          {assignedItems.length} item
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-400 mb-2.5 leading-snug">{cat.desc}</p>
-
-                      {/* Assigned Chips with Real Thumbnails */}
-                      <div className="flex flex-wrap gap-1.5 min-h-[60px] p-2 rounded-xl bg-slate-950/70 border border-slate-800/80">
-                        {assignedItems.length === 0 ? (
-                          <div className="w-full text-center py-4 text-[11px] text-slate-500 italic">
-                            Tarik dari daftar kiri atau klik item lalu klik kotak ini
-                          </div>
-                        ) : (
-                          assignedItems.map((item) => {
-                            const isCorrect = item.category === cat.id;
-                            return (
-                              <span
-                                key={item.id}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAssignHw(item.id, cat.id);
-                                }}
-                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xl text-[11px] font-semibold border border-slate-700 bg-slate-900 text-slate-200 cursor-pointer hover:border-slate-500 hover:bg-slate-800 transition"
-                                title="Klik untuk menghapus dari kategori"
-                              >
-                                <RealAssetThumbnail
-                                  id={item.id}
-                                  name={item.name}
-                                  fallbackIcon={item.icon}
-                                  isSoftware={false}
-                                  size="sm"
-                                />
-                                <span className="truncate max-w-[110px]">{item.name}</span>
-                                <span className="text-[10px] text-slate-400 hover:text-white font-bold ml-0.5">×</span>
-                              </span>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-2 text-[10px] text-slate-500 flex items-center justify-between">
-                      <span>💡 Contoh: {cat.examples}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center pt-2">
-            <div className="text-xs text-slate-400">
-              {hwChecked && (
-                <div className="font-bold flex items-center gap-2 animate-in fade-in">
-                  {hwCorrectCount === 20 ? (
-                    <span className="text-emerald-400">
-                      🎉 Luar Biasa! Sempurna 20 / 20 Komponen Hardware Tepat (+{hwScore}/15 Poin)
-                    </span>
-                  ) : (
-                    <span className="text-amber-300">
-                      📊 Hasil Evaluasi: {hwCorrectCount} dari 20 komponen tepat pada posisinya (+{hwScore}/15 Poin). Periksa kembali penempatanmu jika ingin menyempurnakan!
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => setActiveTab('sw_drag')}
-              className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20"
-            >
-              <span>Lanjut ke Praktikum 20 Software</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <TabLabHardware
+          hwPlacements={hwPlacements}
+          onAssignHw={handleAssignHw}
+          onClearHw={handleClearHw}
+          shuffledHwList={shuffledHwList}
+          selectedHwItem={selectedHwItem}
+          setSelectedHwItem={setSelectedHwItem}
+          hwChecked={hwChecked}
+          hwScore={hwScore}
+          hwCorrectCount={hwCorrectCount}
+          onCheckHw={handleCheckHw}
+          onNextTab={() => setActiveTab('sw_drag')}
+        />
       )}
 
-      {/* ========================================================= */}
       {/* TAB 3: LAB DRAG & DROP 20 SOFTWARE (OS vs APLIKASI) */}
-      {/* ========================================================= */}
       {activeTab === 'sw_drag' && (
-        <div className="space-y-5">
-          {/* Sub Header Software */}
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-black text-white flex items-center gap-2">
-                <Layers className="w-4 h-4 text-amber-400" />
-                Tantangan Pengelompokan 20 Jenis Perangkat Lunak (Logo Asli)
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Kelompokkan 20 software berikut: manakah yang merupakan <strong>Sistem Operasi (OS)</strong> dan manakah <strong>Aplikasi</strong>.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300">
-                Terpasang: <span className="text-amber-400">{Object.values(swPlacements).filter(Boolean).length}/20</span>
-              </div>
-              <button
-                onClick={handleCheckSw}
-                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95 transition-all"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Cek Hasil ({swScore}/10p)</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Tata Letak Berdampingan (Side-by-Side): Bank Software Kiri & Dropzones Kanan */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-            {/* Kolom Kiri (Bank 20 Software) */}
-            <div className="lg:col-span-4 bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-3 lg:sticky lg:top-20">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  Bank Software ({SOFTWARE_20_ITEMS.filter((s) => !swPlacements[s.id]).length} Sisa)
-                </span>
-                <button
-                  onClick={() => {
-                    const cleared = {};
-                    SOFTWARE_20_ITEMS.forEach((s) => { cleared[s.id] = ''; });
-                    setSwPlacements(cleared);
-                    setSelectedSwItem(null);
-                    setSwChecked(false);
-                    setShuffledSwList([...SOFTWARE_20_ITEMS].sort(() => Math.random() - 0.5));
-                  }}
-                  className="text-[11px] text-slate-400 hover:text-white flex items-center gap-1"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  <span>Reset</span>
-                </button>
-              </div>
-
-              {/* Mobile / Tap Selection Banner for Software */}
-              {selectedSwItem && (
-                <div className="p-2 px-3 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center justify-between animate-pulse">
-                  <span className="truncate pr-1">👉 Terpilih: <strong>{SOFTWARE_20_ITEMS.find((s) => s.id === selectedSwItem)?.name}</strong></span>
-                  <button
-                    onClick={() => setSelectedSwItem(null)}
-                    className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-900 text-slate-300 border border-slate-700 hover:text-white flex-shrink-0"
-                  >
-                    Batal
-                  </button>
-                </div>
-              )}
-
-              {/* Daftar Scrollable 1 Kolom Software */}
-              <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-                {shuffledSwList.map((item) => {
-                  const placedType = swPlacements[item.id];
-                  const isSelected = selectedSwItem === item.id;
-
-                  if (placedType) {
-                    return (
-                      <div
-                        key={item.id}
-                        className="p-2 rounded-xl border border-dashed border-slate-800/80 bg-slate-950/40 opacity-30 grayscale cursor-not-allowed select-none text-left flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <RealAssetThumbnail
-                            id={item.id}
-                            name={item.name}
-                            fallbackIcon={item.icon}
-                            isSoftware={true}
-                            size="sm"
-                          />
-                          <span className="text-xs font-bold truncate text-slate-500">{item.name}</span>
-                        </div>
-                        <span className="text-[10px] text-slate-600 font-semibold px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800/60">✓ Terpasang</span>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div
-                      key={item.id}
-                      draggable
-                      onDragStart={(e) => handleSwDragStart(e, item.id)}
-                      onClick={() => setSelectedSwItem(isSelected ? null : item.id)}
-                      className={`p-2.5 rounded-xl border text-left transition-all cursor-grab active:cursor-grabbing select-none relative ${
-                        isSelected
-                          ? 'border-amber-400 bg-amber-500/20 ring-2 ring-amber-400/40 shadow-lg'
-                          : 'border-slate-800 bg-slate-900/70 hover:border-amber-500/50 hover:bg-slate-900 text-slate-200'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <RealAssetThumbnail
-                          id={item.id}
-                          name={item.name}
-                          fallbackIcon={item.icon}
-                          isSoftware={true}
-                          size="md"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold leading-tight truncate">{item.name}</span>
-                            <span className="text-[10px] text-amber-400/80 font-medium ml-1">Tarik / Klik</span>
-                          </div>
-                          <span className="text-[10px] text-slate-400 block line-clamp-1 mt-0.5">{item.desc}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Kolom Kanan (2 Dropzones: OS vs Aplikasi) */}
-            <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {SW_CATEGORIES.map((cat) => {
-                const assignedItems = SOFTWARE_20_ITEMS.filter(
-                  (s) => swPlacements[s.id] === cat.id
-                );
-
-                return (
-                  <div
-                    key={cat.id}
-                    onDragOver={allowDrop}
-                    onDrop={(e) => handleSwDrop(e, cat.id)}
-                    onClick={() => {
-                      if (selectedSwItem) {
-                        handleAssignSw(selectedSwItem, cat.id);
-                        setSelectedSwItem(null);
-                      }
-                    }}
-                    className={`border rounded-2xl p-4 transition-all min-h-[220px] flex flex-col justify-between ${cat.color} ${
-                      selectedSwItem ? 'ring-2 ring-amber-400/40 cursor-pointer bg-slate-900/60' : ''
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="font-black text-xs sm:text-sm text-white">
-                          {cat.label}
-                        </div>
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-900/80 border border-slate-800 text-slate-300">
-                          {assignedItems.length} item
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-400 mb-3 leading-snug">{cat.desc}</p>
-
-                      {/* Assigned Chips with Logos */}
-                      <div className="flex flex-wrap gap-1.5 min-h-[100px] p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80">
-                        {assignedItems.length === 0 ? (
-                          <div className="w-full text-center py-8 text-[11px] text-slate-500 italic">
-                            Tarik dari daftar kiri atau klik software lalu klik ke zona ini
-                          </div>
-                        ) : (
-                          assignedItems.map((item) => {
-                            const isCorrect = item.type === cat.id;
-                            return (
-                              <span
-                                key={item.id}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAssignSw(item.id, cat.id);
-                                }}
-                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-900 text-slate-200 cursor-pointer hover:border-slate-500 hover:bg-slate-800 transition"
-                                title="Klik untuk menghapus dari zona"
-                              >
-                                <RealAssetThumbnail
-                                  id={item.id}
-                                  name={item.name}
-                                  fallbackIcon={item.icon}
-                                  isSoftware={true}
-                                  size="sm"
-                                />
-                                <span className="truncate max-w-[110px]">{item.name}</span>
-                                <span className="text-[10px] text-slate-400 hover:text-white font-bold ml-0.5">×</span>
-                              </span>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center pt-2">
-            <div className="text-xs text-slate-400">
-              {swChecked && (
-                <div className="font-bold flex items-center gap-2 animate-in fade-in">
-                  {swCorrectCount === 20 ? (
-                    <span className="text-emerald-400">
-                      🎉 Luar Biasa! Sempurna 20 / 20 Software Berhasil Dikelompokkan (+{swScore}/10 Poin)
-                    </span>
-                  ) : (
-                    <span className="text-amber-300">
-                      📊 Hasil Evaluasi: {swCorrectCount} dari 20 software tepat pada posisinya (+{swScore}/10 Poin). Periksa kembali penempatanmu jika ingin menyempurnakan!
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => setActiveTab('kuis')}
-              className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20"
-            >
-              <span>Lanjut ke Kuis Pemahaman</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <TabLabSoftware
+          swPlacements={swPlacements}
+          onAssignSw={handleAssignSw}
+          onClearSw={handleClearSw}
+          shuffledSwList={shuffledSwList}
+          selectedSwItem={selectedSwItem}
+          setSelectedSwItem={setSelectedSwItem}
+          swChecked={swChecked}
+          swScore={swScore}
+          swCorrectCount={swCorrectCount}
+          onCheckSw={handleCheckSw}
+          onNextTab={() => setActiveTab('kuis')}
+        />
       )}
 
-      {/* ========================================================= */}
       {/* TAB 4: KUIS PEMAHAMAN SISTEM KOMPUTER */}
-      {/* ========================================================= */}
       {activeTab === 'kuis' && (
-        <div className="space-y-4">
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-black text-white flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-amber-400" />
-                Kuis Logika Sistem Komputer (5 Soal • 10 Poin)
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Pilih jawaban paling tepat. Evaluasi kuis dilakukan sekaligus setelah seluruh soal dijawab.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-amber-400 bg-amber-950/60 border border-amber-800/80 px-3 py-1 rounded-xl">
-                Skor Kuis: {quizScore} / 10 Poin
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {QUIZ_QUESTIONS.map((q, idx) => {
-              const selectedOpt = quizAnswers[q.id];
-
-              return (
-                <div
-                  key={q.id}
-                  className={`bg-slate-950 border rounded-2xl p-4 transition-all ${
-                    selectedOpt ? 'border-slate-700 bg-slate-900/40' : 'border-slate-800/80'
-                  }`}
-                >
-                  <div className="flex items-start gap-2.5">
-                    <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
-                      {idx + 1}
-                    </span>
-                    <div className="space-y-2.5 flex-1">
-                      <p className="text-xs sm:text-sm font-bold text-white leading-relaxed">
-                        {q.question}
-                      </p>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {q.options.map((opt) => {
-                          const isOptionSelected = selectedOpt === opt.id;
-
-                          let btnStyle = 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700';
-                          if (isOptionSelected) {
-                            btnStyle = 'border-amber-500 bg-amber-500/20 text-amber-200 ring-2 ring-amber-500/40 font-bold';
-                          }
-
-                          return (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              disabled={quizChecked}
-                              onClick={() => {
-                                setQuizAnswers((prev) => ({ ...prev, [q.id]: opt.id }));
-                              }}
-                              className={`p-2.5 rounded-xl border text-left text-xs font-medium transition-all flex items-start gap-2 ${btnStyle} ${quizChecked ? 'cursor-not-allowed opacity-90' : ''}`}
-                            >
-                              <span className="uppercase font-extrabold text-[11px] opacity-70 mt-0.5">
-                                {opt.id}.
-                              </span>
-                              <span className="flex-1 leading-snug">{opt.text}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Evaluation Banner / Buttons */}
-          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="text-xs">
-              {quizChecked ? (
-                <div className="space-y-1">
-                  <p className="font-extrabold text-emerald-400 text-sm flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Hasil Kuis: Kamu menjawab {quizCorrectCount} dari 5 soal benar ({quizScore}/10 Poin).</span>
-                  </p>
-                  <p className="text-slate-400 text-[11px]">
-                    Ingin memperbaiki nilai? Klik tombol Ulangi Kuis di samping untuk mereset dan mencoba lagi dari awal.
-                  </p>
-                </div>
-              ) : (
-                <span className="text-slate-400">
-                  Terjawab: {Object.keys(quizAnswers).length} / 5 Soal
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {quizChecked ? (
-                <button
-                  onClick={handleResetQuiz}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-slate-700 transition active:scale-95"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Ulangi Kuis dari Awal</span>
-                </button>
-              ) : (
-                <button
-                  onClick={handleEvaluateQuiz}
-                  disabled={Object.keys(quizAnswers).length < 5}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-lg transition active:scale-95 ${
-                    Object.keys(quizAnswers).length === 5
-                      ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20'
-                      : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
-                  }`}
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Kumpulkan & Cek Nilai Kuis</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-900 border border-amber-500/30 flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Total Poin Misi 1 yang Didapat: {totalM1Score} / 35 Poin</span>
-            </div>
-            {onNextMission && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (onComplete && totalM1Score > 0) {
-                    onComplete('m1', totalM1Score);
-                  }
-                  onNextMission();
-                }}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition"
-              >
-                <span>Lanjut ke Misi 2 (Data & Aplikasi)</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
+        <TabKuisKomputer
+          quizAnswers={quizAnswers}
+          onSelectAnswer={(qid, optId) => setQuizAnswers((prev) => ({ ...prev, [qid]: optId }))}
+          quizChecked={quizChecked}
+          quizScore={quizScore}
+          quizCorrectCount={quizCorrectCount}
+          onEvaluateQuiz={handleEvaluateQuiz}
+          onResetQuiz={handleResetQuiz}
+          totalM1Score={totalM1Score}
+          onNextMission={onNextMission}
+          onComplete={onComplete}
+        />
       )}
     </div>
   );

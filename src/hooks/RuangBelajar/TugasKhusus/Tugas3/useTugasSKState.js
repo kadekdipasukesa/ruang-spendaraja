@@ -95,9 +95,10 @@ export function useTugasSKState() {
   const [submitted, setSubmitted] = useState(false);
   const [existingSubmission, setExistingSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
-  const DEFAULT_SK_TASK_ID = '489b0d1e-8fd0-4bfa-9759-3996773347f3';
-  const [dbTaskId, setDbTaskId] = useState(DEFAULT_SK_TASK_ID);
-  const dbTaskIdRef = useRef(DEFAULT_SK_TASK_ID);
+  const CANONICAL_SK_TASK_ID = '595d2d95-d16f-4582-9be5-93d9db451f47';
+  const DEFAULT_SK_TASK_ID = '595d2d95-d16f-4582-9be5-93d9db451f47';
+  const [dbTaskId, setDbTaskId] = useState(CANONICAL_SK_TASK_ID);
+  const dbTaskIdRef = useRef(CANONICAL_SK_TASK_ID);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const updateDbTaskId = useCallback((newId) => {
@@ -136,7 +137,9 @@ export function useTugasSKState() {
       const candidateTaskIds = [
         explicitTaskId,
         dbTaskIdRef.current,
+        CANONICAL_SK_TASK_ID,
         DEFAULT_SK_TASK_ID,
+        '489b0d1e-8fd0-4bfa-9759-3996773347f3',
       ].filter(Boolean).filter(isUUID);
 
       try {
@@ -179,7 +182,7 @@ export function useTugasSKState() {
       const validUuidTaskIds = candidateTaskIds.filter(isUUID);
       let query = supabase
         .from('tugas_pengumpulan')
-        .select('id, tugas_id, siswa_id, status, skor, nilai_akhir, persentase_skor, detail_jawaban, catatan_guru, submitted_at, graded_at')
+        .select('*')
         .eq('siswa_id', numStudentId);
 
       if (validUuidTaskIds.length > 0) {
@@ -326,7 +329,7 @@ export function useTugasSKState() {
             console.warn('Gagal sinkron database ke local storage:', e);
           }
         }
-      } else {
+      } else if (!queryErr) {
         // Database tugas 3 bersih / akun siswa ini belum pernah mengumpulkan tugas 3: MULAI DARI AWAL!
         setExistingSubmission(null);
         setSubmitted(false);
@@ -362,10 +365,6 @@ export function useTugasSKState() {
         else if (storedSpenda) parsed = JSON.parse(storedSpenda);
         else if (storedUser) parsed = JSON.parse(storedUser);
 
-        // Inisialisasi awal ke nol (DILARANG melanjutkan dari localStorage tanpa cek database)
-        setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
-        setCompleted({ m1: false, m2: false, m3: false, m4: false });
-
         if (parsed) {
           setUser((prev) => (prev?.id === parsed.id ? prev : parsed));
           const currentKey = parsed.id ? `tugas_sk_state_user_${parsed.id}` : 'tugas_sk_state_guest';
@@ -374,11 +373,15 @@ export function useTugasSKState() {
             checkExistingSubmission(parsed.id, currentKey, dbTaskIdRef.current);
           } else {
             clearUserSKDrafts('guest');
+            setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
+            setCompleted({ m1: false, m2: false, m3: false, m4: false });
             setLoading(false);
           }
         } else {
           // Guest mode: Bersihkan draft dan mulai dari awal
           clearUserSKDrafts('guest');
+          setScores({ m1: 0, m2: 0, m3: 0, m4: 0 });
+          setCompleted({ m1: false, m2: false, m3: false, m4: false });
           try {
             localStorage.removeItem('tugas_sk_state_guest');
           } catch (e) {
@@ -553,13 +556,13 @@ export function useTugasSKState() {
       try {
         const { data: dbSub } = await supabase
           .from('tugas_pengumpulan')
-          .select('id, skor, nilai_akhir, detail_jawaban')
+          .select('id, skor, detail_jawaban')
           .eq('siswa_id', studentIdInt)
           .eq('tugas_id', resolvedTaskId)
           .maybeSingle();
 
         if (dbSub) {
-          const dbScore = Math.min(100, Math.max(0, Number(dbSub.nilai_akhir ?? dbSub.skor ?? 0) || 0));
+          const dbScore = Math.min(100, Math.max(0, Number(dbSub.skor ?? dbSub.nilai_akhir ?? 0) || 0));
           previousBestScore = Math.max(previousBestScore, dbScore);
         }
       } catch (e) {

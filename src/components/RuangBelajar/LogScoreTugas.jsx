@@ -19,7 +19,8 @@ import {
   RefreshCw,
   Tag,
   BookOpen,
-  CheckCircle
+  CheckCircle,
+  ChevronDown
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -29,6 +30,12 @@ export default function LogScoreTugas({ student, isAdmin, submissions = [], task
   const [viewMode, setViewMode] = useState('mine'); // 'mine' (default) | 'all'
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedActivity, setSelectedActivity] = useState('SEMUA');
+  const [visibleCount, setVisibleCount] = useState(10);
+
+  // Reset pagination ke 10 saat mode tampilan, kata kunci pencarian, atau filter kategori berubah
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [viewMode, searchTerm, selectedActivity]);
 
   // Helper untuk cek apakah item log milik siswa yang login
   const isMatchCurrentStudent = useCallback((item, currentStudent) => {
@@ -57,19 +64,32 @@ export default function LogScoreTugas({ student, isAdmin, submissions = [], task
     try {
       setLoading(true);
 
-      // Langkah 1: Ambil data dari tabel point_logs
+      // Langkah 1: Ambil SEMUA data dari tabel point_logs (paginasi per 1000 baris agar tidak terpotong batas PostgREST)
       let pointLogsData = [];
       try {
-        const { data, error } = await supabase
-          .from('point_logs')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(300);
+        let from = 0;
+        const step = 1000;
+        let hasMore = true;
 
-        if (!error && data) {
-          pointLogsData = data;
-        } else if (error) {
-          console.warn('Query point_logs fallback:', error.message);
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('point_logs')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .range(from, from + step - 1);
+
+          if (error) {
+            console.warn('Query point_logs fallback error:', error.message);
+            break;
+          }
+
+          if (data && data.length > 0) {
+            pointLogsData = [...pointLogsData, ...data];
+            from += step;
+            if (data.length < step) hasMore = false;
+          } else {
+            hasMore = false;
+          }
         }
       } catch (e) {
         console.warn('Gagal query point_logs langsung:', e);
@@ -78,30 +98,45 @@ export default function LogScoreTugas({ student, isAdmin, submissions = [], task
       // Langkah 2: Ambil data tugas_pengumpulan dan tugas_master sebagai fallback audit trail
       let submissionsData = [];
       try {
-        const { data: subsData, error: subsErr } = await supabase
-          .from('tugas_pengumpulan')
-          .select(`
-            id,
-            tugas_id,
-            id_tugas,
-            siswa_id,
-            nisn_siswa,
-            nama_siswa,
-            kelas_siswa,
-            status,
-            skor,
-            nilai_akhir,
-            feedback_guru,
-            catatan_guru,
-            submitted_at,
-            graded_at,
-            created_at
-          `)
-          .order('submitted_at', { ascending: false })
-          .limit(300);
+        let from = 0;
+        const step = 1000;
+        let hasMore = true;
 
-        if (!subsErr && subsData) {
-          submissionsData = subsData;
+        while (hasMore) {
+          const { data: subsData, error: subsErr } = await supabase
+            .from('tugas_pengumpulan')
+            .select(`
+              id,
+              tugas_id,
+              id_tugas,
+              siswa_id,
+              nisn_siswa,
+              nama_siswa,
+              kelas_siswa,
+              status,
+              skor,
+              nilai_akhir,
+              feedback_guru,
+              catatan_guru,
+              submitted_at,
+              graded_at,
+              created_at
+            `)
+            .order('submitted_at', { ascending: false })
+            .range(from, from + step - 1);
+
+          if (subsErr) {
+            console.warn('Query tugas_pengumpulan fallback error:', subsErr.message);
+            break;
+          }
+
+          if (subsData && subsData.length > 0) {
+            submissionsData = [...submissionsData, ...subsData];
+            from += step;
+            if (subsData.length < step) hasMore = false;
+          } else {
+            hasMore = false;
+          }
         }
       } catch (e) {
         console.warn('Gagal query tugas_pengumpulan fallback:', e);
@@ -126,14 +161,26 @@ export default function LogScoreTugas({ student, isAdmin, submissions = [], task
       // Map untuk data master_siswa untuk mengisi nama/kelas yang kosong
       let siswaMap = {};
       try {
-        const { data: mSiswa } = await supabase
-          .from('master_siswa')
-          .select('id, NISN, "NAMA", "Kelas", "No Absen"');
-        if (mSiswa) {
-          mSiswa.forEach((s) => {
-            siswaMap[s.id] = s;
-            if (s.NISN) siswaMap[s.NISN] = s;
-          });
+        let from = 0;
+        const step = 1000;
+        let hasMore = true;
+
+        while (hasMore) {
+          const { data: mSiswa } = await supabase
+            .from('master_siswa')
+            .select('id, NISN, "NAMA", "Kelas", "No Absen"')
+            .range(from, from + step - 1);
+
+          if (mSiswa && mSiswa.length > 0) {
+            mSiswa.forEach((s) => {
+              siswaMap[s.id] = s;
+              if (s.NISN) siswaMap[s.NISN] = s;
+            });
+            from += step;
+            if (mSiswa.length < step) hasMore = false;
+          } else {
+            hasMore = false;
+          }
         }
       } catch (e) {
         // Abaikan
@@ -293,6 +340,14 @@ export default function LogScoreTugas({ student, isAdmin, submissions = [], task
 
   const totalLogsCount = filteredLogs.length;
 
+  // Batasi render data pada mode Semua Siswa (10 per batch) agar browser tetap ringan & bebas lag
+  const displayedLogs = useMemo(() => {
+    if (viewMode === 'all') {
+      return filteredLogs.slice(0, visibleCount);
+    }
+    return filteredLogs;
+  }, [filteredLogs, viewMode, visibleCount]);
+
   return (
     <div className="space-y-6">
       {/* Top Banner & Stats */}
@@ -362,7 +417,12 @@ export default function LogScoreTugas({ student, isAdmin, submissions = [], task
           {/* Quick Stats Pill */}
           <div className="flex items-center gap-3 text-xs text-slate-500">
             <span className="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 font-medium">
-              Menampilkan: <strong className="text-slate-800">{totalLogsCount} catatan</strong>
+              Menampilkan:{' '}
+              <strong className="text-slate-800">
+                {viewMode === 'all' && filteredLogs.length > displayedLogs.length
+                  ? `${displayedLogs.length} dari ${totalLogsCount} catatan`
+                  : `${totalLogsCount} catatan`}
+              </strong>
             </span>
           </div>
         </div>
@@ -416,7 +476,7 @@ export default function LogScoreTugas({ student, isAdmin, submissions = [], task
         </div>
       ) : filteredLogs.length > 0 ? (
         <div className="space-y-3">
-          {filteredLogs.map((log) => {
+          {displayedLogs.map((log) => {
             const sName = log.nama_siswa || 'Siswa';
             const sClass = log.kelas_siswa || '-';
             const sAbsen = log.no_absen || '-';
@@ -502,6 +562,24 @@ export default function LogScoreTugas({ student, isAdmin, submissions = [], task
               </div>
             );
           })}
+
+          {/* Tombol Lihat Lebih Banyak (+10 Aktivitas Lainnya) untuk mode Semua Siswa */}
+          {viewMode === 'all' && visibleCount < filteredLogs.length && (
+            <div className="pt-3 pb-1 flex flex-col items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setVisibleCount((prev) => prev + 10)}
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl bg-white border border-slate-200/90 hover:border-indigo-300 text-indigo-600 hover:text-indigo-700 font-bold text-xs shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-98"
+                id="btn-load-more-logs"
+              >
+                <ChevronDown className="w-4 h-4 text-indigo-500" />
+                <span>Lihat Lebih Banyak (+10 Log Lainnya)</span>
+              </button>
+              <p className="text-[11px] text-slate-400 font-medium">
+                Menampilkan {displayedLogs.length} dari total {filteredLogs.length} catatan log
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-400 shadow-2xs">

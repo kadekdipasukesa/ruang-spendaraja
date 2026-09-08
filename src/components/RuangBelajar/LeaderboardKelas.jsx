@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Flame,
   Trophy,
@@ -11,6 +11,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from '../../lib/supabaseClient';
 
 export default function LeaderboardKelas({
   leaderboard = [],
@@ -20,13 +21,77 @@ export default function LeaderboardKelas({
   student
 }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [scoreTimestamps, setScoreTimestamps] = useState({});
 
   const currentStudentId = student?.id;
   const currentStudentName = (student?.NAMA || student?.nama || '').toLowerCase();
 
-  // Filter only Grade 7 (Kelas 7) students AND total_points > 0
+  // Sinkronisasi timestamp perolehan skor dari point_logs untuk tie-breaker
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchScoreTimestamps() {
+      try {
+        let from = 0;
+        const step = 1000;
+        let hasMore = true;
+        const timestampsMap = {};
+
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('point_logs')
+            .select('siswa_id, created_at')
+            .range(from, from + step - 1);
+
+          if (error) {
+            console.warn('Gagal memuat point_logs leaderboard:', error.message);
+            break;
+          }
+
+          if (data && data.length > 0) {
+            data.forEach((log) => {
+              if (!log.siswa_id) return;
+              const time = new Date(log.created_at).getTime();
+              // Catat waktu perolehan skor (saat mencapai skor kumulatif terkini)
+              if (!timestampsMap[log.siswa_id] || time > timestampsMap[log.siswa_id]) {
+                timestampsMap[log.siswa_id] = time;
+              }
+            });
+            from += step;
+            if (data.length < step) hasMore = false;
+          } else {
+            hasMore = false;
+          }
+        }
+
+        if (isMounted) {
+          setScoreTimestamps(timestampsMap);
+        }
+      } catch (err) {
+        console.warn('Error sinkronisasi waktu skor leaderboard:', err);
+      }
+    }
+
+    fetchScoreTimestamps();
+
+    // Listener realtime pembaruan poin
+    const channelId = `lb_pts_${Math.random().toString(36).substring(2, 7)}`;
+    const channel = supabase
+      .channel(channelId)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'point_logs' }, () => {
+        fetchScoreTimestamps();
+      })
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, [leaderboard]);
+
+  // Filter only Grade 7 (Kelas 7) students AND total_points > 0, diurutkan skor & waktu penyelesaian
   const activeLeaderboard = useMemo(() => {
-    return leaderboard.filter((item) => {
+    const list = leaderboard.filter((item) => {
       const points = Number(item.total_points) || 0;
       if (points <= 0) return false; // Filter siswa dengan 0 poin
 
@@ -43,7 +108,27 @@ export default function LeaderboardKelas({
 
       return true;
     });
-  }, [leaderboard, selectedClass]);
+
+    // Aturan Pengurutan:
+    // 1. total_points terbesar lebih tinggi
+    // 2. Jika total_points sama: yang duluan dapat skor (timestamp lebih awal) peringkat lebih tinggi
+    return list.sort((a, b) => {
+      const ptsA = Number(a.total_points) || 0;
+      const ptsB = Number(b.total_points) || 0;
+
+      if (ptsB !== ptsA) {
+        return ptsB - ptsA;
+      }
+
+      const timeA = scoreTimestamps[a.id] || Infinity;
+      const timeB = scoreTimestamps[b.id] || Infinity;
+      if (timeA !== timeB) {
+        return timeA - timeB; // Waktu lebih kecil / lebih awal di peringkat atas
+      }
+
+      return (a.NAMA || '').localeCompare(b.NAMA || '');
+    });
+  }, [leaderboard, selectedClass, scoreTimestamps]);
 
   // Filter available classes to only Grade 7 tabs (SEMUA, 7.1 to 7.10)
   const grade7Classes = useMemo(() => {
@@ -206,7 +291,7 @@ export default function LeaderboardKelas({
             Daftar Skor Siswa ({filteredList.length})
           </h3>
           <span className="text-xs text-slate-400">
-            Urutan berdasarkan Total Poin tertinggi
+            Poin tertinggi &amp; peraih skor tercepat
           </span>
         </div>
 

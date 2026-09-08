@@ -22,22 +22,30 @@ Modul pembelajaran interaktif dan praktikum terpadu untuk topik **Sistem Kompute
 ```
 TUGAS 3: SISTEM KOMPUTER & PERKAKAS DIGITAL (100 Poin)
 ├── Misi 1: Komponen Sistem Komputer & Klasifikasi Software (35 Poin)
-│   ├── Tab 1: Materi Visual (Hardware Input/Process/Storage/Output/Auxiliary & OS vs Aplikasi)
-│   ├── Tab 2: Lab Drag & Drop 20 Hardware Foto Asli ke 5 Kategori (15 Poin)
-│   ├── Tab 3: Lab Drag & Drop 20 Software Logo Asli (OS vs Aplikasi) (10 Poin)
-│   └── Tab 4: Kuis Karakteristik Sistem Komputer (5 Soal) (10 Poin)
+│   ├── Koordinator: HardwareExplorer.jsx
+│   ├── Data & Soal: hardwareData.js (Dataset 20 Hardware, 20 Software, & 5 Soal Kuis)
+│   ├── Tab 1: TabMateriVisual.jsx (Hardware Input/Process/Storage/Output/Auxiliary & OS vs Aplikasi)
+│   ├── Tab 2: TabLabHardware.jsx (Lab Drag & Drop 20 Hardware Foto Asli ke 5 Kategori) (15 Poin)
+│   ├── Tab 3: TabLabSoftware.jsx (Lab Drag & Drop 20 Software Logo Asli OS vs Aplikasi) (10 Poin)
+│   └── Tab 4: TabKuisKomputer.jsx (Kuis Karakteristik Sistem Komputer 5 Soal) (10 Poin)
 ├── Misi 2: Data, Aplikasi, & Transformasi Informasi (20 Poin)
-│   ├── Tab 1: Materi Visual (Siklus Data Mentah ➔ Aplikasi Pengolah ➔ Informasi & Prinsip GIGO)
-│   ├── Tab 2: Pabrik Alur Transformasi Data (3 Kasus Nyata: Rapor, Kasir, Smartwatch) (10 Poin)
-│   └── Tab 3: Kuis Konsep Data & Logika Aplikasi (5 Soal) (10 Poin)
+│   ├── Koordinator: DataAppPipeline.jsx
+│   ├── Data & Soal: pipelineData.js (Dataset 3 Skenario Pipeline & 5 Soal Kuis Data)
+│   ├── Tab 1: TabMateriPipeline.jsx (Siklus Data Mentah ➔ Aplikasi Pengolah ➔ Informasi & Prinsip GIGO)
+│   ├── Tab 2: TabLabPipeline.jsx (Simulator 3 Pipeline Data Dunia Nyata: Rapor, Kasir, Smartwatch) (10 Poin)
+│   └── Tab 3: TabKuisPipeline.jsx (Kuis Konsep Data & Logika Aplikasi 5 Soal) (10 Poin)
 ├── Misi 3: Eksplorasi 20 Aplikasi Perkakas Digital & Software (30 Poin)
-│   ├── Tab 1: Materi Visual (5 Kelompok Perkakas: Komunikasi, Hiburan, Produktivitas, Edukasi, Utilitas)
-│   ├── Tab 2: Lab Drag & Drop 20 Aplikasi Logo Asli ke 5 Kelompok Perkakas Digital (20 Poin)
-│   └── Tab 3: Kuis Ragam Software & Lisensi Open Source (5 Soal) (10 Poin)
+│   ├── Koordinator: DigitalToolbox.jsx
+│   ├── Data & Soal: toolboxData.js (Dataset 20 Aplikasi, 5 Kelompok Perkakas, & 5 Soal Kuis)
+│   ├── Tab 1: TabMateriToolbox.jsx (5 Kelompok Perkakas: Komunikasi, Hiburan, Produktivitas, Edukasi, Utilitas)
+│   ├── Tab 2: TabLabToolbox.jsx (Lab Drag & Drop 20 Aplikasi Logo Asli ke 5 Kelompok Perkakas Digital) (20 Poin)
+│   └── Tab 3: TabKuisToolbox.jsx (Kuis Ragam Software & Lisensi Open Source 5 Soal) (10 Poin)
 └── Misi 4: Dampak TIK, Netiket & Keamanan Siber (15 Poin)
-    ├── Tab 1: Materi Visual (Evolusi TIK, Matriks Positif/Negatif, 5 Rambu Netiket)
-    ├── Tab 2: Detektif Studi Kasus Etika Digital (5 Kasus Nyata) (10 Poin)
-    └── Tab 3: Kuis Jejak Digital & Sandi Kuat (5 Soal) (5 Poin)
+    ├── Koordinator: DigitalEthicsDetective.jsx
+    ├── Data & Soal: ethicsData.js (Dataset 5 Kasus Etika Digital & 5 Soal Kuis Netiket)
+    ├── Tab 1: TabMateriEtika.jsx (Materi Visual: Evolusi TIK, Dua Sisi Mata Uang TIK, & Prinsip 3S Netiket)
+    ├── Tab 2: TabLabDetective.jsx (Detektif Studi Kasus Etika Digital 5 Skenario Nyata) (10 Poin)
+    └── Tab 3: TabKuisNetiket.jsx (Kuis Netiket, Jejak Digital & Keamanan Akun 5 Soal) (5 Poin)
 ```
 
 ---
@@ -110,9 +118,10 @@ TUGAS 3: SISTEM KOMPUTER & PERKAKAS DIGITAL (100 Poin)
   - Jika percobaan baru menghasilkan skor lebih tinggi (`currentAttemptScore > previousBestScore`) atau pengumpulan perdana, database akan memperbarui `skor` dengan nilai rekor baru dan trigger database `trg_sync_tugas_to_point_logs` otomatis menyinkronkan peningkatan poin ke `point_logs` dan `master_siswa.total_points`.
 
 ### C. Alur Navigasi Antar Misi & Restorasi Nilai Sebagian (Partial Progress)
-* **Restorasi Nilai Parsial**:
+* **Restorasi Nilai Parsial & Proteksi Tombol Cek Hasil**:
   - Jika siswa memiliki nilai tersimpan sebagian (misalnya Misi 1 bernilai 10 Poin dari kuis/praktikum), state kuis dan penempatan dipulihkan secara proporsional.
-  - Komponen menggunakan `Math.max(Number(currentScore) || 0, calculatedScore)` sehingga nilai tersimpan tidak akan berkurang atau ter-reset menjadi 0 saat halaman dimuat.
+  - Komponen menggunakan `Math.max(Number(currentScore) || 0, calculatedScore)` sehingga nilai tersimpan tidak akan berkurang atau ter-reset menjadi 0 saat halaman dimuat maupun saat tombol evaluasi ditekan.
+  - **Proteksi Tombol Cek Hasil (Anti-Reset Saat Belum Sempurna)**: Pada `HardwareExplorer.jsx`, efek sinkronisasi login pengguna diisolasi dari perubahan prop `currentScore`, dan cabang destruktif yang sebelumnya mereset penempatan menjadi kosong saat nilai belum sempurna (< 15 poin) telah dihilangkan. Handler `handleCheckHw`, `handleCheckSw`, dan `handleEvaluateQuiz` juga melakukan persistensi instan ke `localStorage` sehingga penempatan dan poin parsial siswa tetap aman dan tidak pernah ter-reset kembali ke nol.
 * **Tombol Navigasi Kontinu (Direct Flow)**:
   - Pada bagian bawah setiap misi terdapat tombol navigasi langsung:
     - Misi 1 (Hardware & Software): Tombol **"Lanjut ke Misi 2 (Data & Aplikasi) →"**
