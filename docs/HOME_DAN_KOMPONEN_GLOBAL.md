@@ -77,6 +77,8 @@ Komponen `Navbar` berada di posisi paling atas layar dan menyertakan sistem logi
 
 ## 4. Floating Online Presence (`src/components/FloatingOnline.jsx`)
 
+> *Dokumentasi teknis & arsitektur lengkap:* **[`/docs/FLOATING_ONLINE.md`](/docs/FLOATING_ONLINE.md)**
+
 Widget mengambang di sisi kanan layar yang berfungsi memantau kehadiran siswa secara interaktif.
 
 ```text
@@ -109,6 +111,8 @@ Widget mengambang di sisi kanan layar yang berfungsi memantau kehadiran siswa se
 ---
 
 ## 5. Live Chat Real-time (`src/components/LiveChat.jsx`)
+
+> *Dokumentasi teknis & arsitektur lengkap:* **[`/docs/LIVE_CHAT.md`](/docs/LIVE_CHAT.md)**
 
 Ruang obrolan interaktif seluruh siswa yang terintegrasi langsung dengan database Supabase.
 

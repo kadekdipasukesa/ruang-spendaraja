@@ -142,4 +142,6 @@ Untuk memahami alur kerja lebih spesifik dan mendalam pada setiap modul, silakan
 6. **[`/docs/tugas/TUGAS_3_SISTEM_KOMPUTER.md`](/docs/tugas/TUGAS_3_SISTEM_KOMPUTER.md)**: Rincian teknis 4 misi terpadu Bab 2 (Hardware Komputer, Data & Aplikasi, Perkakas Digital, Dampak & Etika TIK).
 7. **[`/docs/DATABASE_TRIGGERS.md`](/docs/DATABASE_TRIGGERS.md)**: Dokumentasi fungsi & trigger PostgreSQL aktif di Supabase.
 8. **[`/docs/JURNAL_LAB.md`](/docs/JURNAL_LAB.md)**: Dokumentasi arsitektur, algoritma penjadwalan, validasi waktu WITA, dan skema database Jurnal Laboratorium.
+9. **[`/docs/FLOATING_ONLINE.md`](/docs/FLOATING_ONLINE.md)**: Dokumentasi teknis & arsitektur `FloatingOnline.jsx` (Supabase Presence, pelacakan kehadiran siswa realtime, drawer UI samping, dan jembatan notifikasi unread).
+10. **[`/docs/LIVE_CHAT.md`](/docs/LIVE_CHAT.md)**: Dokumentasi teknis & arsitektur `LiveChat.jsx` (Supabase Realtime Postgres Changes, moderasi sensor kata kasar, kontrol kunci chat kelas, audio SFX, dan smart auto-scroll).
 

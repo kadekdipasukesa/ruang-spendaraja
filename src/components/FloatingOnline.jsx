@@ -1,7 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import LiveChat from './LiveChat'; // Pastikan path file benar
 import { MessageCircle } from 'lucide-react';
+
+// NAMA CHANNEL HARUS SAMA UNTUK SEMUA USER AGAR BERADA DI DALAM SATU ROOM
+const PRESENCE_ROOM_NAME = 'spenda_global_online_room';
+
+// Helper identitas tamu stabil per-tab/sesi
+const getGuestInfo = () => {
+    try {
+        let guestId = sessionStorage.getItem('spenda_presence_guest_id');
+        let guestName = sessionStorage.getItem('spenda_presence_guest_name');
+        if (!guestId || !guestName) {
+            const randomNum = Math.floor(100 + Math.random() * 900);
+            guestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+            guestName = `Tamu-${randomNum}`;
+            sessionStorage.setItem('spenda_presence_guest_id', guestId);
+            sessionStorage.setItem('spenda_presence_guest_name', guestName);
+        }
+        return { guestId, guestName };
+    } catch {
+        return { guestId: `guest_${Math.random()}`, guestName: 'Tamu' };
+    }
+};
 
 export default function FloatingOnline({ user, activeTab }) {
     const [onlineCount, setOnlineCount] = useState(0);
@@ -12,34 +33,71 @@ export default function FloatingOnline({ user, activeTab }) {
     // State tambahan untuk memicu tombol chat dari luar
     const [triggerChat, setTriggerChat] = useState(false);
 
-    // --- TAMBAHKAN STATE UNTUK NOTIFIKASI DI SINI ---
+    // State untuk notifikasi pesan belum dibaca
     const [unreadCount, setUnreadCount] = useState(0);
 
-    useEffect(() => {
-        const isUserReady = user && (user.NAMA || user.nama);
-        const identifier = isUserReady ? (user.NAMA || user.nama) : `Tamu-${Math.floor(Math.random() * 1000)}`;
-        const userClass = user?.KELAS || user?.Kelas || user?.kelas || 'N/A';
+    const isUserReady = user && (user.NAMA || user.nama);
+    const guest = getGuestInfo();
+    const identifier = isUserReady ? (user.NAMA || user.nama) : guest.guestName;
+    const userClass = user?.KELAS || user?.Kelas || user?.kelas || 'Tamu';
+    const presenceKey = user?.id 
+        ? `usr_${user.id}` 
+        : (user?.NISN ? `nisn_${user.NISN}` : (isUserReady ? `nama_${identifier}` : guest.guestId));
 
-        // Buat channel baru dengan removeChannel sebelumnya jika ada
-        const channel = supabase.channel(`online_room_${Math.random().toString(36).substring(2, 7)}`, {
-            config: { presence: { key: identifier } },
+    useEffect(() => {
+        // Handler parsing data user online
+        const updateUsersFromState = (channel) => {
+            try {
+                const state = channel.presenceState();
+                const uniqueUsers = [];
+                const seenKeys = new Set();
+
+                Object.entries(state).forEach(([key, presences]) => {
+                    if (Array.isArray(presences) && presences.length > 0) {
+                        const latest = presences[presences.length - 1];
+                        const dedupeKey = latest.id || key;
+                        if (!seenKeys.has(dedupeKey)) {
+                            seenKeys.add(dedupeKey);
+                            uniqueUsers.push({
+                                key: dedupeKey,
+                                nama: latest.nama || 'Pengguna',
+                                kelas: latest.kelas || 'N/A',
+                                posisi: latest.posisi || 'Beranda',
+                                online_at: latest.online_at || new Date().toISOString(),
+                            });
+                        }
+                    }
+                });
+
+                console.log(`📡 [Supabase Presence] Sync: ${uniqueUsers.length} user online`);
+                setOnlineCount(uniqueUsers.length);
+                setOnlineUsers(uniqueUsers);
+            } catch (err) {
+                console.warn("Presence sync error:", err);
+            }
+        };
+
+        // Buat channel dengan nama room yang SAMA persis untuk semua klien
+        const channel = supabase.channel(PRESENCE_ROOM_NAME, {
+            config: { presence: { key: presenceKey } },
         });
 
         channel
             .on('presence', { event: 'sync' }, () => {
-                try {
-                    const state = channel.presenceState();
-                    const users = Object.values(state).flat();
-                    setOnlineCount(users.length);
-                    setOnlineUsers(users);
-                } catch (err) {
-                    console.warn("Presence sync error:", err);
-                }
+                updateUsersFromState(channel);
+            })
+            .on('presence', { event: 'join' }, () => {
+                updateUsersFromState(channel);
+            })
+            .on('presence', { event: 'leave' }, () => {
+                updateUsersFromState(channel);
             })
             .subscribe(async (status) => {
+                console.log("📡 [Supabase Presence] Status Koneksi:", status);
                 if (status === 'SUBSCRIBED') {
                     try {
                         await channel.track({
+                            id: presenceKey,
                             nama: identifier,
                             kelas: userClass,
                             posisi: activeTab || 'Ruang Belajar', 
@@ -54,7 +112,7 @@ export default function FloatingOnline({ user, activeTab }) {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [user?.NAMA, user?.nama, user?.Kelas, user?.KELAS, activeTab]);
+    }, [presenceKey, identifier, userClass, activeTab]);
 
     return (
         <>
