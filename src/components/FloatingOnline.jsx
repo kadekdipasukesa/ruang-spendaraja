@@ -25,7 +25,17 @@ const getGuestInfo = () => {
     }
 };
 
+// Helper deteksi perangkat Chromebook (ChromeOS)
+const checkIsChromebook = () => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent || '';
+    const isCrOS = /\bCrOS\b/i.test(ua);
+    const platform = navigator.userAgentData?.platform || '';
+    return isCrOS || /Chrome\s*OS/i.test(platform);
+};
+
 export default function FloatingOnline({ user, activeTab }) {
+    const [isChromebook] = useState(() => checkIsChromebook());
     const [onlineCount, setOnlineCount] = useState(0);
     const [onlineUsers, setOnlineUsers] = useState([]); 
     const [isOpen, setIsOpen] = useState(false);
@@ -136,7 +146,12 @@ export default function FloatingOnline({ user, activeTab }) {
                 {/* HANDLE */}
                 <div 
                     onClick={() => setIsOpen(!isOpen)}
-                    className="w-4 h-24 bg-emerald-500 rounded-l-xl cursor-pointer flex flex-col items-center justify-center gap-1 shadow-[-4px_0_15px_rgba(16,185,129,0.4)] relative"
+                    className={`${
+                        isChromebook 
+                            ? 'w-7 -ml-3 rounded-l-2xl' 
+                            : 'w-4 rounded-l-xl'
+                    } h-24 bg-emerald-500 cursor-pointer flex flex-col items-center justify-center gap-1 shadow-[-4px_0_15px_rgba(16,185,129,0.4)] relative select-none hover:bg-emerald-400 transition-colors`}
+                    title={isOpen ? "Tutup Panel Online" : "Buka Panel Online"}
                 >
                     {/* Badge Notif Kecil saat panel tertutup */}
                     {!isOpen && unreadCount > 0 && (

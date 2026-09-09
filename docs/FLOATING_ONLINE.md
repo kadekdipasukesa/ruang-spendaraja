@@ -91,7 +91,11 @@ Siswa Masuk Aplikasi / Ubah Tab
 ## 5. Anatomi Antarmuka Pengguna (UI Layout & Styling)
 
 ### A. Handle Samping Mengambang (Side Tab Handle)
-* **Visual**: Batang hijau zamrud memanjang (`w-4 h-24 bg-emerald-500 rounded-l-xl`) dengan bayangan neon halus (`shadow-[-4px_0_15px_rgba(16,185,129,0.4)]`).
+* **Visual**: Batang hijau zamrud memanjang dengan bayangan neon halus (`shadow-[-4px_0_15px_rgba(16,185,129,0.4)]`).
+* **Deteksi Cerdas Perangkat (Chromebook vs. Windows/HP/Mac)**:
+  - Menggunakan deteksi user-agent client-side (`checkIsChromebook`) untuk mendeteksi `CrOS` / `Chrome OS`.
+  - **Di Laptop Windows, Mac, dan HP (Non-Chromebook)**: Otomatis menggunakan dimensi original yang ramping dan rapi (`w-4 rounded-l-xl`), hanya menyembul 12px sehingga tidak memakan ruang layar dan tidak mengganggu pandangan.
+  - **Khusus di Chromebook**: Menggunakan penyesuaian ergonomis (`w-7 -ml-3 rounded-l-2xl`) sehingga tonjolan fisik handle melebar ke kiri melampaui area *overlay scrollbar* ChromeOS (10–14px) agar selalu mudah diklik tanpa terhalang scrollbar halaman.
 * **Interaksi Klik**: Membuka/menutup panel samping (`setIsOpen(!isOpen)`).
 * **Indikator Titik**: Dua titik putih vertikal penanda grip sentuh.
 * **Badge Notifikasi Handle**: Jika panel sedang tertutup (`!isOpen`) dan terdapat pesan chat belum dibaca (`unreadCount > 0`), muncul titik merah berdenyut (`animate-pulse`) di pojok kiri atas handle.
