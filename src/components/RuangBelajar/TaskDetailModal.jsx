@@ -211,20 +211,24 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
             )}
 
             {task.tipe_tugas === 'kuis' && (() => {
+              const isBiner = task.custom_route?.includes('biner-ascii') || task.kode_tugas?.includes('BINER-ASCII');
               const isSK = task.custom_route?.includes('sistem-komputer') || task.kode_tugas?.includes('SISTEM-KOMPUTER');
-              const taskShortName = isSK ? 'Sistem Komputer' : 'BK';
+              const taskShortName = isBiner ? 'Biner & ASCII' : isSK ? 'Sistem Komputer' : 'BK';
+              const defaultRoute = isBiner ? '/ruang-belajar/tugas/biner-ascii' : isSK ? '/tugas/sistem-komputer' : '/tugas/berpikir-komputasional';
               return (
                 <button
                   type="button"
                   onClick={() => {
                     onClose();
-                    navigate(task.custom_route || (isSK ? '/tugas/sistem-komputer' : '/tugas/berpikir-komputasional'));
+                    navigate(task.custom_route || defaultRoute);
                   }}
                   className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-xl shadow-2xs transition ${
                     isCompleted && (task.earnedScore ?? 0) >= points
                       ? 'bg-emerald-700 hover:bg-emerald-800'
                       : (task.earnedScore ?? 0) > 0
                       ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'
+                      : isBiner
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/20 text-slate-950 font-black'
                       : isSK
                       ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-amber-600/20'
                       : 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/20'
@@ -233,10 +237,10 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
                   <Play className="w-3.5 h-3.5 fill-current" />
                   <span>
                     {isCompleted && (task.earnedScore ?? 0) >= points
-                      ? `Lihat / Ulangi Petualangan ${taskShortName} (100 Poin)`
+                      ? `Lihat / Ulangi Tantangan ${taskShortName} (${points} Poin)`
                       : (task.earnedScore ?? 0) > 0
-                      ? `Lanjutkan Petualangan ${taskShortName} (${task.earnedScore}/${points} Poin)`
-                      : `Mulai Petualangan ${taskShortName} (4 Misi)`}
+                      ? `Lanjutkan Tantangan ${taskShortName} (${task.earnedScore}/${points} Poin)`
+                      : `Mulai Tantangan ${taskShortName} (3 Tahap)`}
                   </span>
                 </button>
               );

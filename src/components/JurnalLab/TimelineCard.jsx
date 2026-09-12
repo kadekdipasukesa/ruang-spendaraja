@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Clock, User, BookOpen, Users, AlertTriangle, 
   CheckCircle2, XCircle, ChevronDown, Check, X, PlayCircle, Trash2, Pencil,
-  FileEdit, FileCheck, ShieldCheck, Sparkles, AlertCircle
+  FileEdit, FileCheck, ShieldCheck, Sparkles, AlertCircle, Camera, ExternalLink, Maximize2
 } from 'lucide-react';
 import ModalReject from './ModalReject';
 import ModalSelesai from './ModalSelesai';
@@ -24,6 +25,10 @@ export default function TimelineCard({
   const [showSelesaiModal, setShowSelesaiModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showImageLightbox, setShowImageLightbox] = useState(false);
+
+  const handleCloseSelesai = useCallback(() => setShowSelesaiModal(false), []);
+  const handleCloseReject = useCallback(() => setShowRejectModal(false), []);
 
   const formatDate = (isoStr) => {
     if (!isoStr) return '-';
@@ -374,6 +379,43 @@ export default function TimelineCard({
                 <div><strong>Catatan Kendala / Kerusakan:</strong> {item.catatan_kendala}</div>
               </div>
             )}
+
+            {/* Foto Dokumentasi Kegiatan / Ruangan Lab */}
+            {item?.foto_dokumentasi && (
+              <div className="pt-2.5 border-t border-slate-800">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5 text-slate-300 font-medium">
+                    <Camera className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Foto Dokumentasi Pengembalian:</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowImageLightbox(true)}
+                    className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <Maximize2 className="w-3 h-3" />
+                    <span>Perbesar</span>
+                  </button>
+                </div>
+                <div 
+                  onClick={() => setShowImageLightbox(true)}
+                  className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950/80 group cursor-pointer h-36 sm:h-44 flex items-center justify-center transition-all hover:border-cyan-500/50"
+                >
+                  <img
+                    src={item.foto_dokumentasi}
+                    alt="Foto Dokumentasi Sesi Lab"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-slate-950/30 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/90 text-white text-xs px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 shadow-lg">
+                      <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Klik untuk Lihat Ukuran Penuh</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -467,16 +509,68 @@ export default function TimelineCard({
 
       <ModalReject
         isOpen={showRejectModal}
-        onClose={() => setShowRejectModal(false)}
+        onClose={handleCloseReject}
         onConfirm={(alasan) => onApprove && onApprove(item.id, 'rejected', alasan)}
       />
 
       <ModalSelesai
         isOpen={showSelesaiModal}
-        onClose={() => setShowSelesaiModal(false)}
+        onClose={handleCloseSelesai}
         onConfirm={(payload) => onComplete && onComplete(item.id, payload)}
         item={item}
       />
+
+      {/* Lightbox Modal untuk Melihat Foto Ukuran Penuh */}
+      {showImageLightbox && item?.foto_dokumentasi && createPortal(
+        <div 
+          className="fixed inset-0 z-[300] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowImageLightbox(false)}
+        >
+          <div 
+            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center bg-slate-900 border border-slate-800 rounded-3xl p-3 sm:p-4 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Lightbox Header */}
+            <div className="w-full flex items-center justify-between pb-3 px-2 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-cyan-400" />
+                <span className="text-xs sm:text-sm font-semibold text-slate-200">
+                  Dokumentasi {item?.mata_pelajaran} - {item?.guru_pengajar}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={item.foto_dokumentasi}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                  title="Buka Tab Baru"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setShowImageLightbox(false)}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/50 hover:text-rose-300 text-slate-400 transition-colors cursor-pointer"
+                  title="Tutup"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Lightbox Image View */}
+            <div className="w-full flex-1 flex items-center justify-center overflow-auto p-2 sm:p-4">
+              <img
+                src={item.foto_dokumentasi}
+                alt={`Dokumentasi ${item?.mata_pelajaran}`}
+                className="max-h-[75vh] w-auto max-w-full object-contain rounded-xl shadow-lg"
+              />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

@@ -38,6 +38,8 @@ import TugasSimulasiFolder from './pages/TugasKhusus/TugasSimulasiFolder';
 import TugasKuisAlgoritma from './pages/TugasKhusus/TugasKuisAlgoritma';
 import TugasBerpikirKomputasional from './pages/TugasKhusus/TugasBerpikirKomputasional';
 import TugasSistemKomputer from './pages/TugasKhusus/TugasSistemKomputer';
+import TugasBinerAscii from './pages/TugasKhusus/TugasBinerAscii';
+import EkstraTikPage from './pages/EkstraTikPage';
 
 
 function AppContent() {
@@ -69,8 +71,10 @@ function AppContent() {
     if (path.includes('/tugas/simulasi-folder')) return 'Tugas 1: Simulasi Folder';
     if (path.includes('/tugas/berpikir-komputasional') || path.includes('/tugas/kuis-algoritma')) return 'Tugas 2: Berpikir Komputasional';
     if (path.includes('/tugas/sistem-komputer') || path.includes('/tugas/perkakas-digital')) return 'Tugas 3: Sistem Komputer';
+    if (path.includes('/tugas/biner-ascii') || path.includes('/tugas/bilangan-biner')) return 'Tugas 4: Biner & ASCII';
 
     // 🗓️ Laboratorium & Agenda
+    if (path === '/ekstra-tik') return 'Ekstra TIK';
     if (path === '/jurnal-lab') return 'Jurnal Lab Komputer';
     if (path === '/agenda-guru') return 'Mengisi Agenda Guru';
 
@@ -155,6 +159,7 @@ function AppContent() {
         <Route path="/input-nilai" element={<InputNilaiPage />} />
 
         {/* ─── 🗓️ RUTE BARU: JURNAL & AGENDA KERJA GURU ─── */}
+        <Route path="/ekstra-tik" element={<EkstraTikPage />} />
         <Route path="/agenda-guru" element={<AgendaGuruPage />} />
         <Route path="/admin/kelola-siswa" element={<KelolaSiswaPage />} />
         <Route path="/jurnal-lab" element={<JurnalLabPage />} />
@@ -168,6 +173,9 @@ function AppContent() {
         <Route path="/tugas/berpikir-komputasional" element={<TugasBerpikirKomputasional />} />
         <Route path="/tugas/sistem-komputer" element={<TugasSistemKomputer />} />
         <Route path="/tugas/perkakas-digital" element={<TugasSistemKomputer />} />
+        <Route path="/ruang-belajar/tugas/biner-ascii" element={<TugasBinerAscii />} />
+        <Route path="/tugas/biner-ascii" element={<TugasBinerAscii />} />
+        <Route path="/tugas/bilangan-biner" element={<TugasBinerAscii />} />
 
       </Routes>
     </div>

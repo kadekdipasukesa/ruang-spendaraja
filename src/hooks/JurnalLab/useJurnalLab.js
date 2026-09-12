@@ -217,6 +217,10 @@ export function useJurnalLab(defaultLab = 'LAB Komputer') {
                 updatePayload.kondisi_awal = dataSelesai.kondisi_awal;
             }
 
+            if (dataSelesai.foto_dokumentasi !== undefined) {
+                updatePayload.foto_dokumentasi = dataSelesai.foto_dokumentasi;
+            }
+
             const { error } = await supabase
                 .from('jurnal_lab')
                 .update(updatePayload)

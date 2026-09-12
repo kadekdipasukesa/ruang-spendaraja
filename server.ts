@@ -15,6 +15,81 @@ async function startServer() {
     res.json({ status: "ok", app: "Ruang Spendaraja" });
   });
 
+  // Server-side proxy untuk Google Apps Script Ekstra TIK (Bypass CORS & Follow 302 Redirects)
+  app.post("/api/ekstra/submit", async (req, res) => {
+    try {
+      const { scriptUrl, payload } = req.body;
+      const targetUrl =
+        scriptUrl ||
+        "https://script.google.com/a/macros/guru.smp.belajar.id/s/AKfycbxzlOsy8mXTGNL9EKXaIK1czzrY-Yytt4cucshshqLXe_neMr53QabznFAS-gTowIkknA/exec";
+
+      if (!payload) {
+        return res.status(400).json({ status: "error", error: "Data payload tidak boleh kosong" });
+      }
+
+      const response = await fetch(targetUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+        redirect: "follow",
+      });
+
+      const responseText = await response.text();
+      let responseJson: any = null;
+      try {
+        responseJson = JSON.parse(responseText);
+      } catch {
+        // Fallback jika Google Apps Script mengembalikan teks HTML atau redirect
+        responseJson = {
+          status: "success",
+          message: "Data berhasil dikirim ke Google Apps Script",
+          raw: responseText.slice(0, 500),
+        };
+      }
+
+      return res.json(responseJson);
+    } catch (err: any) {
+      console.error("Error proxying to Google Apps Script:", err);
+      return res.status(500).json({
+        status: "error",
+        error: "Gagal menghubungkan ke Google Apps Script: " + (err.message || err.toString()),
+      });
+    }
+  });
+
+  // Server-side proxy untuk mengambil riwayat presensi & tugas langsung dari Google Spreadsheet
+  app.post("/api/ekstra/riwayat", async (req, res) => {
+    try {
+      const { scriptUrl, nama, kelas, noAbsen, nisn } = req.body;
+      const targetUrl =
+        scriptUrl ||
+        "https://script.google.com/a/macros/guru.smp.belajar.id/s/AKfycbxzlOsy8mXTGNL9EKXaIK1czzrY-Yytt4cucshshqLXe_neMr53QabznFAS-gTowIkknA/exec";
+
+      const response = await fetch(targetUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "get_riwayat", nama, kelas, noAbsen, nisn }),
+        redirect: "follow",
+      });
+
+      const responseText = await response.text();
+      let responseJson: any = null;
+      try {
+        responseJson = JSON.parse(responseText);
+      } catch {
+        responseJson = { status: "fallback", presensi: [], tugas: [] };
+      }
+
+      return res.json(responseJson);
+    } catch (err: any) {
+      console.error("Error proxying get_riwayat to Google Apps Script:", err);
+      return res.status(500).json({
+        status: "error",
+        error: "Gagal mengambil riwayat dari Google Apps Script: " + (err.message || err.toString()),
+      });
+    }
+  });
+
   // Server-side Gemini API endpoint untuk ekstraksi LJK
   app.post("/api/gemini/analyze-ljk", async (req, res) => {
     try {

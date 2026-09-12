@@ -125,9 +125,9 @@ const HomeRoot = () => {
       glow: 'group-hover:border-violet-400',
       shadow: 'hover:shadow-[0_0_30px_-5px_rgba(139,92,246,0.5)]',
       glowColor: 'text-violet-400',
-      path: 'https://script.google.com/a/macros/guru.smp.belajar.id/s/AKfycbxzlOsy8mXTGNL9EKXaIK1czzrY-Yytt4cucshshqLXe_neMr53QabznFAS-gTowIkknA/exec?page=absen',
-      isExternal: true,
-      desc: 'Presensi & kegiatan Ekstrakurikuler TIK Kelas 7.'
+      path: '/ekstra-tik',
+      isExternal: false,
+      desc: 'Presensi & pengumpulan tugas Ekstrakurikuler TIK.'
     },
 
     {

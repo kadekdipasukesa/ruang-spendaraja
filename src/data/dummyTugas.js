@@ -130,40 +130,46 @@ export const DUMMY_TUGAS = [
     submission: null
   },
   {
-    id: "tugas-inf-04",
-    kode_tugas: "TUGAS-04-KEAMANAN-PASSWORD",
+    id: "93e18a4d-71b5-4b0d-9b16-e5c26b9a2c91",
+    kode_tugas: "TUGAS-04-BINER-ASCII",
     urutan: 4,
-    title: "Keamanan Akun & Analisis Kasus Phishing",
-    judul: "Keamanan Akun & Analisis Kasus Phishing",
+    title: "Tugas 4: Petualangan Bilangan Biner & Kode ASCII",
+    judul: "Tugas 4: Petualangan Bilangan Biner & Kode ASCII",
     subject: "Informatika",
-    category: "Literasi Digital",
-    kategori: "Literasi Digital",
-    difficulty: "Mudah",
-    tipe_tugas: "submit",
-    custom_route: null,
-    points: 80,
-    poin_maksimal: 80,
-    deadline: "2026-09-05T23:59:59",
-    priority: "Rendah",
+    category: "Sistem Komputer",
+    kategori: "Sistem Komputer",
+    difficulty: "Sedang",
+    tipe_tugas: "kuis",
+    custom_route: "/ruang-belajar/tugas/biner-ascii",
+    points: 50,
+    poin_maksimal: 50,
+    deadline: "2026-10-15T23:59:59",
+    priority: "Tinggi",
     status: "belum",
     is_active: true,
     target_kelas: "SEMUA",
     teacher: "Pak Dipa, S.Kom.",
     estimatedTime: "25 Menit",
-    description: "Menganalisis 5 contoh pesan email/pesan WhatsApp mencurigakan untuk mengenali indikator tautan berbahaya (phishing) dan menyusun kaidah pembuatan password yang kuat.",
-    deskripsi: "Menganalisis 5 contoh pesan email/pesan WhatsApp mencurigakan untuk mengenali indikator tautan berbahaya (phishing) dan menyusun kaidah pembuatan password yang kuat.",
+    description: "Pelajari konsep representasi biner, transistor, kode ASCII (desimal 33-126), dan tuntaskan 3 tahap tantangan acak: Desimal ke Biner (15p), Biner ke Desimal (15p), serta Karakter ASCII ke Biner (20p).",
+    deskripsi: "Pelajari konsep representasi biner, transistor, kode ASCII (desimal 33-126), dan tuntaskan 3 tahap tantangan acak: Desimal ke Biner (15p), Biner ke Desimal (15p), serta Karakter ASCII ke Biner (20p).",
     petunjuk: [
-      "Baca panduan 'Dasar Keamanan Akun Digital'.",
-      "Periksa ciri-ciri domain/URL berbahaya pada contoh kasus.",
-      "Tuliskan analisis dan contoh formulasi password aman pada kolom catatan pengumpulan."
+      "Pelajari materi visual interaktif, fun fact transistor, dan eksplorasi tabel ASCII 33-126.",
+      "Coba simulator saklar 8-bit untuk memahami pembentukan bilangan biner dari penjumlahan bobot.",
+      "Tahap 2: Selesaikan 5 soal konversi Desimal ke Biner (ketik hanya digit 0 dan 1).",
+      "Tahap 3: Selesaikan 5 soal konversi Biner ke Desimal (ketik hasil angka desimal).",
+      "Tahap 4: Selesaikan 5 soal konversi karakter teks ASCII ke kode biner 8-bit.",
+      "Klik 'Kumpulkan Tugas' untuk menyimpan nilai terbaikmu ke database cloud."
     ],
     instructions: [
-      "Baca panduan 'Dasar Keamanan Akun Digital'.",
-      "Periksa ciri-ciri domain/URL berbahaya pada contoh kasus.",
-      "Tuliskan analisis dan contoh formulasi password aman pada kolom catatan pengumpulan."
+      "Pelajari materi visual interaktif, fun fact transistor, dan eksplorasi tabel ASCII 33-126.",
+      "Coba simulator saklar 8-bit untuk memahami pembentukan bilangan biner dari penjumlahan bobot.",
+      "Tahap 2: Selesaikan 5 soal konversi Desimal ke Biner (ketik hanya digit 0 dan 1).",
+      "Tahap 3: Selesaikan 5 soal konversi Biner ke Desimal (ketik hasil angka desimal).",
+      "Tahap 4: Selesaikan 5 soal konversi karakter teks ASCII ke kode biner 8-bit.",
+      "Klik 'Kumpulkan Tugas' untuk menyimpan nilai terbaikmu ke database cloud."
     ],
     attachments: [
-      { name: "Studi_Kasus_Phishing_Email.pdf", type: "pdf", size: "2.1 MB", url: "#" }
+      { name: "Tabel_Karakter_ASCII_Lengkap.pdf", type: "pdf", size: "920 KB", url: "#" }
     ],
     submission: null
   },

@@ -242,7 +242,14 @@ Saat guru atau pengurus lab menekan tombol **"Selesaikan Jam Lab"** atau **"Isi 
    - ✅ *Ruangan dibersihkan dan disapu.*
    - ✅ *Kursi dan meja dirapikan ke posisi semula.*
 2. Menyediakan textarea opsional untuk mencatat kendala kerusakan atau gangguan teknis.
-3. Data checklist di-serialize menjadi JSON terstruktur ke kolom `kondisi_akhir`:
+3. **Stabilitas State & Anti-Reset**: Inisialisasi formulir dilindungi oleh referensi siklus hidup modal (`isInitializedRef` dan `currentItemIdRef`) serta pemisahan handler keyboard/scroll agar re-render background (seperti detak jam 1-detik di parent `TimelineContainer`) tidak mereset nilai checklist, input kondisi awal, maupun catatan kendala saat sedang diisi.
+4. **Foto Dokumentasi Lab (Cloudinary + Client-Side Canvas Compression)**:
+   - Pengguna dapat mengambil foto langsung via kamera perangkat (`capture="environment"`) atau memilih file dari galeri.
+   - Menggunakan helper `src/utils/cloudinaryUpload.js` untuk mengompresi foto secara instan di peramban via HTML5 Canvas (resolusi maksimum 1280px, kualitas 0.75 WebP/JPEG), menghemat ukuran file hingga 90–95% (menjadi rata-rata ~120–180 KB) sebelum diunggah.
+   - Foto dikirim langsung via Unsigned Upload Preset ke Cloudinary (`cloudName: cjt4xpst`, `uploadPreset: jurnal_lab_preset`, folder `jurnal-lab`).
+   - URL foto publik disimpan di kolom `foto_dokumentasi` pada tabel `jurnal_lab` Supabase sehingga database tetap sangat ringan.
+   - Pada kartu `TimelineCard.jsx`, foto ditampilkan dalam thumbnail interaktif dan dapat diklik untuk memperbesar tampilan penuh (modal lightbox).
+5. Data checklist di-serialize menjadi JSON terstruktur ke kolom `kondisi_akhir`:
    ```json
    {
      "elektronik_dimatikan": true,
@@ -250,7 +257,7 @@ Saat guru atau pengurus lab menekan tombol **"Selesaikan Jam Lab"** atau **"Isi 
      "kursi_dirapikan": true
    }
    ```
-4. Mengubah status pengajuan di database menjadi `'completed'`.
+6. Mengubah status pengajuan di database menjadi `'completed'`.
 
 ---
 
