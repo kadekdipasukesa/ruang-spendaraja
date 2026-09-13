@@ -2,6 +2,15 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import { v2 as cloudinary } from "cloudinary";
+
+// Konfigurasi Cloudinary Server-Side (API Key & Secret terlindungi di backend)
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "cjt4xpst",
+  api_key: process.env.CLOUDINARY_API_KEY || "646749617121989",
+  api_secret: process.env.CLOUDINARY_API_SECRET || "Tvd_jQ0prLApU09DlY0OC1XiaEo",
+  secure: true,
+});
 
 async function startServer() {
   const app = express();
@@ -484,6 +493,70 @@ async function startServer() {
       } catch {
         return res.status(500).json({ error: "Gagal memproses link preview." });
       }
+    }
+  });
+
+  // Server-side Upload Foto Profil Siswa dengan Overwrite Otomatis (Aset lama tertimpa bersih)
+  app.post("/api/profile/upload", async (req, res) => {
+    try {
+      const { image, userId } = req.body;
+      if (!image || !userId) {
+        return res.status(400).json({
+          status: "error",
+          error: "Data gambar dan userId wajib disertakan.",
+        });
+      }
+
+      // Upload ke Cloudinary dengan Overwrite = true
+      const uploadResult = await cloudinary.uploader.upload(image, {
+        folder: "photo_profile",
+        public_id: `profil_${userId}`,
+        overwrite: true,
+        invalidate: true,
+        resource_type: "image",
+      });
+
+      return res.json({
+        status: "success",
+        url: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
+        version: uploadResult.version,
+      });
+    } catch (err: any) {
+      console.error("Error uploading profile photo to Cloudinary:", err);
+      return res.status(500).json({
+        status: "error",
+        error: "Gagal mengunggah foto profil: " + (err.message || err.toString()),
+      });
+    }
+  });
+
+  // Server-side Delete Foto Profil Siswa dari Cloudinary (Hapus aset fisik secara tuntas)
+  app.post("/api/profile/delete", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          error: "userId wajib disertakan.",
+        });
+      }
+
+      const publicId = `photo_profile/profil_${userId}`;
+      const destroyResult = await cloudinary.uploader.destroy(publicId, {
+        invalidate: true,
+      });
+
+      return res.json({
+        status: "success",
+        result: destroyResult.result,
+      });
+    } catch (err: any) {
+      console.error("Error destroying profile photo in Cloudinary:", err);
+      return res.status(500).json({
+        status: "error",
+        error: "Gagal menghapus foto dari Cloudinary: " + (err.message || err.toString()),
+      });
     }
   });
 

@@ -8,6 +8,7 @@ export const CLOUDINARY_CONFIG = {
   cloudName: 'cjt4xpst',
   uploadPreset: 'jurnal_lab_preset',
   uploadPresetEkstra: 'tugas_ekstra_tik7',
+  uploadPresetProfile: 'photo_profile',
   uploadUrl: 'https://api.cloudinary.com/v1_1/cjt4xpst/image/upload',
   uploadRawUrl: 'https://api.cloudinary.com/v1_1/cjt4xpst/auto/upload',
 };
@@ -123,9 +124,10 @@ export async function compressImage(file, options = {}) {
  * @param {string} folder - Sub-folder di Cloudinary (opsional)
  * @param {Function} onProgress - Callback progress persentase (0-100)
  * @param {string} customPreset - Upload preset custom (misal: 'tugas_ekstra_tik7')
+ * @param {Object} options - Opsi tambahan seperti publicId, overwrite, tags
  * @returns {Promise<string>} - Mengembalikan secure_url foto/dokumen di Cloudinary
  */
-export async function uploadToCloudinary(fileToUpload, folder = 'jurnal-lab', onProgress = null, customPreset = null) {
+export async function uploadToCloudinary(fileToUpload, folder = 'jurnal-lab', onProgress = null, customPreset = null, options = {}) {
   if (!fileToUpload) {
     throw new Error('Tidak ada file yang dipilih untuk diunggah.');
   }
@@ -139,6 +141,12 @@ export async function uploadToCloudinary(fileToUpload, folder = 'jurnal-lab', on
   formData.append('upload_preset', presetToUse);
   if (folder) {
     formData.append('folder', folder);
+  }
+  if (options.publicId) {
+    formData.append('public_id', options.publicId);
+  }
+  if (options.tags) {
+    formData.append('tags', options.tags);
   }
 
   return new Promise((resolve, reject) => {

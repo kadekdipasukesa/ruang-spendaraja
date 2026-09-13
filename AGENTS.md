@@ -45,8 +45,8 @@ Dokumen ini adalah referensi utama untuk pengembang dan AI Agent agar memahami s
 
 ### A. Tabel Utama
 1. **`master_siswa`**:
-   - Kolom: `id`, `No Absen`, `NAMA`, `NISN` (Unique), `Kelas`, `Gender`, `Agama`, `is_registered`, `password`, `role` (siswa/guru/admin), `total_points` (integer, default 0), `total_pelanggaran`, `role_2`.
-   - *Catatan Penting*: `total_points` adalah **Single Source of Truth** nilai siswa yang ditampilkan di Header dan Leaderboard.
+   - Kolom: `id`, `No Absen`, `NAMA`, `NISN` (Unique), `Kelas`, `Gender`, `Agama`, `is_registered`, `password`, `role` (siswa/guru/admin), `total_points` (integer, default 0), `total_pelanggaran`, `role_2`, `foto_profile` (text URL Cloudinary).
+   - *Catatan Penting*: `total_points` adalah **Single Source of Truth** nilai siswa yang ditampilkan di Header dan Leaderboard. Foto profil siswa diunggah melalui backend terotentikasi (`/api/profile/upload` dengan `overwrite: true` pada `photo_profile/profil_${siswa.id}` menggunakan Cloudinary Signed SDK) dan dihapus permanen (`/api/profile/delete` via `cloudinary.uploader.destroy`), disinkronkan ke kolom `foto_profile`.
 2. **`tugas_master`**:
    - Kolom: `id`, `kode_tugas`, `urutan`, `judul`, `deskripsi`, `petunjuk`, `kategori`, `tipe_tugas`, `custom_route`, `poin_maksimal`, `deadline`, `is_active`, `bobot_nilai`.
 3. **`tugas_pengumpulan`**:
@@ -143,7 +143,7 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
 
 Untuk memahami alur kerja lebih spesifik dan mendalam pada setiap modul, silakan baca dokumentasi pendukung berikut:
 1. **[`/docs/DESIGN_SYSTEM.md`](/docs/DESIGN_SYSTEM.md)**: Standar desain 4 arketipe halaman (Siswa, Praktikum, Portal, Admin) & aturan komponen mobile.
-2. **[`/docs/HOME_DAN_KOMPONEN_GLOBAL.md`](/docs/HOME_DAN_KOMPONEN_GLOBAL.md)**: Arsitektur Home App Launcher, Navbar, Floating Online Presence, dan Live Chat Realtime.
+2. **[`/docs/HOME_DAN_KOMPONEN_GLOBAL.md`](/docs/HOME_DAN_KOMPONEN_GLOBAL.md)**: Arsitektur Home App Launcher, Navbar Modular (`NavbarBrand`, `NavbarPointsBadge`, `NavbarUserSection`, `ModalLogin`, `ModalProfilUser`) dengan integrasi Foto Profil Cloudinary & Supabase Realtime, Floating Online Presence, dan Live Chat Realtime.
 3. **[`/docs/RUANG_BELAJAR.md`](/docs/RUANG_BELAJAR.md)**: Master Hub modul Ruang Belajar, Timeline, Log Skor, dan Leaderboard Kelas.
 4. **[`/docs/tugas/TUGAS_1_SIMULATOR_FOLDER.md`](/docs/tugas/TUGAS_1_SIMULATOR_FOLDER.md)**: Rincian teknis virtual file system & 25 misi Tugas 1.
 5. **[`/docs/tugas/TUGAS_2_BERPIKIR_KOMPUTASIONAL.md`](/docs/tugas/TUGAS_2_BERPIKIR_KOMPUTASIONAL.md)**: Rincian teknis 4 misi terpadu Bab 1 (Algoritma, Jadwal, Struktur Data, Biner).
