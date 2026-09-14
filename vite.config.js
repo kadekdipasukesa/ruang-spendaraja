@@ -8,6 +8,9 @@ export default defineConfig({
     port: 3000,
     allowedHosts: true,
   },
+  build: {
+    chunkSizeWarningLimit: 5000,
+  },
   define: {
     "__APP_VERSION__": JSON.stringify((() => {
       const now = new Date();
