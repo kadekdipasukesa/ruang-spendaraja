@@ -95,7 +95,13 @@ export default function ModalProfilUser({
         }),
       });
 
-      const uploadResult = await uploadResp.json();
+      let uploadResult;
+      try {
+        uploadResult = await uploadResp.json();
+      } catch {
+        throw new Error(`Server mengembalikan respon status ${uploadResp.status} (${uploadResp.statusText || 'Gagal parsing JSON'}).`);
+      }
+
       if (!uploadResp.ok || uploadResult.status !== 'success') {
         throw new Error(uploadResult.error || 'Gagal mengunggah foto profil ke Cloudinary.');
       }
