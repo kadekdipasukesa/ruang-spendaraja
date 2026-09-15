@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { compressImage } from '../../utils/cloudinaryUpload';
+import CameraCaptureModal from './CameraCaptureModal';
 
 export default function ModalProfilUser({
   isOpen,
@@ -25,7 +26,7 @@ export default function ModalProfilUser({
   onUserUpdated,
   onLogout,
 }) {
-  const fileInputRef = useRef(null);
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -38,7 +39,7 @@ export default function ModalProfilUser({
     setImgError(false);
   }, [user?.foto_profile]);
 
-  if (!isOpen || !user) return null;
+  if (!user) return null;
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -47,43 +48,54 @@ export default function ModalProfilUser({
     return (words[0][0] + words[1][0]).toUpperCase();
   };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      setErrorMsg('File yang dipilih harus berupa foto/gambar (JPG, PNG, WebP).');
-      return;
+  // Helper konversi Data URL Base64 ke Blob
+  const dataURLtoBlob = (dataUrl) => {
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
     }
+    return new Blob([u8arr], { type: mime });
+  };
 
-    // Reset pesan
+  // Handler pengambilan foto khusus melalui kamera
+  const handleCameraCapture = async (capturedDataUri) => {
+    if (!capturedDataUri) return;
+
     setErrorMsg('');
     setSuccessMsg('');
     setIsUploading(true);
-    setUploadProgress(10);
-    setUploadStatus('Mengompres foto profil...');
+    setUploadProgress(15);
+    setUploadStatus('Mengompresi hasil foto kamera...');
 
     try {
-      // 1. Kompresi gambar via HTML5 Canvas (max 1280px, WebP, quality 0.8)
-      const compressed = await compressImage(file, {
+      // 1. Konversi data URL ke File & kompresi optimal via Canvas (max 1280px, WebP, quality 0.8)
+      const rawBlob = dataURLtoBlob(capturedDataUri);
+      const rawFile = new File([rawBlob], `profil_${user?.id || 'siswa'}.jpg`, {
+        type: 'image/jpeg',
+      });
+      const compressed = await compressImage(rawFile, {
         maxWidth: 1280,
         maxHeight: 1280,
         quality: 0.8,
       });
 
       setUploadProgress(40);
-      setUploadStatus('Mempersiapkan gambar...');
+      setUploadStatus('Mempersiapkan berkas gambar...');
 
       // Konversi blob hasil kompresi ke Base64 Data URL
       const reader = new FileReader();
-      const dataUri = await new Promise((resolve, reject) => {
+      const finalDataUri = await new Promise((resolve, reject) => {
         reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('Gagal membaca berkas gambar.'));
+        reader.onerror = () => reject(new Error('Gagal memproses gambar kamera.'));
         reader.readAsDataURL(compressed.file);
       });
 
-      setUploadProgress(60);
-      setUploadStatus('Mengunggah & menimpa foto di Cloudinary...');
+      setUploadProgress(65);
+      setUploadStatus('Mengunggah & menimpa foto profil...');
 
       // 2. Unggah ke server-side endpoint dengan Signed Overwrite
       const uploadResp = await fetch('/api/profile/upload', {
@@ -91,7 +103,7 @@ export default function ModalProfilUser({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
-          image: dataUri,
+          image: finalDataUri,
         }),
       });
 
@@ -132,17 +144,15 @@ export default function ModalProfilUser({
 
       setImgError(false);
       setUploadProgress(100);
-      setSuccessMsg('Foto profil berhasil diperbarui!');
+      setSuccessMsg('Foto profil berhasil diperbarui dengan kamera!');
+      setIsCameraModalOpen(false);
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
-      console.error('Gagal memperbarui foto profil:', err);
-      setErrorMsg(err.message || 'Terjadi kesalahan saat mengunggah foto profil.');
+      console.error('Gagal memperbarui foto profil dari kamera:', err);
+      setErrorMsg(err.message || 'Terjadi kesalahan saat memproses foto kamera.');
     } finally {
       setIsUploading(false);
       setUploadStatus('');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
   };
 
@@ -200,25 +210,32 @@ export default function ModalProfilUser({
   };
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[150] overflow-y-auto px-4 py-8 flex justify-center items-center">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-slate-950/80 backdrop-blur-md"
-        />
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <div
+            key="modal-profil-user-overlay"
+            className="fixed inset-0 z-[150] overflow-y-auto px-4 py-8 flex justify-center items-center"
+          >
+            {/* Backdrop */}
+            <motion.div
+              key="modal-profil-user-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="fixed inset-0 bg-slate-950/80 backdrop-blur-md"
+            />
 
-        {/* Modal Card */}
-        <motion.div
-          id="modal-profile-card"
-          initial={{ opacity: 0, scale: 0.92, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.92, y: 20 }}
-          className="relative bg-[#1e293b] w-full max-w-md rounded-[2rem] shadow-[0_25px_60px_rgba(0,0,0,0.6)] p-6 sm:p-7 border border-white/10 text-white z-10 my-auto"
-        >
+            {/* Modal Card */}
+            <motion.div
+              key="modal-profil-user-card"
+              id="modal-profile-card"
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              className="relative bg-[#1e293b] w-full max-w-md rounded-[2rem] shadow-[0_25px_60px_rgba(0,0,0,0.6)] p-6 sm:p-7 border border-white/10 text-white z-10 my-auto"
+            >
           {/* Header */}
           <div className="flex justify-between items-start mb-6">
             <div>
@@ -275,34 +292,25 @@ export default function ModalProfilUser({
               <button
                 id="btn-trigger-upload-photo"
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => setIsCameraModalOpen(true)}
                 disabled={isUploading}
-                title="Ganti Foto Profil"
+                title="Ambil Foto dengan Kamera"
                 className="absolute bottom-1 right-1 p-2.5 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white rounded-full shadow-xl border-2 border-slate-900 transition-all cursor-pointer hover:scale-110 disabled:opacity-50"
               >
                 <Camera size={16} />
               </button>
-
-              <input
-                ref={fileInputRef}
-                id="avatar-file-input"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
             </div>
 
             {/* Photo Action Buttons */}
             <div className="flex items-center gap-2 mt-4">
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => setIsCameraModalOpen(true)}
                 disabled={isUploading}
                 className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition-all flex items-center gap-1.5"
               >
                 <Camera size={13} />
-                <span>{user.foto_profile ? 'Ganti Foto' : 'Pasang Foto'}</span>
+                <span>{user.foto_profile ? 'Ambil Foto Baru' : 'Ambil Foto Wajah'}</span>
               </button>
 
               {user.foto_profile && (
@@ -461,8 +469,20 @@ export default function ModalProfilUser({
               Tutup
             </button>
           </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+          </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Kamera Wajah (Hanya melalui kamera langsung, tanpa pilihan file) */}
+      <CameraCaptureModal
+        isOpen={isCameraModalOpen}
+        onClose={() => setIsCameraModalOpen(false)}
+        onCapture={handleCameraCapture}
+        isProcessing={isUploading}
+        uploadProgress={uploadProgress}
+        uploadStatus={uploadStatus}
+      />
+    </>
   );
 }

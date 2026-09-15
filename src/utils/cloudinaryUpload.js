@@ -91,7 +91,9 @@ export async function compressImage(file, options = {}) {
         );
 
         function finishBlob(finalBlob, mimeType, extension) {
-          const fileName = file.name.replace(/\.[^/.]+$/, '') + `.${extension}`;
+          const originalName = (file && typeof file.name === 'string' && file.name.trim()) ? file.name : 'camera_photo.jpg';
+          const baseName = originalName.replace(/\.[^/.]+$/, '') || 'photo';
+          const fileName = `${baseName}.${extension}`;
           const compressedFile = new File([finalBlob], fileName, {
             type: mimeType,
             lastModified: Date.now(),

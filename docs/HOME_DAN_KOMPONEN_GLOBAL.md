@@ -18,7 +18,8 @@ src/
 │   │   ├── NavbarPointsBadge.jsx          # Indikator Poin Siswa Beranimasi (Kelas 7 & Admin)
 │   │   ├── NavbarUserSection.jsx          # Tombol Masuk / Avatar Foto Profil Bulat & Profil Trigger
 │   │   ├── ModalLogin.jsx                 # Modal Dialog Autocomplete Siswa & Pembuatan Akun Baru
-│   │   └── ModalProfilUser.jsx            # Modal Informasi Akun Siswa & Unggah/Ganti Foto Profil
+│   │   ├── ModalProfilUser.jsx            # Modal Informasi Akun Siswa & Trigger Ambil Foto Kamera
+│   │   └── CameraCaptureModal.jsx         # Viewfinder Kamera Langsung (Selfie 1:1, Flip, Snap & Anti-Pilih Berkas)
 │   │
 │   ├── FloatingOnline.jsx                 # Sidebar Mengambang Indikator Online (Supabase Presence)
 │   ├── LiveChat.jsx                       # Widget Obrolan Realtime Siswa Antar-Kelas
@@ -82,16 +83,17 @@ Komponen `Navbar` berada di posisi paling atas layar, dibangun dengan arsitektur
    - Autocomplete pencarian nama siswa di tabel `master_siswa`.
    - Logika aktivasi akun baru (`is_registered === false`) dengan pembuatan password pertama kali minimal 6 karakter.
    - Form input kata sandi dengan fitur lihat/sembunyikan (*toggle show/hide*).
-6. **`ModalProfilUser.jsx`**:
+6. **`ModalProfilUser.jsx` & `CameraCaptureModal.jsx`**:
    - Tampilan profil lengkap: Nama Lengkap, Kelas, No. Absen, NISN, Total Poin, dan Status Akun.
+   - **Kebijakan Kamera Langsung (Anti-Pilih Berkas/Galeri)**: Input berkas lokal dinonaktifkan secara total. Penggantian foto profil mewajibkan pengguna membuka kamera langsung melalui `CameraCaptureModal.jsx` dengan bingkai oval panduan wajah, flip kamera (depan/belakang), dan crop instan 1:1.
    - Kompresi foto otomatis di sisi klien (*HTML5 Canvas* 1280px WebP, quality 0.8) sebelum pengunggahan.
    - Unggah melalui backend terotentikasi (`/api/profile/upload`) menggunakan Cloudinary Signed SDK dengan `overwrite: true` dan nama file statis tetap `photo_profile/profil_${user.id}` (1 siswa = tepat 1 file di Cloudinary).
    - Progress bar interaktif selama kompresi dan pengunggahan.
    - Fitur hapus foto profil dengan konfirmasi inline aman tanpa `window.confirm`. Menghapus aset fisik secara tuntas di Cloudinary via `/api/profile/delete` (`cloudinary.uploader.destroy`) serta mengosongkan kolom `foto_profile` di database menjadi `NULL` dan kembali ke avatar inisial.
 
 ### B. Mekanisme Unggah & Hapus Foto Profil (Server-Side Signed Cloudinary)
-- Siswa memilih foto via kamera/galeri di `ModalProfilUser.jsx`.
-- Gambar dikompresi menjadi WebP ringan di sisi klien, diubah menjadi Base64 Data URL, lalu dikirim ke backend `/api/profile/upload`.
+- Siswa menekan tombol kamera pada `ModalProfilUser.jsx`, yang langsung membuka viewfinder `CameraCaptureModal.jsx`.
+- Setelah foto dijepret dan dikonfirmasi, gambar dikompresi menjadi WebP ringan di sisi klien, diubah menjadi Base64 Data URL, lalu dikirim ke backend `/api/profile/upload`.
 - Server Node.js mengotentikasi permintaan menggunakan API Key & Secret Cloudinary, lalu mengunggah ke `folder: 'photo_profile'` dengan `public_id: 'profil_${userId}'`, `overwrite: true`, dan `invalidate: true`. Berkas lama otomatis tertimpa secara bersih tanpa menumpuk sampah di penyimpanan.
 - URL foto berversi baru (`.../v{version}/photo_profile/profil_{userId}`) disimpan ke kolom `foto_profile` pada tabel `master_siswa` di Supabase, disinkronkan ke `localStorage`, dan disebarkan melalui CustomEvent `user-updated`.
 - Saat siswa mengklik hapus foto, backend `/api/profile/delete` memanggil `cloudinary.uploader.destroy('photo_profile/profil_${userId}')` sehingga aset fisik di Cloudinary terhapus bersih dan kuota storage tetap maksimal.
