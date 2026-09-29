@@ -23,7 +23,8 @@ export default function LiveChat({
     externalTrigger, 
     setExternalTrigger, 
     setUnreadExternal,
-    onlineCount = 0
+    onlineCount = 0,
+    onOpenStats
 })
 ```
 
@@ -34,6 +35,7 @@ export default function LiveChat({
 | `setExternalTrigger` | `Function` | Callback untuk mengembalikan nilai `externalTrigger` menjadi `false` setelah jendela obrolan berhasil dibuka. |
 | `setUnreadExternal` | `Function` | Callback untuk mengirimkan jumlah pesan belum dibaca (*unread count*) ke komponen induk `FloatingOnline`. |
 | `onlineCount` | `Number` | Jumlah total pengguna yang sedang aktif/online dari Supabase Presence `FloatingOnline`. |
+| `onOpenStats` | `Function` | Callback untuk memicu dibukanya `ModalDetailStatistik` yang menampilkan daftar lengkap pengguna yang sedang aktif. |
 
 ---
 
@@ -334,7 +336,7 @@ Untuk menjaga keterbacaan kode (*clean code*), kemudahan pemeliharaan, serta per
    - Menangani sinkronisasi profil pengirim via kueri dinamis `master_siswa`.
    - Mengelola logika auto-scroll dan load more riwayat obrolan.
 2. **`src/components/LiveChat/ChatHeader.jsx`**:
-   - Menampilkan judul "Live Chat", indikator pulse hijau, ikon `Users` beserta jumlah total pengguna online (`onlineCount`) tanpa label tambahan, tombol hapus riwayat per-kamar (khusus admin), dan tombol tutup.
+   - Menampilkan judul "Live Chat", indikator pulse hijau, tombol lencana interaktif ikon `Users` beserta jumlah total pengguna online (`onlineCount`) yang dapat diklik untuk membuka modal statistik pengguna online di lapisan paling depan, tombol hapus riwayat per-kamar (khusus admin), dan tombol tutup.
    - Menyediakan tombol tab switcher kamar (`Ruang Siswa` vs `Ruang Guru`) dan kontrol kunci chat kelas untuk Admin.
 3. **`src/components/LiveChat/ChatMessageItem.jsx`**:
    - Merender setiap baris bubble pesan dengan format nama Title Case 2 kata (`Dipa Sukesa`), role badge (`Admin`, `Guru`, atau kelas seperti `7.1`), ikon verifikasi (`ShieldCheck` / `GraduationCap`), teks aman sensor, jam kirim, serta kartu preview link/video.

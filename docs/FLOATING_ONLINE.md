@@ -115,13 +115,15 @@ Siswa Masuk Aplikasi / Ubah Tab
 * **Tombol Tutup Mobile**: Tampil pada layar kecil (`md:hidden`) untuk memudahkan pengguna menutup drawer dengan sentuhan.
 * **Overlay Gelap Mobile**: Saat panel terbuka pada smartphone, muncul backdrop hitam semi-transparan (`bg-black/40 backdrop-blur-sm z-[45] md:hidden`) yang menutup layar; mengklik backdrop langsung menutup drawer.
 
-### C. Modal Detail Statistik User Online
-* **Layering**: `z-[100]` dengan latar blur gelap (`bg-black/80 backdrop-blur-md`).
-* **Card Container**: `max-w-sm rounded-[2rem] bg-slate-900 border border-emerald-500/30`.
+### C. Modal Detail Statistik User Online (`ModalDetailStatistik.jsx`)
+* **Arsitektur Modular**: Diekstrak menjadi komponen independen (`src/components/ModalDetailStatistik.jsx`).
+* **Layering & Portal**: Dirender menggunakan `createPortal(modalContent, document.body)` dengan `z-[99999]` dan latar blur gelap (`bg-black/80 backdrop-blur-md`) sehingga dijamin selalu tampil di lapisan terdepan tanpa tertimpa atau terpotong elemen lain di layar (termasuk jendela chat maupun navbar).
+* **Card Container**: `max-w-sm rounded-[2rem] bg-slate-900 border border-emerald-500/30 shadow-2xl overflow-hidden`.
 * **Daftar User Scrollable**:
   - Avatar lingkaran inisial huruf pertama nama siswa (`u.nama?.charAt(0)`).
   - Teks nama tebal dengan label lokasi halaman (`📍 {u.posisi || 'Beranda'}`).
   - Badge kelas siswa di sisi kanan (`px-2 py-1 bg-slate-800 text-emerald-400 font-bold`).
+* **Pemicu (Triggers)**: Dapat dibuka baik melalui tombol "STATISTIK" pada panel drawer `FloatingOnline`, maupun melalui klik tombol pill user online di header `LiveChat`.
 
 ---
 
@@ -135,17 +137,21 @@ Siswa Masuk Aplikasi / Ubah Tab
     externalTrigger={triggerChat} 
     setExternalTrigger={setTriggerChat} 
     setUnreadExternal={setUnreadCount} 
+    onlineCount={onlineCount}
+    onOpenStats={() => setShowDetail(true)}
 />
 ```
 
 ### Mekanisme Komunikasi Dua Arah:
-1. **Parent-to-Child (Buka Chat)**:
+1. **Parent-to-Child (Buka Chat & Teruskan Data Presence)**:
    - Saat pengguna menekan tombol "LIVE CHAT" di panel `FloatingOnline`, state `triggerChat` diubah menjadi `true`.
    - `LiveChat` mendeteksi perubahan prop `externalTrigger` via `useEffect`, membuka jendela chat (`setIsOpen(true)`), dan memanggil `setExternalTrigger(false)` untuk mereset pemicu.
-2. **Child-to-Parent (Sinkronisasi Unread Badge)**:
+   - `onlineCount` dan handler `onOpenStats` diteruskan ke `LiveChat` sehingga pengguna dapat melihat jumlah user aktif di header chat dan membukanya langsung dengan mengeklik tombol lencana.
+2. **Child-to-Parent (Sinkronisasi Unread Badge & Trigger Modal Statistik)**:
    - Ketika ada pesan baru masuk ke tabel `livechat` di Supabase dan jendela chat sedang tertutup (`!isOpen`), `LiveChat` memanggil fungsi `setUnreadExternal(nextCount)`.
    - `FloatingOnline` menerima nilai tersebut dan menyimpannya ke state `unreadCount`, sehingga angka notifikasi merah langsung muncul pada handle tab maupun tombol chat.
    - Saat pengguna membuka jendela chat, `LiveChat` otomatis mereset unread menjadi `0` dan menyinkronkannya kembali ke `FloatingOnline`.
+   - Tombol lencana user online di header chat memanggil `onOpenStats` yang mengaktifkan `setShowDetail(true)` pada `FloatingOnline`.
 
 ---
 
@@ -153,9 +159,9 @@ Siswa Masuk Aplikasi / Ubah Tab
 
 1. **Backdrop Drawer Mobile**: `z-[45]`.
 2. **Drawer Samping**: `z-50`.
-3. **Modal Detail User**: `z-[100]`.
-4. **Jendela LiveChat**: `z-[100]`.
-5. **Emoji Picker di dalam Chat**: `z-[110]`.
+3. **Jendela LiveChat**: `z-[100]`.
+4. **Emoji Picker di dalam Chat**: `z-[110]`.
+5. **Modal Detail Statistik User Online (`ModalDetailStatistik`)**: `z-[99999]` (dirender langsung ke `document.body` via `createPortal` agar dijamin berada di lapisan paling depan di atas seluruh viewport).
 
 *Catatan Penting*: Nilai z-index di atas telah diselaraskan dengan `Navbar` (`z-40` / `z-50`) dan modal materi/tugas Ruang Belajar (`z-[99999]`) agar tidak terjadi tabrakan tumpukan elemen antarmuka.
 

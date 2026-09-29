@@ -139,3 +139,26 @@ Komponen `DocxViewerProtected.jsx` menyajikan dokumen asli `PENGALAMAN BELAJAR D
 * **Pesan Penting**: 12 pt Bold Center dengan warna teks merah `#C00000`.
 * **Renderer Teks Tanpa `**` Mentah**: Seluruh deskripsi materi pada `TopicCardFocused.jsx` diproses melalui parser `renderFormattedContent` sehingga format tebal (`**...**`), miring (`*...*`), kode, penomoran langkah, dan bullet list tampil dalam elemen visual yang rapi dan mudah dibaca tanpa ada simbol markdown mentah.
 * **Integrasi Header Anti-Ketumpuk**: `WordHeader.jsx` dikonfigurasikan dengan `sticky top-14 sm:top-16 z-30` serta `pt-16 sm:pt-20` pada halaman `TugasWord.jsx` agar posisi bar navigasi tugas selalu tampak jelas di bawah navbar portal utama.
+
+---
+
+## 6. Integrasi Database Supabase & Skema `tugas_pengumpulan`
+
+Pengumpulan dan penyimpanan progres pengerjaan Tugas 5 diatur melalui custom hook `useTugasWordState.js` dengan kepatuhan skema tabel resmi PostgreSQL:
+* **Tabel Target**: `public.tugas_pengumpulan`
+* **Kolom Skema Database yang Digunakan**:
+  - `tugas_id` (`uuid`, Foreign Key ke `tugas_master.id`)
+  - `siswa_id` (`integer`, Foreign Key ke `master_siswa.id`)
+  - `status` (`text`: `'submitted'` jika lengkap atau `'sedang'`)
+  - `skor` (`integer`: nilai akumulasi tahap 1, 2, dan 3)
+  - `persentase_skor` (`numeric(5,2)`: persentase perolehan nilai)
+  - `tautan_tugas` (`text`: tautan berkas dokumen Word di Cloudinary, **bukan `file_url`**)
+  - `nama_berkas` (`text`: nama dokumen Word asli siswa)
+  - `catatan_siswa` (`text`: catatan opsional dari siswa)
+  - `detail_jawaban` (`jsonb`: log lengkap progres checkpoint, waktu baca, jawaban kuis, dan file info)
+  - `catatan_guru` (`text`: status/evaluasi otomatis atau catatan guru)
+  - `submitted_at` (`timestamptz`: waktu pengiriman pertama)
+  - `updated_at` (`timestamptz`: waktu pembaruan terakhir)
+* **Kepatuhan Anti-Error PGRST204**: Seluruh payload dibatasi secara ketat hanya pada kolom yang ada di skema database. Dilarang menyertakan kolom non-skema seperti `file_url`, `nisn_siswa`, `nama_siswa`, `kelas_siswa`, atau `nilai_akhir` yang dapat memicu error PostgREST.
+* **Mekanisme Penyimpanan**: Menggunakan `upsert` dengan constraint `onConflict: 'tugas_id,siswa_id'` dan fallback `update` per `id` pengumpulan yang sudah tercatat.
+* **Sinkronisasi Skor & Poin**: Perubahan baris pada `tugas_pengumpulan` secara otomatis memicu database trigger `trg_sync_tugas_to_point_logs` ➔ `trg_update_master_siswa_total_points`, disinkronkan kembali ke frontend melalui `syncStudentPointsAfterTask`.

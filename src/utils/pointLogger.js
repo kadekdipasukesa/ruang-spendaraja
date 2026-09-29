@@ -17,6 +17,20 @@ export async function syncStudentPointsAfterTask(siswaId) {
       .maybeSingle();
 
     if (siswaData?.total_points !== undefined && siswaData?.total_points !== null) {
+      // Perbarui sesi lokal siswa jika tersedia
+      try {
+        const raw = localStorage.getItem('user_siswa');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Number(parsed.id || parsed.ID) === Number(siswaId)) {
+            parsed.total_points = siswaData.total_points;
+            localStorage.setItem('user_siswa', JSON.stringify(parsed));
+            window.dispatchEvent(new Event('storage'));
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
       return siswaData.total_points;
     }
 

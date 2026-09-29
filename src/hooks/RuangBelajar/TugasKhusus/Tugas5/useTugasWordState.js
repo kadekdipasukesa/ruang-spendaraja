@@ -122,50 +122,40 @@ export function useTugasWordState() {
   const checkExistingSubmission = useCallback(async (student) => {
     if (!student) return null;
     const resolvedTaskId = dbTaskIdRef.current || TUGAS_5_CONFIG.id;
-    const numStudentId = Number(student.id || student.ID);
+    let numStudentId = Number(student.id || student.ID);
     const studentNisn = student.NISN || student.nisn;
 
     try {
+      // Resolusi siswa_id jika belum tersedia di session
+      if ((!numStudentId || isNaN(numStudentId)) && studentNisn) {
+        const { data: siswaRow } = await supabase
+          .from('master_siswa')
+          .select('id')
+          .eq('NISN', String(studentNisn))
+          .maybeSingle();
+        if (siswaRow?.id) {
+          numStudentId = Number(siswaRow.id);
+        }
+      }
+
+      if (!numStudentId || isNaN(numStudentId)) return null;
+
       const candidateTaskIds = ['6f2a8901-4bc1-4e78-9b55-d1a8e265b489'];
       if (resolvedTaskId && isUUID(resolvedTaskId) && !candidateTaskIds.includes(resolvedTaskId)) {
         candidateTaskIds.push(resolvedTaskId);
       }
 
-      let sub = null;
+      // Kueri berdasarkan foreign key resmi siswa_id ke master_siswa
+      const { data: sub, error: errSiswa } = await supabase
+        .from('tugas_pengumpulan')
+        .select('*')
+        .in('tugas_id', candidateTaskIds)
+        .eq('siswa_id', numStudentId)
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      // Kueri 1: Berdasarkan siswa_id (jika valid)
-      if (Number.isInteger(numStudentId) && numStudentId > 0) {
-        const { data: bySiswaId, error: errSiswa } = await supabase
-          .from('tugas_pengumpulan')
-          .select('*')
-          .in('tugas_id', candidateTaskIds)
-          .eq('siswa_id', numStudentId)
-          .order('submitted_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (!errSiswa && bySiswaId) {
-          sub = bySiswaId;
-        }
-      }
-
-      // Kueri 2: Fallback berdasarkan nisn_siswa
-      if (!sub && studentNisn) {
-        const { data: byNisn, error: errNisn } = await supabase
-          .from('tugas_pengumpulan')
-          .select('*')
-          .in('tugas_id', candidateTaskIds)
-          .eq('nisn_siswa', String(studentNisn))
-          .order('submitted_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (!errNisn && byNisn) {
-          sub = byNisn;
-        }
-      }
-
-      if (sub) {
+      if (!errSiswa && sub) {
         setExistingSubmission(sub);
 
         let detail = sub.detail_jawaban;
@@ -199,22 +189,23 @@ export function useTugasWordState() {
         }
 
         // Pulihkan Progres Tahap 3 (Upload File Cloudinary)
-        if (sub.file_url || detail.uploadedFileInfo?.secureUrl) {
+        const fileUrl = sub.tautan_tugas || sub.file_url || detail.uploadedFileInfo?.secureUrl;
+        if (fileUrl) {
           setUploadedFileInfo({
-            secureUrl: sub.file_url || detail.uploadedFileInfo?.secureUrl,
-            fileName: detail.uploadedFileInfo?.fileName || 'Tugas5_Pengalaman_Belajar.docx',
+            secureUrl: fileUrl,
+            fileName: sub.nama_berkas || detail.uploadedFileInfo?.fileName || 'Tugas5_Pengalaman_Belajar.docx',
             fileSize: detail.uploadedFileInfo?.fileSize || 0,
             format: detail.uploadedFileInfo?.format || 'docx',
           });
         }
-        if (detail.studentNotes) {
-          setStudentNotes(detail.studentNotes);
+        if (sub.catatan_siswa || detail.studentNotes) {
+          setStudentNotes(sub.catatan_siswa || detail.studentNotes);
         }
 
         // Pulihkan Tahap Terakhir Aktif
         if (detail.lastActiveStage) {
           setActiveStage(detail.lastActiveStage);
-        } else if (sub.file_url || detail.uploadedFileInfo?.secureUrl) {
+        } else if (fileUrl) {
           setActiveStage(3);
         } else if (detail.quizSubmitted) {
           setActiveStage(3);
@@ -341,10 +332,28 @@ export function useTugasWordState() {
     setSubmitting(true);
     try {
       const resolvedTaskId = dbTaskIdRef.current || TUGAS_5_CONFIG.id;
-      const studentIdNum = Number(currentUser.id || currentUser.ID);
+      let studentIdNum = Number(currentUser.id || currentUser.ID);
       const studentNisn = currentUser.NISN || currentUser.nisn ? String(currentUser.NISN || currentUser.nisn) : null;
-      const studentName = currentUser.NAMA || currentUser.nama || 'Siswa Spendaraja';
-      const studentClass = currentUser.Kelas || currentUser.kelas || '7';
+
+      // Resolusi siswa_id integer jika belum ada di sesi
+      if ((!studentIdNum || isNaN(studentIdNum)) && studentNisn) {
+        const { data: siswaRow } = await supabase
+          .from('master_siswa')
+          .select('id')
+          .eq('NISN', studentNisn)
+          .maybeSingle();
+        if (siswaRow?.id) {
+          studentIdNum = Number(siswaRow.id);
+        }
+      }
+
+      if (!studentIdNum || isNaN(studentIdNum)) {
+        if (isManualClick) {
+          showToast('⚠️ Data akun siswa tidak valid. Silakan login ulang.', 'warning');
+          window.dispatchEvent(new CustomEvent('open-login-modal'));
+        }
+        return false;
+      }
 
       // Gabungkan data terbaru
       const topicsList = customCompletedTopicIds || completedTopicIds;
@@ -366,7 +375,9 @@ export function useTugasWordState() {
       const curTotal = curScoreTahap1 + curScoreTahap2 + curScoreTahap3;
 
       // Proteksi Nilai Database (Math.max)
-      const existingScoreInDb = existingSubmission?.nilai_akhir ? Number(existingSubmission.nilai_akhir) : 0;
+      const existingScoreInDb = existingSubmission?.skor !== undefined && existingSubmission?.skor !== null
+        ? Number(existingSubmission.skor)
+        : (existingSubmission?.nilai_akhir ? Number(existingSubmission.nilai_akhir) : 0);
       const finalScoreToSave = Math.max(existingScoreInDb, curTotal);
 
       if (existingScoreInDb > curTotal) {
@@ -400,22 +411,25 @@ export function useTugasWordState() {
         updatedAt: new Date().toISOString(),
       };
 
-      const payload = {
-        tugas_id: isUUID(resolvedTaskId) ? resolvedTaskId : TUGAS_5_CONFIG.id,
-        nisn_siswa: studentNisn,
-        nama_siswa: studentName,
-        kelas_siswa: studentClass,
-        file_url: upFile?.secureUrl || existingSubmission?.file_url || null,
-        nilai_akhir: finalScoreToSave,
-        skor: finalScoreToSave,
-        status: completeStatus ? 'submitted' : (existingSubmission?.status === 'submitted' ? 'submitted' : 'sedang'),
-        submitted_at: new Date().toISOString(),
-        detail_jawaban: detailJawaban,
-      };
+      const finalTaskId = isUUID(resolvedTaskId) ? resolvedTaskId : TUGAS_5_CONFIG.id;
+      const maxPoin = TUGAS_5_CONFIG.poin_maksimal || 100;
+      const persentaseSkor = maxPoin > 0 ? Number(((finalScoreToSave / maxPoin) * 100).toFixed(2)) : null;
 
-      if (Number.isInteger(studentIdNum) && studentIdNum > 0) {
-        payload.siswa_id = studentIdNum;
-      }
+      // Payload sesuai skema tabel public.tugas_pengumpulan
+      const payload = {
+        tugas_id: finalTaskId,
+        siswa_id: studentIdNum,
+        status: completeStatus ? 'submitted' : (existingSubmission?.status === 'submitted' ? 'submitted' : 'sedang'),
+        skor: finalScoreToSave,
+        persentase_skor: persentaseSkor,
+        tautan_tugas: upFile?.secureUrl || existingSubmission?.tautan_tugas || null,
+        catatan_siswa: (notes || '').trim() || existingSubmission?.catatan_siswa || null,
+        nama_berkas: upFile?.fileName || existingSubmission?.nama_berkas || null,
+        detail_jawaban: detailJawaban,
+        catatan_guru: existingSubmission?.catatan_guru || (completeStatus ? 'Tugas pengolah kata selesai dikumpulkan.' : 'Progres pengerjaan tersimpan.'),
+        submitted_at: existingSubmission?.submitted_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
       let saveErr = null;
       let savedRecord = null;
@@ -432,7 +446,7 @@ export function useTugasWordState() {
       } else {
         const { data: newSub, error } = await supabase
           .from('tugas_pengumpulan')
-          .insert([payload])
+          .upsert(payload, { onConflict: 'tugas_id,siswa_id' })
           .select()
           .maybeSingle();
         saveErr = error;
