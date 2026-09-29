@@ -590,6 +590,11 @@ export function useTugasWordState() {
     }));
   };
 
+  const handleResetQuiz = () => {
+    setQuizSubmitted(false);
+    showToast('Kuis dibuka kembali. Kamu dapat memilih dan memperbaiki jawabanmu.', 'info');
+  };
+
   const handleSubmitQuiz = async () => {
     const answeredCount = Object.keys(quizAnswers).length;
     if (answeredCount < KUIS_MS_WORD_QUESTIONS.length) {
@@ -682,7 +687,9 @@ export function useTugasWordState() {
     // Tahap 2 Kuis
     quizAnswers,
     quizSubmitted,
+    setQuizSubmitted,
     handleAnswerQuiz,
+    handleResetQuiz,
     handleSubmitQuiz,
     scoreTahap2,
     // Tahap 3 Proyek & Cloudinary

@@ -1,15 +1,20 @@
 import { useState } from 'react';
-import { FileEdit, CheckCircle2, XCircle, Sparkles, ArrowRight, Award, HelpCircle } from 'lucide-react';
+import { FileEdit, CheckCircle2, XCircle, Sparkles, ArrowRight, Award, HelpCircle, RotateCcw } from 'lucide-react';
 import { KUIS_MS_WORD_QUESTIONS, TUGAS_5_CONFIG } from '../../../../../data/tugas5WordData';
 
 export default function KuisMsWord({
   quizAnswers = {},
   quizSubmitted = false,
   onAnswerQuiz,
+  onSelectOption,
   onSubmitQuiz,
+  onResetQuiz,
   onGoToProject,
+  onGoToStage3,
   scoreTahap2 = 0,
 }) {
+  const handleSelectAnswer = onAnswerQuiz || onSelectOption;
+  const handleGoToStage3 = onGoToProject || onGoToStage3;
   const answeredCount = Object.keys(quizAnswers).length;
   const isAllAnswered = answeredCount === KUIS_MS_WORD_QUESTIONS.length;
 
@@ -136,11 +141,13 @@ export default function KuisMsWord({
                       key={opt.id}
                       type="button"
                       disabled={quizSubmitted}
-                      onClick={() => onAnswerQuiz(q.id, opt.id)}
-                      className={`flex items-start gap-3 p-3.5 rounded-2xl border text-left transition ${optStyle}`}
+                      onClick={() => handleSelectAnswer && handleSelectAnswer(q.id, opt.id)}
+                      className={`flex items-start gap-3 p-3.5 rounded-2xl border text-left transition select-none ${
+                        quizSubmitted ? 'cursor-default' : 'cursor-pointer hover:scale-[1.01]'
+                      } ${optStyle}`}
                     >
                       <span
-                        className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs shrink-0 mt-0.5 border ${badgeStyle}`}
+                        className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs shrink-0 mt-0.5 border font-bold ${badgeStyle}`}
                       >
                         {opt.id}
                       </span>
@@ -171,19 +178,19 @@ export default function KuisMsWord({
         <div>
           <span className="text-xs text-slate-400 block">
             {quizSubmitted
-              ? `Hasil Kuis: ${scoreTahap2} dari 30 Poin Berhasil Diraih`
+              ? `Hasil Kuis: ${scoreTahap2} dari ${TUGAS_5_CONFIG.poin_tahap2_kuis || 26} Poin Berhasil Diraih`
               : `${answeredCount} dari ${KUIS_MS_WORD_QUESTIONS.length} Soal Terjawab`}
           </span>
           <span className="text-sm font-bold text-white">
             {quizSubmitted
-              ? 'Lanjutkan ke Tahap 3 untuk merancang dan mengunggah berkas brosur!'
+              ? 'Lanjutkan ke Tahap 3 untuk membuat dan mengunggah dokumen Word (.docx)!'
               : isAllAnswered
               ? 'Seluruh soal telah dijawab. Silakan kunci jawabanmu sekarang.'
               : 'Jawab seluruh pertanyaan di atas untuk mengunci poin.'}
           </span>
         </div>
 
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="flex items-center gap-3 ml-auto flex-wrap">
           {!quizSubmitted ? (
             <button
               type="button"
@@ -199,14 +206,27 @@ export default function KuisMsWord({
               <span>Kunci & Evaluasi Kuis</span>
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={onGoToProject}
-              className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black rounded-xl text-xs transition shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer"
-            >
-              <span>Lanjut ke Tahap 3: Proyek & Unggah Brosur</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              {onResetQuiz && (
+                <button
+                  type="button"
+                  onClick={onResetQuiz}
+                  className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                  title="Klik untuk membuka kembali kuis dan memperbaiki pilihan jawaban"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Kerjakan Ulang Kuis</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleGoToStage3}
+                className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black rounded-xl text-xs transition shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer"
+              >
+                <span>Lanjut ke Tahap 3: Proyek & Unggah Berkas</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           )}
         </div>
       </div>

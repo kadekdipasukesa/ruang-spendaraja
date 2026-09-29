@@ -139,6 +139,7 @@ Komponen `DocxViewerProtected.jsx` menyajikan dokumen asli `PENGALAMAN BELAJAR D
 * **Pesan Penting**: 12 pt Bold Center dengan warna teks merah `#C00000`.
 * **Renderer Teks Tanpa `**` Mentah**: Seluruh deskripsi materi pada `TopicCardFocused.jsx` diproses melalui parser `renderFormattedContent` sehingga format tebal (`**...**`), miring (`*...*`), kode, penomoran langkah, dan bullet list tampil dalam elemen visual yang rapi dan mudah dibaca tanpa ada simbol markdown mentah.
 * **Integrasi Header Anti-Ketumpuk**: `WordHeader.jsx` dikonfigurasikan dengan `sticky top-14 sm:top-16 z-30` serta `pt-16 sm:pt-20` pada halaman `TugasWord.jsx` agar posisi bar navigasi tugas selalu tampak jelas di bawah navbar portal utama.
+* **Navigasi Tahap & Interaksi Kuis Resonans**: Dukungan transisi mulus dari Tahap 1 ke Tahap 2 melalui callback ganda (`onGoToQuiz` & `onGoToStage2`) baik dari tombol selebrasi akhir maupun tombol gulir topik 7. Komponen `KuisMsWord.jsx` mendukung handler seleksi opsi (`handleSelectAnswer = onAnswerQuiz || onSelectOption`) dengan animasi hover responsif, opsi tombol ulang kuis (`handleResetQuiz`) untuk perbaikan nilai, dan transisi ke Tahap 3 (`handleGoToStage3 = onGoToProject || onGoToStage3`).
 
 ---
 

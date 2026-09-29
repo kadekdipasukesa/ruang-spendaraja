@@ -5,6 +5,8 @@ import DocxViewerProtected from '../DocxViewerProtected';
 import { MATERI_TOPIK_WORD, TUGAS_5_CONFIG, PROYEK_BROSUR_DATA } from '../../../../../data/tugas5WordData';
 
 export default function MateriWordLiterasi({
+  activeTopicId,
+  setActiveTopicId,
   completedTopicIds = [],
   readingSeconds = {},
   currentTopicSeconds = 0,
@@ -14,22 +16,27 @@ export default function MateriWordLiterasi({
   onVerifyAnswer,
   onNextTopic,
   onGoToQuiz,
+  onGoToStage2,
   scoreTahap1 = 0,
 }) {
-  const allCompleted = completedTopicIds.length === MATERI_TOPIK_WORD.length;
+  const handleGoToQuiz = onGoToQuiz || onGoToStage2;
+  const allCompleted = completedTopicIds.length >= MATERI_TOPIK_WORD.length;
 
   // Handle smooth scroll when clicking next topic
   const handleScrollToNextTopic = (currentTopicId) => {
     const nextTopicId = currentTopicId + 1;
     if (nextTopicId <= MATERI_TOPIK_WORD.length) {
+      if (setActiveTopicId) {
+        setActiveTopicId(nextTopicId);
+      }
       setTimeout(() => {
         const nextElem = document.getElementById(`topik-card-${nextTopicId}`);
         if (nextElem) {
           nextElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 100);
-    } else if (onGoToQuiz) {
-      onGoToQuiz();
+    } else if (handleGoToQuiz) {
+      handleGoToQuiz();
     }
   };
 
@@ -260,7 +267,7 @@ export default function MateriWordLiterasi({
 
           <button
             type="button"
-            onClick={onGoToQuiz}
+            onClick={handleGoToQuiz}
             className="px-8 py-3.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 hover:from-emerald-400 hover:to-indigo-500 text-slate-950 font-black rounded-2xl text-sm transition shadow-xl shadow-emerald-500/20 inline-flex items-center gap-2 cursor-pointer transform hover:scale-105"
           >
             <span>Lanjut ke Kuis Fitur Ms. Word (Tahap 2 • 26 Poin)</span>

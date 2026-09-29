@@ -30,6 +30,7 @@ export default function TugasWord() {
     quizAnswers,
     quizSubmitted,
     handleAnswerQuiz,
+    handleResetQuiz,
     handleSubmitQuiz,
     scoreTahap2,
     // Tahap 3 Proyek & Cloudinary
@@ -113,7 +114,9 @@ export default function TugasWord() {
             onSelectAnswer={handleAnswerCheckpoint}
             onVerifyAnswer={handleVerifyCheckpoint}
             onNextTopic={handleNextTopic}
+            onGoToQuiz={() => setActiveStage(2)}
             onGoToStage2={() => setActiveStage(2)}
+            scoreTahap1={scoreTahap1}
           />
         )}
 
@@ -122,9 +125,12 @@ export default function TugasWord() {
           <KuisMsWord
             quizAnswers={quizAnswers}
             quizSubmitted={quizSubmitted}
+            onAnswerQuiz={handleAnswerQuiz}
             onSelectOption={handleAnswerQuiz}
             onSubmitQuiz={handleSubmitQuiz}
+            onResetQuiz={handleResetQuiz}
             scoreTahap2={scoreTahap2}
+            onGoToProject={() => setActiveStage(3)}
             onGoToStage3={() => setActiveStage(3)}
           />
         )}

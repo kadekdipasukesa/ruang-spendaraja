@@ -9,11 +9,11 @@ export default function WordStepTabs({
   scoreTahap2 = 0,
   scoreTahap3 = 0,
   completedTopicsCount = 0,
-  totalTopicsCount = 5,
+  totalTopicsCount = 7,
   quizSubmitted = false,
   hasUploadedFile = false,
 }) {
-  const isTahap1Complete = completedTopicsCount === totalTopicsCount;
+  const isTahap1Complete = completedTopicsCount >= totalTopicsCount;
   const isTahap2Locked = !isTahap1Complete;
   const isTahap3Locked = !isTahap1Complete || !quizSubmitted;
 
