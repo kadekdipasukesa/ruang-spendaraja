@@ -3,6 +3,8 @@ import confetti from 'canvas-confetti';
 import { supabase } from '../../../../lib/supabaseClient';
 import { syncStudentPointsAfterTask } from '../../../../utils/pointLogger';
 import { uploadTugas5ToCloudinary } from '../../../../utils/cloudinaryUpload';
+import { soundEffects } from '../../../../utils/gameAudio';
+import { playMissionSuccessSound, triggerMissionFireworkAnimation } from '../../../../utils/missionCelebration';
 import {
   TUGAS_5_CONFIG,
   MATERI_TOPIK_WORD,
@@ -577,7 +579,7 @@ export function useTugasWordState() {
     } else {
       // Seluruh 7 langkah tuntas! Arahkan ke Tahap 2 (Kuis)
       setActiveStage(2);
-      triggerSmallConfetti();
+      triggerGrandConfetti();
       showToast('🎉 Panduan 7 langkah tuntas! Lanjutkan ke Tahap 2 (Kuis Fitur Word).', 'success');
     }
   };
@@ -719,12 +721,13 @@ export function useTugasWordState() {
   };
 }
 
-// Visual Confetti Helpers
+// Visual Confetti & Audio Petasan Celebration Helpers
 function triggerSmallConfetti() {
   try {
+    soundEffects.playCelebrationFirework();
     confetti({
-      particleCount: 30,
-      spread: 50,
+      particleCount: 40,
+      spread: 60,
       origin: { y: 0.75 },
     });
   } catch (e) {
@@ -734,6 +737,16 @@ function triggerSmallConfetti() {
 
 function triggerGrandConfetti() {
   try {
+    soundEffects.playCelebrationFirework();
+    playMissionSuccessSound();
+    triggerMissionFireworkAnimation();
+    setTimeout(() => {
+      soundEffects.playCelebrationFirework();
+    }, 350);
+    setTimeout(() => {
+      soundEffects.playLevelUp();
+    }, 700);
+
     const end = Date.now() + 2 * 1000;
     const colors = ['#2563eb', '#38bdf8', '#fbbf24', '#10b981'];
 

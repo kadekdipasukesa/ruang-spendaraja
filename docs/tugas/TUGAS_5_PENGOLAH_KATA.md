@@ -47,7 +47,7 @@ src/
 │   │   └── KuisMsWord.jsx                    # 5 soal kuis interaktif dengan pembahasan instan & badge skor (26 Poin)
 │   └── Tahap3Proyek/
 │       ├── ProyekBrosurHut.jsx               # Panduan praktik, rubrik 4 kriteria, toggle pratinjau contoh dokumen jadi, tanpa tombol salin teks
-│       └── FormUploadCloudinaryTugas5.jsx    # Drag & drop upload Cloudinary khusus .docx/.doc + Ceklis 4 Verifikasi Mandiri (Hybrid Auto-Grading)
+│       └── FormUploadCloudinaryTugas5.jsx    # Drag & drop upload Cloudinary khusus .docx/.doc, tombol "Preview Berkas" interaktif (ModalPreviewDokumen multi-engine) berdampingan dengan "Lihat Berkas", + Ceklis 4 Verifikasi Mandiri (Hybrid Auto-Grading)
 └── pages/TugasKhusus/
     └── TugasWord.jsx                         # Main page controller
 ```
@@ -163,3 +163,20 @@ Pengumpulan dan penyimpanan progres pengerjaan Tugas 5 diatur melalui custom hoo
 * **Kepatuhan Anti-Error PGRST204**: Seluruh payload dibatasi secara ketat hanya pada kolom yang ada di skema database. Dilarang menyertakan kolom non-skema seperti `file_url`, `nisn_siswa`, `nama_siswa`, `kelas_siswa`, atau `nilai_akhir` yang dapat memicu error PostgREST.
 * **Mekanisme Penyimpanan**: Menggunakan `upsert` dengan constraint `onConflict: 'tugas_id,siswa_id'` dan fallback `update` per `id` pengumpulan yang sudah tercatat.
 * **Sinkronisasi Skor & Poin**: Perubahan baris pada `tugas_pengumpulan` secara otomatis memicu database trigger `trg_sync_tugas_to_point_logs` ➔ `trg_update_master_siswa_total_points`, disinkronkan kembali ke frontend melalui `syncStudentPointsAfterTask`.
+
+---
+
+## 7. Efek Audio Selebrasi Petasan & Kembang Api (Web Audio API)
+
+Tugas 5 mengintegrasikan efek audio petasan sintetis berperforma tinggi tanpa dependensi jaringan eksternal:
+* **Audio Synthesizer Engine**: Memanfaatkan modul `soundEffects` dari `src/utils/gameAudio.js` dan `missionCelebration.js` menggunakan Web Audio API native browser (`AudioContext`).
+* **Karakter Efek Suara Petasan (`playCelebrationFirework()`)**:
+  - Ledakan pop petasan/kembang api menggunakan noise buffer + lowpass filter sweep dinamis (800 Hz menurun eksponensial ke 80 Hz dalam 0.35 detik) dengan low punch bass.
+  - Diikuti chime koin ceria melodis (`playPointGain()`) secara harmonis setelah pop ledakan.
+  - Mode grand selebrasi (`triggerGrandConfetti()`) menggabungkan pop petasan multi-burst berturut-turut, arpeggio fanfare kemenangan (`playMissionSuccessSound()`), sparkle jingle bintang (`playLevelUp()`), dan letusan animasi petasan confetti (`triggerMissionFireworkAnimation()`).
+* **Pemicu Efek Suara di Tugas 5**:
+  1. **Lolos Checkpoint Pertanyaan Langkah 1-7**: Pop petasan + efek konfeti saat siswa menjawab benar pertanyaan pemahaman.
+  2. **Tuntas 7 Langkah Panduan Materi**: Grand petasan saat seluruh materi literasi diselesaikan dan siswa diarahkan ke Tahap 2.
+  3. **Submit Kuis Ms. Word (Tahap 2)**: Pop petasan ceria saat siswa mengunci dan mengevaluasi jawaban kuis.
+  4. **Pengunggahan Berkas Word Berhasil (Tahap 3)**: Pop petasan saat dokumen `.docx` selesai diunggah ke Cloudinary.
+  5. **Simpan Progres & Pengumpulan Akhir**: Grand letusan petasan saat siswa menekan tombol "Kirim Semua Tugas" atau "Simpan Progres" di header.

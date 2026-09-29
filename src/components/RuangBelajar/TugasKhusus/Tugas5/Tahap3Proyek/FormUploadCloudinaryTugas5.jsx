@@ -11,8 +11,10 @@ import {
   CheckSquare,
   Square,
   ShieldCheck,
+  Eye,
 } from 'lucide-react';
 import { TUGAS_5_CONFIG } from '../../../../../data/tugas5WordData';
+import ModalPreviewDokumen from '../../../../EkstraTik/ModalPreviewDokumen';
 
 export default function FormUploadCloudinaryTugas5({
   user,
@@ -30,6 +32,7 @@ export default function FormUploadCloudinaryTugas5({
   scoreTahap3 = 0,
 }) {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const fileInputRef = useRef(null);
 
   // 4 Kriteria Verifikasi Praktik Mandiri (Hybrid Auto-Grading)
@@ -260,7 +263,17 @@ export default function FormUploadCloudinaryTugas5({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-2 ml-auto flex-wrap">
+              <button
+                type="button"
+                onClick={() => setShowPreviewModal(true)}
+                className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-blue-600/30 cursor-pointer"
+                title="Buka pratinjau dokumen Word (.docx) di dalam aplikasi"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Preview Berkas</span>
+              </button>
+
               <a
                 href={uploadedFileInfo.secureUrl}
                 target="_blank"
@@ -410,6 +423,20 @@ export default function FormUploadCloudinaryTugas5({
           )}
         </button>
       </div>
+
+      {/* Modal Preview Dokumen Word (.docx) */}
+      {uploadedFileInfo?.secureUrl && (
+        <ModalPreviewDokumen
+          isOpen={showPreviewModal}
+          onClose={() => setShowPreviewModal(false)}
+          fileData={{
+            fileUrl: uploadedFileInfo.secureUrl,
+            previewUrl: uploadedFileInfo.secureUrl,
+            fileName: uploadedFileInfo.fileName || 'Tugas5_Pengalaman_Belajar.docx',
+            fileSize: formatBytes(uploadedFileInfo.fileSize),
+          }}
+        />
+      )}
     </div>
   );
 }
