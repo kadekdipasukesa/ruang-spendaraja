@@ -246,6 +246,32 @@ export default function TaskDetailModal({ task, onClose, onOpenSubmitModal }) {
               );
             })()}
 
+            {(task.tipe_tugas === 'khusus' || task.custom_route?.includes('pengolah-kata') || task.kode_tugas?.includes('WORD')) && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  navigate(task.custom_route || '/ruang-belajar/tugas/pengolah-kata');
+                }}
+                className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-xl shadow-2xs transition ${
+                  isCompleted && (task.earnedScore ?? 0) >= points
+                    ? 'bg-emerald-700 hover:bg-emerald-800'
+                    : (task.earnedScore ?? 0) > 0
+                    ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-600/20'
+                }`}
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>
+                  {isCompleted && (task.earnedScore ?? 0) >= points
+                    ? `Lihat Karyamu (${points} Poin Sempurna)`
+                    : (task.earnedScore ?? 0) > 0
+                    ? `Lanjutkan Praktik Ms. Word (${task.earnedScore}/${points} Poin)`
+                    : 'Mulai Praktik Ms. Word (3 Tahap)'}
+                </span>
+              </button>
+            )}
+
             {task.tipe_tugas === 'submit' && (
               <button
                 type="button"

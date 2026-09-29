@@ -39,6 +39,7 @@ import TugasKuisAlgoritma from './pages/TugasKhusus/TugasKuisAlgoritma';
 import TugasBerpikirKomputasional from './pages/TugasKhusus/TugasBerpikirKomputasional';
 import TugasSistemKomputer from './pages/TugasKhusus/TugasSistemKomputer';
 import TugasBinerAscii from './pages/TugasKhusus/TugasBinerAscii';
+import TugasWord from './pages/TugasKhusus/TugasWord';
 import EkstraTikPage from './pages/EkstraTikPage';
 
 
@@ -54,7 +55,12 @@ function AppContent() {
     }
   }, []);
 
-  const hideNavbarPaths = ['/gempitas'];
+  const hideNavbarPaths = [
+    '/gempitas',
+    '/ruang-belajar/tugas/pengolah-kata',
+    '/tugas/pengolah-kata',
+    '/tugas/word-brosur',
+  ];
   const showNavbar = !hideNavbarPaths.includes(location.pathname.toLowerCase());
 
   // 3. Logika untuk menentukan label posisi di statistik online secara otomatis
@@ -72,6 +78,7 @@ function AppContent() {
     if (path.includes('/tugas/berpikir-komputasional') || path.includes('/tugas/kuis-algoritma')) return 'Tugas 2: Berpikir Komputasional';
     if (path.includes('/tugas/sistem-komputer') || path.includes('/tugas/perkakas-digital')) return 'Tugas 3: Sistem Komputer';
     if (path.includes('/tugas/biner-ascii') || path.includes('/tugas/bilangan-biner')) return 'Tugas 4: Biner & ASCII';
+    if (path.includes('/tugas/pengolah-kata') || path.includes('/tugas/word-brosur')) return 'Tugas 5: Pengolah Kata';
 
     // 🗓️ Laboratorium & Agenda
     if (path === '/ekstra-tik') return 'Ekstra TIK';
@@ -176,6 +183,9 @@ function AppContent() {
         <Route path="/ruang-belajar/tugas/biner-ascii" element={<TugasBinerAscii />} />
         <Route path="/tugas/biner-ascii" element={<TugasBinerAscii />} />
         <Route path="/tugas/bilangan-biner" element={<TugasBinerAscii />} />
+        <Route path="/ruang-belajar/tugas/pengolah-kata" element={<TugasWord />} />
+        <Route path="/tugas/pengolah-kata" element={<TugasWord />} />
+        <Route path="/tugas/word-brosur" element={<TugasWord />} />
 
       </Routes>
     </div>

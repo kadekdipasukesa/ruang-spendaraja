@@ -60,12 +60,27 @@ TUGAS 4: BILANGAN BINER & KODE ASCII (50 Poin)
     * Percobaan 2: Poin Berkurang 1 pt.
     * Percobaan 3+: Tetap diberi apresiasi 1 pt agar siswa tidak patah semangat.
 
-### C. Materi Interaktif & Simulator Saklar 8-Bit
-* **Fun Fact Nyata**: Komputer/CPU sebenarnya tidak mengenal teks, video, atau foto, melainkan hanya miliaran transistor dengan status fisik ON (1) dan OFF (0).
-* **Kamus ASCII**: Menjelaskan fungsi ASCII sebagai standardisasi internasional representasi karakter.
-* **Studi Kasus Huruf `'a'`**: Menunjukkan alur huruf `'a'` ➔ kode desimal `97` ➔ kode biner `01100001` ($64 + 32 + 1$).
-* **Simulator Saklar 8-Bit**: Siswa dapat mengklik 8 saklar ($128, 64, 32, 16, 8, 4, 2, 1$) untuk melihat kalkulasi live jumlah desimal dan karakter ASCII yang terbentuk seketika.
-* **Penjelajah Tabel ASCII 33-126**: Dilengkapi pencarian nama/desimal/biner dan filter chip kategori (Huruf Besar, Huruf Kecil, Angka, Simbol).
+### C. Desain Visual Brosur Informatika & Materi Interaktif
+* **Hero Header "Yuk, Kenalan dengan Bilangan Biner"**:
+  * Mengadopsi palet Royal Navy Blue (`#0a1b38` - `#0f2a58`) dengan aksen kuning emas cerah (`#fbbf24`), cyan elektrik, dan ungu.
+  * Dilengkapi tipografi judul bercabang *"Bilangan"* (putih 3D) dan *"Biner"* (kuning bercahaya dengan underline swoosh curve).
+  * Menampilkan badge resmi `Informatika – Kelas 7`.
+  * Ilustrasi mockup laptop 8-bit bus dengan layar biner cyan matriks (`01001101`, `01110000`, `01101011`, `01101000`) dan speech bubble kuning ikon lampu: *"Komputer hanya mengenal 0 dan 1!"*.
+* **Struktur 3 Kolom Infografis Brosur**:
+  * **Bagian 1 (Badge Biru #1)**: *Apa itu Bilangan Biner?*, definisi bilangan biner sistem basis 2, serta Fun Fact miliaran transistor CPU (status on 1 dan off 0).
+  * **Bagian 2 (Badge Ungu #2)**: *Cara Kerja*, nilai tempat perpangkatan 2 ($2^0, 2^1, 2^2, 2^3$), contoh perhitungan $1101_2 = 13$, serta Simulator Saklar 8-Bit Interaktif (1 Byte) dengan proteksi anti-kecurangan.
+  * **Bagian 3 (Badge Hijau #3)**: *Konversi Bilangan*, memuat metode Desimal ke Biner (metode tangga bagi 2, catat sisa, baca bawah ke atas) dan Biner ke Desimal (metode garis papan tulis coret 0 ambil 1).
+  * **Panduan LKPD & Tips Sukses**: 5 langkah vertikal terarah (Baca Petunjuk, Pelajari Materi, Kerjakan Soal, Periksa Kembali, Kumpulkan) dan kartu Tips Sukses.
+  * **Banner Inspiratif**: *"Dari 0 dan 1 lahir teknologi besar"* dengan ringkasan digital matriks `0101 1010` dan tombol CTA mulai kuis.
+* **Simulator Saklar 8-Bit (Proteksi Anti-Kecurangan)**:
+  * Selama pengerjaan tugas (belum selesai / belum mengumpulkan / nilai belum maksimal), saklar 8-bit berada dalam **Mode Terkunci (Read-Only)** dengan peragaan statis huruf 'a' (01100001) agar tidak dapat dijadikan kalkulator contekan.
+  * Begitu siswa menuntaskan dan mengumpulkan tugas (skor 50/50), simulator otomatis terbuka penuh menjadi playground laboratorium interaktif bebas.
+* **Metode Konversi Papan Tulis**:
+  * **Biner ➔ Desimal (Metode Garis Papan Tulis & Coret 0)**: 8 digit biner ditarik garis ke bawah menuju bobot kelipatan dua ($128, 64, 32, 16, 8, 4, 2, 1$). Jika bit bernilai 0 bobot dicoret ($<s>128</s>$), jika 1 bobot diambil. Hasilnya didapat dengan menjumlahkan bobot yang tidak dicoret ($64 + 32 + 1 = 97$).
+  * **Desimal ➔ Biner (Metode Tangga Pembagian 2 & Sisa)**: Desimal dibagi 2 secara bertingkat, hasil bagi ditulis di bawahnya dan sisa pembagian (0 atau 1) dicatat di kanan hingga hasil bagi mencapai 0. Angka biner dibaca dari **bawah ke atas** (↑), lalu digenapkan 8-bit dengan menambahkan angka 0 di depan ($01100001$).
+* **Penjelajah Tabel ASCII 33-126 (Tanpa Kode Biner)**:
+  * Hanya menampilkan simbol karakter dan kode desimal ASCII.
+  * Kolom, pencarian, dan tooltip kode biner dinonaktifkan agar siswa tidak dapat langsung menyalin jawaban biner pada Tahap 4 (ASCII ke Biner). Siswa diarahkan mengonversi kode desimal ke biner secara mandiri menggunakan metode bagi 2 atau penjumlahan bobot.
 
 ---
 

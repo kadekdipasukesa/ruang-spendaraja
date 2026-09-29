@@ -9,6 +9,7 @@ export const CLOUDINARY_CONFIG = {
   uploadPreset: 'jurnal_lab_preset',
   uploadPresetEkstra: 'tugas_ekstra_tik7',
   uploadPresetProfile: 'photo_profile',
+  uploadPresetTugas5: 'tugas_5',
   uploadUrl: 'https://api.cloudinary.com/v1_1/cjt4xpst/image/upload',
   uploadRawUrl: 'https://api.cloudinary.com/v1_1/cjt4xpst/auto/upload',
 };
@@ -193,3 +194,112 @@ export async function uploadToCloudinary(fileToUpload, folder = 'jurnal-lab', on
     xhr.send(formData);
   });
 }
+
+/**
+ * Helper khusus pengumpulan berkas Tugas 5 (Ms. Word Brosur HUT Sekolah) ke Cloudinary
+ * Menggunakan kredensial publik Unsigned Upload murni (tanpa parameter ilegal signed SDK seperti overwrite/type)
+ * 
+ * @param {File|Blob} fileToUpload - File karya siswa (.docx, .doc, .pdf, .png, .jpg)
+ * @param {Object} student - Data siswa (id, NISN, NAMA, Kelas)
+ * @param {Function} onProgress - Callback progress persentase (0-100)
+ * @returns {Promise<{ secureUrl: string, rawResponse: Object, originalFileName: string, fileSize: number }>}
+ */
+export async function uploadTugas5ToCloudinary(fileToUpload, student = {}, onProgress = null) {
+  if (!fileToUpload) {
+    throw new Error('Pilih berkas karya brosur (.docx / .pdf / gambar) terlebih dahulu.');
+  }
+
+  const isImage = fileToUpload.type && fileToUpload.type.startsWith('image/');
+  const targetUrl = isImage ? CLOUDINARY_CONFIG.uploadUrl : CLOUDINARY_CONFIG.uploadRawUrl;
+  const rawName = fileToUpload.name || 'karya_brosur';
+
+  // Daftar preset kandidat: utama 'tugas_5', fallback ke preset unsigned yang sudah teruji aktif di cloud cjt4xpst
+  const candidatePresets = [
+    CLOUDINARY_CONFIG.uploadPresetTugas5 || 'tugas_5',
+    CLOUDINARY_CONFIG.uploadPresetEkstra || 'tugas_ekstra_tik7',
+    CLOUDINARY_CONFIG.uploadPreset || 'jurnal_lab_preset',
+  ];
+
+  const tryUploadWithPreset = (presetName) => {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+      formData.append('upload_preset', presetName);
+      formData.append('folder', 'Tugas/5');
+      formData.append('tags', 'tugas_5,ruang_belajar,brosur_word');
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', targetUrl);
+
+      if (xhr.upload && onProgress) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress(percent);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.secure_url) {
+              resolve({
+                secureUrl: response.secure_url,
+                rawResponse: response,
+                originalFileName: rawName,
+                fileSize: fileToUpload.size || 0,
+                format: response.format || (rawName.split('.').pop() || ''),
+                publicId: response.public_id,
+              });
+            } else {
+              reject(new Error('Gagal mendapatkan URL berkas dari Cloudinary.'));
+            }
+          } catch (err) {
+            reject(new Error('Format respons Cloudinary tidak valid.'));
+          }
+        } else {
+          try {
+            const errRes = JSON.parse(xhr.responseText);
+            const errMsg = errRes.error?.message || `Gagal unggah berkas (HTTP ${xhr.status}).`;
+            reject(new Error(errMsg));
+          } catch (e) {
+            reject(new Error(`Gagal unggah berkas ke Cloudinary (HTTP ${xhr.status}).`));
+          }
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new Error('Terjadi gangguan jaringan saat mengunggah berkas ke Cloudinary. Silakan coba lagi.'));
+      };
+
+      xhr.send(formData);
+    });
+  };
+
+  let lastError = null;
+  for (const preset of candidatePresets) {
+    try {
+      const result = await tryUploadWithPreset(preset);
+      return result;
+    } catch (err) {
+      lastError = err;
+      const msg = err.message || '';
+      // Jika error terkait preset belum di-whitelist atau tidak ditemukan, coba preset berikutnya
+      const isPresetError = 
+        msg.toLowerCase().includes('preset') || 
+        msg.toLowerCase().includes('whitelisted') ||
+        msg.toLowerCase().includes('not found');
+      
+      if (!isPresetError) {
+        // Jika error jaringan atau file corrupt, langsung lempar
+        throw err;
+      }
+      console.warn(`Upload dengan preset ${preset} gagal (${msg}), mencoba fallback...`);
+    }
+  }
+
+  throw lastError || new Error('Gagal mengunggah berkas ke Cloudinary.');
+}
+

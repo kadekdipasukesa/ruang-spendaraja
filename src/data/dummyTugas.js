@@ -174,9 +174,51 @@ export const DUMMY_TUGAS = [
     submission: null
   },
   {
-    id: "tugas-inf-05",
-    kode_tugas: "TUGAS-05-SPREADSHEET-DATA",
+    id: "6f2a8901-4bc1-4e78-9b55-d1a8e265b489",
+    kode_tugas: "TUGAS-05-WORD-BROSUR",
     urutan: 5,
+    title: "Tugas 5: Aplikasi Pengolah Kata (Ms. Word) - Pengalaman Belajar di SMPN 2 Singaraja",
+    judul: "Tugas 5: Aplikasi Pengolah Kata (Ms. Word) - Pengalaman Belajar di SMPN 2 Singaraja",
+    subject: "Informatika",
+    category: "Literasi Digital",
+    kategori: "Literasi Digital",
+    difficulty: "Sedang",
+    tipe_tugas: "khusus",
+    custom_route: "/ruang-belajar/tugas/pengolah-kata",
+    points: 100,
+    poin_maksimal: 100,
+    deadline: "2026-10-15T23:59:59",
+    priority: "Tinggi",
+    status: "belum",
+    is_active: true,
+    target_kelas: "SEMUA",
+    teacher: "Pak Dipa, S.Kom.",
+    estimatedTime: "45 Menit",
+    description: "Mempraktikkan literasi digital panduan 7 langkah praktik Word (Calibri, A4, tabel 3x5, wrap text gambar PNG), menyelesaikan 5 kuis fitur Ms. Word, dan membuat naskah dokumen dengan unggah berkas .docx ke Cloudinary.",
+    deskripsi: "Mempraktikkan literasi digital panduan 7 langkah praktik Word (Calibri, A4, tabel 3x5, wrap text gambar PNG), menyelesaikan 5 kuis fitur Ms. Word, dan membuat naskah dokumen dengan unggah berkas .docx ke Cloudinary.",
+    petunjuk: [
+      "Pelajari panduan 7 langkah praktik Microsoft Word (membuka lembar A4, font Calibri 12pt, judul 20pt bold center, tabel identitas 3x5, perataan justify, format khusus, wrap text top and bottom gambar komputer PNG, dan simpan berkas docx).",
+      "Jawab soal checkpoint pemahaman singkat di bawah setiap langkah untuk membuka langkah berikutnya (+2 Poin per langkah = 14 Poin).",
+      "Selesaikan 5 soal kuis evaluasi pemahaman fitur dan toolbar Microsoft Word (26 Poin).",
+      "Buka aplikasi Ms. Word di komputermu, praktikkan naskah Pengalaman Belajar di SMPN 2 Singaraja & Ruang Spendaraja sesuai panduan 7 langkah.",
+      "Unggah berkas hasil karya berformat (.docx / .doc) langsung ke Cloudinary (Preset tugas_5, Folder Tugas/5) untuk memperoleh 60 Poin proyek."
+    ],
+    instructions: [
+      "Pelajari panduan 7 langkah praktik Microsoft Word (membuka lembar A4, font Calibri 12pt, judul 20pt bold center, tabel identitas 3x5, perataan justify, format khusus, wrap text top and bottom gambar komputer PNG, dan simpan berkas docx).",
+      "Jawab soal checkpoint pemahaman singkat di bawah setiap langkah untuk membuka langkah berikutnya (+2 Poin per langkah = 14 Poin).",
+      "Selesaikan 5 soal kuis evaluasi pemahaman fitur dan toolbar Microsoft Word (26 Poin).",
+      "Buka aplikasi Ms. Word di komputermu, praktikkan naskah Pengalaman Belajar di SMPN 2 Singaraja & Ruang Spendaraja sesuai panduan 7 langkah.",
+      "Unggah berkas hasil karya berformat (.docx / .doc) langsung ke Cloudinary (Preset tugas_5, Folder Tugas/5) untuk memperoleh 60 Poin proyek."
+    ],
+    attachments: [
+      { name: "PENGALAMAN BELAJAR DI SMPN 2 SINGARAJA.docx", type: "docx", size: "704 KB", url: "https://res.cloudinary.com/cjt4xpst/raw/upload/v1790653556/Tugas/5/uw52vcknjgpo6z65k9tz.docx" }
+    ],
+    submission: null
+  },
+  {
+    id: "tugas-inf-06",
+    kode_tugas: "TUGAS-06-SPREADSHEET-DATA",
+    urutan: 6,
     title: "Olah Data Nilai & Visualisasi Grafik Spreadsheet",
     judul: "Olah Data Nilai & Visualisasi Grafik Spreadsheet",
     subject: "Informatika",

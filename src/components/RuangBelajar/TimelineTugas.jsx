@@ -59,6 +59,11 @@ export default function TimelineTugas({
           label: '📦 Pengumpulan Proyek / Link',
           className: 'bg-blue-50 text-blue-700 border-blue-200'
         };
+      case 'khusus':
+        return {
+          label: '💻 Praktik Modul & Proyek',
+          className: 'bg-blue-50 text-blue-700 border-blue-200'
+        };
       default:
         return {
           label: '📄 Lembar Kerja Tugas',
@@ -361,6 +366,10 @@ export default function TimelineTugas({
                             } else if (task.tipe_tugas === 'kuis') {
                               const isSK = task.custom_route?.includes('sistem-komputer') || task.kode_tugas?.includes('SISTEM-KOMPUTER');
                               navigate(task.custom_route || (isSK ? '/tugas/sistem-komputer' : '/tugas/berpikir-komputasional'));
+                            } else if (task.tipe_tugas === 'khusus' || task.custom_route?.includes('pengolah-kata') || task.kode_tugas?.includes('WORD')) {
+                              navigate(task.custom_route || '/ruang-belajar/tugas/pengolah-kata');
+                            } else if (task.custom_route) {
+                              navigate(task.custom_route);
                             } else if (task.tipe_tugas === 'submit') {
                               onOpenSubmitModal ? onOpenSubmitModal(task) : onSelectDetail(task);
                             } else {

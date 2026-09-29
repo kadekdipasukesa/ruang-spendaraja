@@ -51,12 +51,12 @@ export default function TugasBinerAscii() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-20 selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen bg-[#061022] text-slate-100 pb-20 selection:bg-[#fbbf24] selection:text-slate-950">
       {/* Background Glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-10 left-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 right-10 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-10 left-1/4 w-96 h-96 bg-[#1d4ed8]/15 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 right-10 w-96 h-96 bg-[#fbbf24]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-[#38bdf8]/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
@@ -89,6 +89,8 @@ export default function TugasBinerAscii() {
             <MateriBinerAscii
               onComplete={handleCompleteStage1}
               isAlreadyCompleted={stage1Completed}
+              isTaskCompleted={submitted || (existingSubmission?.nilai_akhir >= 50) || totalScore >= 50}
+              totalScore={totalScore}
             />
           )}
 

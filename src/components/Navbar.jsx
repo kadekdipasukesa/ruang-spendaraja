@@ -129,7 +129,7 @@ export default function Navbar() {
         }}
         animate={isHidden ? 'hidden' : 'visible'}
         transition={{ duration: 0.35, ease: 'easeInOut' }}
-        className="fixed top-0 left-0 w-full bg-slate-950/80 backdrop-blur-xl border-b border-white/5 px-4 sm:px-6 py-3.5 flex justify-between items-center z-[100] transition-all duration-300"
+        className="fixed top-0 left-0 w-full bg-slate-950/20 backdrop-blur-xl border-b border-white/5 px-4 sm:px-6 py-3.5 flex justify-between items-center z-[100] transition-all duration-300"
       >
         <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent shadow-[0_1px_10px_rgba(245,158,11,0.2)]" />
 
