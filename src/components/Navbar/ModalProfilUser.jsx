@@ -14,10 +14,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  Key,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { compressImage } from '../../utils/cloudinaryUpload';
 import CameraCaptureModal from './CameraCaptureModal';
+import ModalGantiPassword from './ModalGantiPassword';
 
 export default function ModalProfilUser({
   isOpen,
@@ -27,6 +29,7 @@ export default function ModalProfilUser({
   onLogout,
 }) {
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [isGantiPasswordOpen, setIsGantiPasswordOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -448,13 +451,26 @@ export default function ModalProfilUser({
             </div>
           </div>
 
+          {/* Ubah Kata Sandi Action Button */}
+          <div className="mt-4">
+            <button
+              id="btn-modal-profil-ganti-password"
+              type="button"
+              onClick={() => setIsGantiPasswordOpen(true)}
+              className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-slate-800/80 hover:bg-slate-700 text-blue-300 border border-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer group"
+            >
+              <Key size={14} className="text-amber-400 group-hover:rotate-12 transition-transform" />
+              <span>Ganti Kata Sandi</span>
+            </button>
+          </div>
+
           {/* Footer Actions */}
-          <div className="flex items-center gap-3 mt-6">
+          <div className="flex items-center gap-3 mt-4">
             <button
               id="btn-modal-profil-logout"
               type="button"
               onClick={onLogout}
-              className="flex-1 py-3 px-4 rounded-xl font-bold text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-all flex items-center justify-center gap-2 group"
+              className="flex-1 py-3 px-4 rounded-xl font-bold text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-all flex items-center justify-center gap-2 group cursor-pointer"
             >
               <LogOut size={15} className="group-hover:-translate-x-0.5 transition-transform" />
               <span>Keluar Akun</span>
@@ -464,7 +480,7 @@ export default function ModalProfilUser({
               id="btn-modal-profil-close"
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 px-4 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/30 transition-all"
+              className="flex-1 py-3 px-4 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/30 transition-all cursor-pointer"
             >
               Tutup
             </button>
@@ -482,6 +498,16 @@ export default function ModalProfilUser({
         isProcessing={isUploading}
         uploadProgress={uploadProgress}
         uploadStatus={uploadStatus}
+      />
+
+      {/* Modal Ganti Kata Sandi Mandiri dengan Validasi Sandi Lama */}
+      <ModalGantiPassword
+        isOpen={isGantiPasswordOpen}
+        onClose={() => setIsGantiPasswordOpen(false)}
+        user={user}
+        onSuccess={(updatedUser) => {
+          if (onUserUpdated) onUserUpdated(updatedUser);
+        }}
       />
     </>
   );

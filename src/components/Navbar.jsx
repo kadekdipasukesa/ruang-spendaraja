@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
+import { getStoredUserSession, updateUserSession, clearUserSession } from '../utils/authStorage';
 import NavbarBrand from './Navbar/NavbarBrand';
 import NavbarUserSection from './Navbar/NavbarUserSection';
 import ModalLogin from './Navbar/ModalLogin';
@@ -51,7 +52,7 @@ export default function Navbar() {
                     ? payload.new.foto_profile
                     : prev.foto_profile,
               };
-              localStorage.setItem('user_siswa', JSON.stringify(updated));
+              updateUserSession(updated);
               return updated;
             });
           }
@@ -64,38 +65,68 @@ export default function Navbar() {
     };
   }, [user?.id]);
 
-  // Load user dari localStorage & sinkronkan data terbaru saat mount
+  // Load user dari authStorage & verifikasi keabsahan kata sandi ke master_siswa
   useEffect(() => {
-    const savedUser = localStorage.getItem('user_siswa');
-    if (savedUser) {
+    const storedUser = getStoredUserSession();
+    if (storedUser) {
       try {
-        const parsed = JSON.parse(savedUser);
-        setUser(parsed);
+        setUser(storedUser);
 
-        // Ambil data terbaru dari master_siswa termasuk foto_profile
-        if (parsed?.id) {
+        // Verifikasi keabsahan akun & kecocokan kata sandi ke master_siswa
+        if (storedUser?.id) {
           supabase
             .from('master_siswa')
             .select('*')
-            .eq('id', parsed.id)
+            .eq('id', storedUser.id)
             .single()
             .then(({ data, error }) => {
-              if (data && !error) {
-                setUser(data);
-                localStorage.setItem('user_siswa', JSON.stringify(data));
+              if (error || !data) {
+                // Akun sudah tidak ditemukan di database
+                console.warn('Akun tidak ditemukan di database. Mengakhiri sesi.');
+                clearUserSession();
+                setUser(null);
+                return;
               }
+
+              // Cek apakah password di database masih cocok dengan yang tersimpan di sesi
+              // Jika sandi telah diubah/direset oleh guru atau siswa di perangkat lain:
+              if (storedUser.password && data.password && data.password !== storedUser.password) {
+                console.warn('Kata sandi akun telah berubah di database. Mengakhiri sesi otomatis.');
+                clearUserSession();
+                setUser(null);
+                alert('⚠️ Kata sandi akun Anda telah diperbarui atau direset. Silakan masuk kembali dengan kata sandi terbaru.');
+                return;
+              }
+
+              // Cek jika akun dinonaktifkan
+              if (data.is_registered === false) {
+                clearUserSession();
+                setUser(null);
+                return;
+              }
+
+              // Sesi terverifikasi sah! Perbarui data terbaru
+              setUser(data);
+              updateUserSession(data);
             })
-            .catch(() => {});
+            .catch((err) => {
+              console.warn('Gagal verifikasi status akun ke database:', err);
+            });
         }
       } catch (e) {
-        console.error('Error parsing user_siswa from localStorage:', e);
+        console.error('Error memproses sesi pengguna:', e);
+        clearUserSession();
+        setUser(null);
       }
+    } else {
+      setUser(null);
     }
 
     const handleOpenLogin = () => setShowLoginModal(true);
     const handleUserUpdated = (e) => {
       if (e.detail) {
         setUser(e.detail);
+        updateUserSession(e.detail);
       }
     };
 
@@ -109,7 +140,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('user_siswa');
+    clearUserSession();
     setUser(null);
     setShowProfileModal(false);
     window.location.reload();
@@ -117,6 +148,7 @@ export default function Navbar() {
 
   const handleUserUpdated = (updatedUser) => {
     setUser(updatedUser);
+    updateUserSession(updatedUser);
   };
 
   return (

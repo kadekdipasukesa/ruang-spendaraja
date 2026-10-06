@@ -17,8 +17,9 @@ src/
 │   │   ├── NavbarBrand.jsx                # Brand Logo Ruang Spendaraja & Versi Aplikasi
 │   │   ├── NavbarPointsBadge.jsx          # Indikator Poin Siswa Beranimasi (Kelas 7 & Admin)
 │   │   ├── NavbarUserSection.jsx          # Tombol Masuk / Avatar Foto Profil Bulat & Profil Trigger
-│   │   ├── ModalLogin.jsx                 # Modal Dialog Autocomplete Siswa & Pembuatan Akun Baru
-│   │   ├── ModalProfilUser.jsx            # Modal Informasi Akun Siswa & Trigger Ambil Foto Kamera
+│   │   ├── ModalLogin.jsx                 # Modal Dialog Autocomplete Siswa, Checkbox Ingat Saya & Buat Akun
+│   │   ├── ModalProfilUser.jsx            # Modal Informasi Akun Siswa, Trigger Ambil Foto Kamera & Trigger Ubah Sandi
+│   │   ├── ModalGantiPassword.jsx         # Modal Mandiri Ganti Kata Sandi Siswa (Validasi Sandi Lama)
 │   │   └── CameraCaptureModal.jsx         # Viewfinder Kamera Langsung (Selfie 1:1, Flip, Snap & Anti-Pilih Berkas)
 │   │
 │   ├── FloatingOnline.jsx                 # Sidebar Mengambang Indikator Online (Supabase Presence)
@@ -31,6 +32,7 @@ src/
 │       └── Footer.jsx                     # Footer Portal Sekolah
 │
 └── utils/
+    ├── authStorage.js                     # Pengelola Sesi Autentikasi (Komputer Lab vs Perangkat Pribadi)
     ├── appPermissions.js                  # Helper Verifikasi Izin Akses Modul Siswa/Kelas
     └── bannedWordsPool.js                 # Filter Otomatis Sensor Kata Kasar pada LiveChat
 ```
@@ -79,10 +81,14 @@ Komponen `Navbar` berada di posisi paling atas layar, dibangun dengan arsitektur
 4. **`NavbarUserSection.jsx`**:
    - Jika belum login: Tombol masuk beranimasi.
    - Jika sudah login: Menampilkan avatar foto profil berbentuk bulat (atau inisial nama jika belum ada foto), nama pendek siswa, kelas, dan tombol keluar cepat (*quick logout*). Mengklik avatar akan membuka modal profil pengguna.
-5. **`ModalLogin.jsx`**:
+5. **`ModalLogin.jsx` & Manajemen Sesi (`src/utils/authStorage.js`)**:
    - Autocomplete pencarian nama siswa di tabel `master_siswa`.
    - Logika aktivasi akun baru (`is_registered === false`) dengan pembuatan password pertama kali minimal 6 karakter.
    - Form input kata sandi dengan fitur lihat/sembunyikan (*toggle show/hide*).
+   - **Checkbox "Ingat Saya di Perangkat Ini"**:
+     * **Tidak Dicentang (Default / Komputer Lab Bersama)**: Sesi disimpan dengan penanda `sessionStorage`. Saat murid menutup tab/browser di lab, sesi langsung hangus total (*clean slate*) sehingga tidak ada akun murid yang nyangkut untuk jam pelajaran berikutnya.
+     * **Dicentang (Perangkat Pribadi)**: Sesi disimpan permanen di `localStorage` agar siswa tetap login otomatis di HP/laptop miliknya.
+   - **Handshake Verification Sandi**: Setiap kali web dibuka, `Navbar.jsx` memverifikasi sandi ke Supabase `master_siswa`. Jika sandi di database telah diubah atau direset oleh guru di perangkat lain, sistem seketika mencabut sesi lokal (*auto-logout*) dan menampilkan notifikasi keamanan.
 6. **`ModalProfilUser.jsx` & `CameraCaptureModal.jsx`**:
    - Tampilan profil lengkap: Nama Lengkap, Kelas, No. Absen, NISN, Total Poin, dan Status Akun.
    - **Kebijakan Kamera Langsung (Anti-Pilih Berkas/Galeri)**: Input berkas lokal dinonaktifkan secara total. Penggantian foto profil mewajibkan pengguna membuka kamera langsung melalui `CameraCaptureModal.jsx` dengan bingkai oval panduan wajah, flip kamera (depan/belakang), dan crop instan 1:1.
@@ -90,6 +96,11 @@ Komponen `Navbar` berada di posisi paling atas layar, dibangun dengan arsitektur
    - Unggah melalui backend terotentikasi (`/api/profile/upload`) menggunakan Cloudinary Signed SDK dengan `overwrite: true` dan nama file statis tetap `photo_profile/profil_${user.id}` (1 siswa = tepat 1 file di Cloudinary).
    - Progress bar interaktif selama kompresi dan pengunggahan.
    - Fitur hapus foto profil dengan konfirmasi inline aman tanpa `window.confirm`. Menghapus aset fisik secara tuntas di Cloudinary via `/api/profile/delete` (`cloudinary.uploader.destroy`) serta mengosongkan kolom `foto_profile` di database menjadi `NULL` dan kembali ke avatar inisial.
+7. **`ModalGantiPassword.jsx` (Fitur Mandiri Ubah Kata Sandi)**:
+   - Siswa dapat mengganti kata sandi langsung dari modal profil.
+   - **Validasi Ketat**: Wajib memasukkan kata sandi lama, sandi baru minimal 6 karakter, konfirmasi sandi baru cocok, dan sandi baru tidak boleh sama dengan sandi lama.
+   - Sistem mencocokkan kata sandi lama langsung ke `master_siswa` Supabase sebelum mengizinkan pembaruan.
+   - Begitu berhasil diubah, seluruh sesi lama di perangkat lain otomatis terkunci dan ter-logout saat web dibuka.
 
 ### B. Mekanisme Unggah & Hapus Foto Profil (Server-Side Signed Cloudinary)
 - Siswa menekan tombol kamera pada `ModalProfilUser.jsx`, yang langsung membuka viewfinder `CameraCaptureModal.jsx`.

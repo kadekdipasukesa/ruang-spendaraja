@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Key, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { X, User, Key, UserPlus, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { saveUserSession } from '../../utils/authStorage';
 
 export default function ModalLogin({ isOpen, onClose, onLoginSuccess }) {
   const [inputNama, setInputNama] = useState('');
@@ -13,6 +14,7 @@ export default function ModalLogin({ isOpen, onClose, onLoginSuccess }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   useEffect(() => {
     if (inputNama.length > 2 && !selectedSiswa) {
@@ -46,6 +48,7 @@ export default function ModalLogin({ isOpen, onClose, onLoginSuccess }) {
     setErrorMsg('');
     setShowPassword(false);
     setIsLoading(false);
+    setRememberMe(false);
   };
 
   const handleLogin = async (e) => {
@@ -68,8 +71,14 @@ export default function ModalLogin({ isOpen, onClose, onLoginSuccess }) {
           .eq('id', selectedSiswa.id);
 
         if (!error) {
-          alert('Selamat! Akun berhasil dibuat. Silakan login.');
-          window.location.reload();
+          const activatedUser = { ...selectedSiswa, password: newPassword, is_registered: true };
+          saveUserSession(activatedUser, rememberMe);
+          alert('Selamat! Akun berhasil dibuat dan aktif.');
+          if (onLoginSuccess) {
+            onLoginSuccess(activatedUser);
+          } else {
+            window.location.reload();
+          }
         } else {
           setErrorMsg('Gagal mengaktifkan akun. Silakan coba lagi.');
         }
@@ -78,7 +87,7 @@ export default function ModalLogin({ isOpen, onClose, onLoginSuccess }) {
       }
 
       if (selectedSiswa.password === password) {
-        localStorage.setItem('user_siswa', JSON.stringify(selectedSiswa));
+        saveUserSession(selectedSiswa, rememberMe);
         if (onLoginSuccess) {
           onLoginSuccess(selectedSiswa);
         } else {
@@ -216,6 +225,27 @@ export default function ModalLogin({ isOpen, onClose, onLoginSuccess }) {
                       </div>
                     </div>
                   )}
+
+                  {/* Opsi Ingat Saya (Perangkat Pribadi vs Komputer Lab) */}
+                  <div className="flex items-start gap-2.5 px-1 py-1 select-none text-left bg-slate-950/40 p-3 rounded-2xl border border-white/5">
+                    <input
+                      type="checkbox"
+                      id="checkbox-remember-me"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 rounded-md border-white/20 bg-slate-900 text-blue-600 focus:ring-0 focus:ring-offset-0 cursor-pointer accent-blue-600 shrink-0"
+                    />
+                    <label htmlFor="checkbox-remember-me" className="cursor-pointer">
+                      <span className="text-xs font-bold text-slate-200 block">
+                        Ingat saya di perangkat ini
+                      </span>
+                      <span className="text-[10px] text-slate-400 leading-tight block mt-0.5">
+                        {rememberMe
+                          ? '✅ Aktif untuk HP/Laptop pribadi (tetap login saat browser dibuka lagi).'
+                          : '🔒 Mode Komputer Lab: Akun otomatis keluar saat browser/tab ditutup.'}
+                      </span>
+                    </label>
+                  </div>
 
                   {errorMsg && (
                     <p className="text-[10px] text-red-500 font-bold text-center animate-pulse tracking-wider">

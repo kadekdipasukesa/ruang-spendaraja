@@ -154,7 +154,7 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
 
 Untuk memahami alur kerja lebih spesifik dan mendalam pada setiap modul, silakan baca dokumentasi pendukung berikut:
 1. **[`/docs/DESIGN_SYSTEM.md`](/docs/DESIGN_SYSTEM.md)**: Standar desain 4 arketipe halaman (Siswa, Praktikum, Portal, Admin) & aturan komponen mobile.
-2. **[`/docs/HOME_DAN_KOMPONEN_GLOBAL.md`](/docs/HOME_DAN_KOMPONEN_GLOBAL.md)**: Arsitektur Home App Launcher, Navbar Modular (`NavbarBrand`, `NavbarPointsBadge`, `NavbarUserSection`, `ModalLogin`, `ModalProfilUser`, `CameraCaptureModal`) dengan integrasi Foto Profil Cloudinary via Kamera Langsung & Supabase Realtime, Floating Online Presence, dan Live Chat Realtime.
+2. **[`/docs/HOME_DAN_KOMPONEN_GLOBAL.md`](/docs/HOME_DAN_KOMPONEN_GLOBAL.md)**: Arsitektur Home App Launcher, Navbar Modular (`NavbarBrand`, `NavbarPointsBadge`, `NavbarUserSection`, `ModalLogin`, `ModalProfilUser`, `ModalGantiPassword`, `CameraCaptureModal`), Manajemen Sesi Komputer Lab vs Perangkat Pribadi (`authStorage.js`), Handshake Verifikasi Sandi Database Supabase, integrasi Foto Profil Cloudinary via Kamera Langsung & Supabase Realtime, Floating Online Presence, dan Live Chat Realtime.
 3. **[`/docs/RUANG_BELAJAR.md`](/docs/RUANG_BELAJAR.md)**: Master Hub modul Ruang Belajar, Timeline, Log Skor, dan Leaderboard Kelas.
 4. **[`/docs/tugas/TUGAS_1_SIMULATOR_FOLDER.md`](/docs/tugas/TUGAS_1_SIMULATOR_FOLDER.md)**: Rincian teknis virtual file system & 25 misi Tugas 1.
 5. **[`/docs/tugas/TUGAS_2_BERPIKIR_KOMPUTASIONAL.md`](/docs/tugas/TUGAS_2_BERPIKIR_KOMPUTASIONAL.md)**: Rincian teknis 4 misi terpadu Bab 1 (Algoritma, Jadwal, Struktur Data, Biner).
