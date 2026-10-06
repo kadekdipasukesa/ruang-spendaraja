@@ -12,8 +12,9 @@ import LogPelanggaran from '../components/CatatanPelanggaran/LogPelanggaran';
 import RekapSiswa from '../components/CatatanPelanggaran/RekapSiswa';
 import FormPelanggaran from '../components/CatatanPelanggaran/FormPelanggaran';
 
-// PATOKAN TANGGAL AWAL TAHUN AJARAN BARU (1 JULI 2026)
-const AWAL_TAHUN_AJARAN_BARU = '2026-07-01T00:00:00.000Z';
+// PATOKAN TANGGAL AWAL PERIODE PELANGGARAN (1 AGUSTUS 2026 DAN SETERUSNYA)
+const AWAL_PERIODE_PELANGGARAN = '2026-08-01T00:00:00.000Z';
+const AWAL_TAHUN_AJARAN_BARU = AWAL_PERIODE_PELANGGARAN;
 
 const DAFTAR_PELANGGARAN = [
     { id: 1, jenis: "Datang terlambat", kategori: "RINGAN", skor: 1 },
@@ -100,34 +101,80 @@ export default function PelanggaranPage() {
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            // 1. Ambil Log Pelanggaran hanya dari tanggal 1 Juli 2026 ke atas
-            const { data: logs, error: logError } = await supabase
-                .from('log_pelanggaran_siswa')
-                .select(`
-                    *,
-                    master_siswa!log_pelanggaran_siswa_siswa_id_fkey (NAMA, Kelas),
-                    pelapor:master_siswa!log_pelanggaran_siswa_pelapor_id_fkey (NAMA)
-                `)
-                .gte('tanggal', AWAL_TAHUN_AJARAN_BARU) // <-- FILTER TAHUN AJARAN BARU
-                .order('tanggal', { ascending: false });
+            // 1. Ambil seluruh Log Pelanggaran dari 1 Agustus 2026 dan seterusnya (Gunakan loop pagination agar tidak terpotong batas default 1.000 baris PostgREST)
+            let allLogs = [];
+            let fromLog = 0;
+            const logPageSize = 1000;
+            let hasMoreLogs = true;
 
-            // 2. Ambil seluruh data siswa
-            const { data: siswaList, error: siswaError } = await supabase
-                .from('master_siswa')
-                .select('id, NAMA, Kelas');
+            while (hasMoreLogs) {
+                const { data: chunkLogs, error: logError } = await supabase
+                    .from('log_pelanggaran_siswa')
+                    .select(`
+                        *,
+                        master_siswa!log_pelanggaran_siswa_siswa_id_fkey (NAMA, Kelas),
+                        pelapor:master_siswa!log_pelanggaran_siswa_pelapor_id_fkey (NAMA)
+                    `)
+                    .gte('tanggal', AWAL_PERIODE_PELANGGARAN)
+                    .order('tanggal', { ascending: false })
+                    .range(fromLog, fromLog + logPageSize - 1);
 
-            if (logError) console.error("Error Log:", logError.message);
-            if (siswaError) console.error("Error Siswa:", siswaError.message);
+                if (logError) {
+                    console.error("Error Log:", logError.message);
+                    break;
+                }
 
-            // 3. Kalkulasi Poin Seri Baru secara manual dari Log Juli 2026+
+                if (chunkLogs && chunkLogs.length > 0) {
+                    allLogs.push(...chunkLogs);
+                    if (chunkLogs.length < logPageSize) {
+                        hasMoreLogs = false;
+                    } else {
+                        fromLog += logPageSize;
+                    }
+                } else {
+                    hasMoreLogs = false;
+                }
+            }
+
+            // 2. Ambil seluruh data siswa (dengan paginasi agar seluruh siswa termuat lengkap)
+            let allSiswa = [];
+            let fromSiswa = 0;
+            const siswaPageSize = 1000;
+            let hasMoreSiswa = true;
+
+            while (hasMoreSiswa) {
+                const { data: chunkSiswa, error: siswaError } = await supabase
+                    .from('master_siswa')
+                    .select('id, NAMA, Kelas')
+                    .order('id', { ascending: true })
+                    .range(fromSiswa, fromSiswa + siswaPageSize - 1);
+
+                if (siswaError) {
+                    console.error("Error Siswa:", siswaError.message);
+                    break;
+                }
+
+                if (chunkSiswa && chunkSiswa.length > 0) {
+                    allSiswa.push(...chunkSiswa);
+                    if (chunkSiswa.length < siswaPageSize) {
+                        hasMoreSiswa = false;
+                    } else {
+                        fromSiswa += siswaPageSize;
+                    }
+                } else {
+                    hasMoreSiswa = false;
+                }
+            }
+
+            // 3. Kalkulasi Poin Pelanggaran secara manual dari Log Agustus 2026+
             const poinMap = {};
-            (logs || []).forEach(log => {
+            allLogs.forEach(log => {
                 const sId = log.siswa_id;
                 poinMap[sId] = (poinMap[sId] || 0) + (log.poin_pelanggaran || 0);
             });
 
             // 4. Petakan poin baru ke rekap siswa (Hanya yang total poin > 0)
-            const rekapFiltered = (siswaList || [])
+            const rekapFiltered = allSiswa
                 .map(s => ({
                     ...s,
                     total_pelanggaran: Math.max(0, poinMap[s.id] || 0)
@@ -135,7 +182,7 @@ export default function PelanggaranPage() {
                 .filter(s => s.total_pelanggaran > 0)
                 .sort((a, b) => b.total_pelanggaran - a.total_pelanggaran);
 
-            setLogData(logs || []);
+            setLogData(allLogs);
             setRekapSiswa(rekapFiltered);
 
         } catch (err) {
