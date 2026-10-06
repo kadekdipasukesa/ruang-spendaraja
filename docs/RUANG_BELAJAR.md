@@ -28,7 +28,13 @@ src/
 │   ├── RuangBelajarHeader.jsx                     # Header profil, foto master_siswa, ranking kelas, animasi petasan 5 besar & Fixed Bottom Nav
 │   ├── TimelineTugas.jsx                          # Tab 1: Daftar tugas, modul & status pengumpulan
 │   ├── LogScoreTugas.jsx                          # Tab 2: Riwayat audit poin dari point_logs
-│   ├── LeaderboardKelas.jsx                       # Tab 3: Peringkat siswa per kelas (poin > 0)
+│   ├── LeaderboardKelas.jsx                       # Tab 3: Controller Papan Peringkat Kelas 7 (poin > 0)
+│   ├── LeaderboardKelas/                          # Subkomponen Modular Papan Peringkat:
+│   │   ├── StudentAvatar.jsx                      # Avatar foto master_siswa & fallback inisial gradien
+│   │   ├── PodiumThree.jsx                        # Podium 3 Besar Juara (Juara 1 Emas, Perak, Perunggu, interaktif)
+│   │   ├── LeaderboardTable.jsx                   # Tabel seluruh siswa kelas 7 (baris interaktif)
+│   │   ├── ClassFilterTabs.jsx                    # Segmented control tab kelas 7.1-7.10
+│   │   └── StudentPointHistoryModal.jsx           # Modal profil & riwayat perolehan skor dari point_logs (1000+ data)
 │   ├── TaskCard.jsx                               # Kartu item tugas individual
 │   ├── TaskDetailModal.jsx                        # Modal rincian tugas & petunjuk pengerjaan
 │   ├── ModalSubmitProyek.jsx                      # Modal upload/kirim link proyek
@@ -113,14 +119,21 @@ src/
 * Dilengkapi filter mode tampilan (*Poin Saya* vs *Semua Log Siswa / Aktivitas Kelas*), filter pencarian teks instan, dan filter kategori chip (*Tugas*, *Game*, *Ujian*, *Bonus*).
 
 ### 3. Tab Leaderboard (`LeaderboardKelas.jsx`)
-* **Integrasi Foto Profil Resmi (`master_siswa.foto_profile`)**: Setiap entri siswa menampilkan avatar foto asli atau fallback dua huruf inisial berwarna harmonis (`StudentAvatar`).
-* **Podium 3 Besar Juara (Olympic Pedestal)**:
+* **Integrasi Foto Profil Resmi (`master_siswa.foto_profile`)**: Setiap entri siswa menampilkan avatar foto asli atau fallback dua huruf inisial berwarna harmonis (`StudentAvatar.jsx`).
+* **Podium 3 Besar Juara (Olympic Pedestal - `PodiumThree.jsx`)**:
   - Juara 1 (Emas): Kartu utama elevated bernuansa gradien emas amber, mahkota 👑, avatar berukuran besar (xl), dan badge skor juara.
   - Juara 2 (Perak): Kartu elegan bertingkat bernuansa perak slate dengan medali perak 🥈.
   - Juara 3 (Perunggu): Kartu hangat bertingkat bernuansa perunggu tembaga dengan medali 🥉.
+  - **Interaktif**: Seluruh kartu podium (Juara 1, 2, 3) dapat diklik untuk membuka modal profil & riwayat nilai lengkap siswa.
+* **Tabel Seluruh Siswa Interaktif (`LeaderboardTable.jsx`)**:
+  - Setiap baris siswa dapat diklik untuk membuka modal rincian nilai (`StudentPointHistoryModal.jsx`).
+  - Menggunakan tipografi `font-mono tabular-nums` yang bersih dan sejajar secara visual, tanpa pill enclosure statis yang berantakan (Anti-AI Slop discipline).
+* **Modal Profil & Riwayat Nilai (`StudentPointHistoryModal.jsx`)**:
+  - Menampilkan profil siswa, foto/avatar resmi, kelas, absen, NISN, status peringkat, dan total skor.
+  - Mengambil data langsung dari tabel `point_logs` (`id`, `siswa_id`, `amount`, `activity_type`, `description`, `created_at`, `tugas_pengumpulan_id`) dengan penanganan kapasitas 1000+ data via chunking paginasi.
+  - Merinci apa yang dikerjakan (`description`), tipe aktivitas (`activity_type`), perolehan nilai (`+X pt`), serta tanggal dan waktu perolehan skor dalam format Indonesia (WITA).
 * **Banner Status Akun Siswa Aktif**: Menampilkan posisi peringkat dan skor siswa yang sedang login secara langsung dengan tombol *"Lihat di Tabel"* untuk scroll instan ke barisnya.
-* **Segmented Control Kelas 7**: Pilihan kelas **Semua Kelas 7, 7.1, 7.2, ..., 7.10** yang ramah sentuhan, anti-clipping, dan responsif di mobile.
-* **Daftar Peringkat Tabular Numerals**: Menggunakan tipografi `font-mono tabular-nums` yang bersih dan sejajar secara visual, tanpa pill enclosure statis yang berantakan (Anti-AI Slop discipline).
+* **Segmented Control Kelas 7 (`ClassFilterTabs.jsx`)**: Pilihan kelas **Semua Kelas 7, 7.1, 7.2, ..., 7.10** yang ramah sentuhan, anti-clipping, dan responsif di mobile.
 * **Tie-Breaker Konsisten**: Disinkronkan dengan `point_logs` untuk mengurutkan peraih skor tercepat secara adil.
 
 ### 4. Header Siswa, Foto Profil master_siswa & Selebrasi Petasan 5 Besar (`RuangBelajarHeader.jsx`)
