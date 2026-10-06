@@ -70,24 +70,9 @@ export default function StudentPointHistoryModal({
   const totalPoints = student?.total_points ?? 0;
   const studentPhoto = student?.foto_profile;
 
-  // Handle penutupan modal via Escape dan Tombol Back pada HP / Browser
+  // Tutup modal via tombol Escape
   useEffect(() => {
     if (!isOpen) return;
-
-    let isPushed = false;
-
-    // Push state ke history browser hanya jika belum ada state modal aktif
-    if (!window.history.state?.studentPointHistoryModalOpen) {
-      window.history.pushState({ studentPointHistoryModalOpen: true }, '');
-      isPushed = true;
-    }
-
-    const handlePopState = (e) => {
-      // Saat tombol Back ditekan oleh user pada browser/HP,
-      // state browser sudah otomatis mundur (pop), tandai isPushed false agar cleanup tidak memanggil history.back() lagi
-      isPushed = false;
-      onClose();
-    };
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -95,20 +80,12 @@ export default function StudentPointHistoryModal({
       }
     };
 
-    window.addEventListener('popstate', handlePopState);
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('keydown', handleKeyDown);
-
-      // Jika modal ditutup BUKAN oleh tombol Back browser/HP (misal via tombol Tutup Modal, klik backdrop, atau tombol Esc),
-      // maka state yang sebelumnya kita push perlu di-revert agar tidak meninggalkan state modal palsu.
-      if (isPushed && window.history.state?.studentPointHistoryModalOpen) {
-        window.history.back();
-      }
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   // Fetch riwayat perolehan nilai dari tabel point_logs
   // Menggunakan siswa_id yang sah serta mampu menangani hingga 1000+ baris data
@@ -242,15 +219,26 @@ export default function StudentPointHistoryModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
+          onClick={(e) => e.stopPropagation()}
           className="relative w-full max-w-2xl bg-white rounded-3xl sm:rounded-[2rem] border border-slate-200/90 shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col z-10"
         >
+          {/* Tombol X Tutup Modal di Header */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all cursor-pointer z-30 flex items-center justify-center"
+            title="Tutup Modal"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
           {/* 1. Header Profil Siswa */}
           <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950 text-white p-5 sm:p-6 pb-6 shrink-0 overflow-hidden">
             {/* Ambient Glows */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/15 rounded-full blur-2xl pointer-events-none -ml-12 -mb-12" />
 
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 pr-10 sm:pr-12">
               {/* Avatar Profil */}
               <div className="relative shrink-0 self-start sm:self-center">
                 <StudentAvatar

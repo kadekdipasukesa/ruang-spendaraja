@@ -132,7 +132,7 @@ src/
   - Menampilkan profil siswa, foto/avatar resmi, kelas, absen, NISN, status peringkat, dan total skor.
   - Mengambil data langsung dari tabel `point_logs` (`id`, `siswa_id`, `amount`, `activity_type`, `description`, `created_at`, `tugas_pengumpulan_id`) dengan penanganan kapasitas 1000+ data via chunking paginasi.
   - Merinci apa yang dikerjakan (`description`), tipe aktivitas (`activity_type`), perolehan nilai (`+X pt`), serta tanggal dan waktu perolehan skor dalam format Indonesia (WITA).
-  - **Navigasi Ramah Ponsel (`popstate`)**: Terintegrasi dengan riwayat browser ponsel (`window.history.pushState`), sehingga saat tombol "Kembali" / Back pada HP ditekan, sistem otomatis menutup modal terlebih dahulu alih-alih me-redirect keluar ke halaman beranda. Header modal juga dibersihkan dari tombol X yang berdesakan agar tidak tumpang tindih.
+  - **Navigasi & Penutupan Stabil**: Penutupan modal dirancang tangguh dan andal melalui klik pada backdrop area luar modal, tombol X di sudut kanan atas header, tombol "Tutup Modal" di footer, serta tombol keyboard Escape tanpa memanipulasi `history.pushState` / `popstate` agar tidak memicu auto-close mendadak atau bentrok dengan perutean halaman.
 * **Banner Status Akun Siswa Aktif**: Menampilkan posisi peringkat dan skor siswa yang sedang login secara langsung dengan tombol *"Lihat di Tabel"* untuk scroll instan ke barisnya.
 * **Segmented Control Kelas 7 (`ClassFilterTabs.jsx`)**: Pilihan kelas **Semua Kelas 7, 7.1, 7.2, ..., 7.10** yang ramah sentuhan, anti-clipping, dan responsif di mobile.
 * **Tie-Breaker Konsisten**: Disinkronkan dengan `point_logs` untuk mengurutkan peraih skor tercepat secara adil.
