@@ -123,6 +123,7 @@ export default function Navbar() {
     }
 
     const handleOpenLogin = () => setShowLoginModal(true);
+    const handleOpenProfile = () => setShowProfileModal(true);
     const handleUserUpdated = (e) => {
       if (e.detail) {
         setUser(e.detail);
@@ -131,10 +132,12 @@ export default function Navbar() {
     };
 
     window.addEventListener('open-login-modal', handleOpenLogin);
+    window.addEventListener('open-profile-modal', handleOpenProfile);
     window.addEventListener('user-updated', handleUserUpdated);
 
     return () => {
       window.removeEventListener('open-login-modal', handleOpenLogin);
+      window.removeEventListener('open-profile-modal', handleOpenProfile);
       window.removeEventListener('user-updated', handleUserUpdated);
     };
   }, []);

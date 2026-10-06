@@ -60,6 +60,7 @@ export default function RuangBelajar() {
           isAdmin={isAdmin}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          leaderboard={leaderboard}
         />
 
         {/* Loading Skeleton */}

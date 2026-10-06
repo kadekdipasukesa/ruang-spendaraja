@@ -194,7 +194,7 @@ export function useRuangBelajarDB() {
     try {
       const { data, error } = await supabase
         .from('master_siswa')
-        .select('id, "NAMA", "Kelas", "No Absen", "NISN", total_points')
+        .select('id, "NAMA", "Kelas", "No Absen", "NISN", total_points, foto_profile')
         .gt('total_points', 0)
         .order('total_points', { ascending: false });
 
@@ -256,7 +256,11 @@ export function useRuangBelajarDB() {
         if (student?.id && payload?.new?.id === student.id) {
           setStudent((prev) => {
             if (!prev) return prev;
-            const updated = { ...prev, total_points: payload.new.total_points };
+            const updated = {
+              ...prev,
+              ...payload.new,
+              total_points: payload.new.total_points !== undefined ? payload.new.total_points : prev.total_points
+            };
             localStorage.setItem('user_siswa', JSON.stringify(updated));
             return updated;
           });

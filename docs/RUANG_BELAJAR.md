@@ -25,7 +25,7 @@ src/
 │       └── TugasKuisAlgoritma.jsx                 # Kuis Logika & Algoritma Interaktif
 │
 ├── components/RuangBelajar/
-│   ├── RuangBelajarHeader.jsx                     # Header profil, skor real-time & Fixed Bottom Nav
+│   ├── RuangBelajarHeader.jsx                     # Header profil, foto master_siswa, ranking kelas, animasi petasan 5 besar & Fixed Bottom Nav
 │   ├── TimelineTugas.jsx                          # Tab 1: Daftar tugas, modul & status pengumpulan
 │   ├── LogScoreTugas.jsx                          # Tab 2: Riwayat audit poin dari point_logs
 │   ├── LeaderboardKelas.jsx                       # Tab 3: Peringkat siswa per kelas (poin > 0)
@@ -49,11 +49,15 @@ src/
 │       ├── ModalDelete.jsx                        # Konfirmasi hapus berkas
 │       └── ModalSubmissionSuccess.jsx             # Dialog selebrasi & submit nilai ke database
 │
-└── hooks/RuangBelajar/
-    ├── useRuangBelajarDB.js                       # Master hook database Supabase & state Ruang Belajar
-    └── TugasKhusus/Tugas1/
-        ├── useSimulasiFolder.js                   # State engine file explorer, breadcrumb & evaluasi
-        └── missionsConfig.js                      # 25 daftar misi evaluasi otomatis (skor maks 100)
+├── hooks/RuangBelajar/
+│   ├── useRuangBelajarDB.js                       # Master hook database Supabase & state Ruang Belajar
+│   ├── useClassRank.js                            # Hook ranking kelas siswa, sync foto master_siswa & selebrasi 5 besar
+│   └── TugasKhusus/Tugas1/
+│       ├── useSimulasiFolder.js                   # State engine file explorer, breadcrumb & evaluasi
+│       └── missionsConfig.js                      # 25 daftar misi evaluasi otomatis (skor maks 100)
+│
+└── utils/
+    └── petasanCelebration.js                      # Mesin animasi petasan & kembang api 4-tahap + audio Web Audio API
 ```
 
 ---
@@ -109,9 +113,26 @@ src/
 * Dilengkapi filter mode tampilan (*Poin Saya* vs *Semua Log Siswa / Aktivitas Kelas*), filter pencarian teks instan, dan filter kategori chip (*Tugas*, *Game*, *Ujian*, *Bonus*).
 
 ### 3. Tab Leaderboard (`LeaderboardKelas.jsx`)
-* Membagi leaderboard menjadi tombol pill per kelas: **7A, 7B, 7C, 7D, 7E, 7F, 7G, 7H, 7I, 7J, 7K**.
-* Hanya menampilkan siswa dengan `total_points > 0` untuk menjaga kompetisi tetap relevan dan bersih.
-* Peringkat 1, 2, dan 3 mendapatkan badge medali emas 🥇, perak 🥈, dan perunggu 🥉.
+* **Integrasi Foto Profil Resmi (`master_siswa.foto_profile`)**: Setiap entri siswa menampilkan avatar foto asli atau fallback dua huruf inisial berwarna harmonis (`StudentAvatar`).
+* **Podium 3 Besar Juara (Olympic Pedestal)**:
+  - Juara 1 (Emas): Kartu utama elevated bernuansa gradien emas amber, mahkota 👑, avatar berukuran besar (xl), dan badge skor juara.
+  - Juara 2 (Perak): Kartu elegan bertingkat bernuansa perak slate dengan medali perak 🥈.
+  - Juara 3 (Perunggu): Kartu hangat bertingkat bernuansa perunggu tembaga dengan medali 🥉.
+* **Banner Status Akun Siswa Aktif**: Menampilkan posisi peringkat dan skor siswa yang sedang login secara langsung dengan tombol *"Lihat di Tabel"* untuk scroll instan ke barisnya.
+* **Segmented Control Kelas 7**: Pilihan kelas **Semua Kelas 7, 7.1, 7.2, ..., 7.10** yang ramah sentuhan, anti-clipping, dan responsif di mobile.
+* **Daftar Peringkat Tabular Numerals**: Menggunakan tipografi `font-mono tabular-nums` yang bersih dan sejajar secara visual, tanpa pill enclosure statis yang berantakan (Anti-AI Slop discipline).
+* **Tie-Breaker Konsisten**: Disinkronkan dengan `point_logs` untuk mengurutkan peraih skor tercepat secara adil.
+
+### 4. Header Siswa, Foto Profil master_siswa & Selebrasi Petasan 5 Besar (`RuangBelajarHeader.jsx`)
+* **Foto Profil Otentik `master_siswa`**: Mengambil `foto_profile` langsung dari database Supabase dengan sinkronisasi realtime, fallback cerdas inisial nama (`getInitials`), serta interaksi klik avatar untuk membuka modal detail profil/foto siswa (`open-profile-modal`).
+* **Ranking Kelas Akurat (`useClassRank.js`)**:
+  - Menghitung posisi peringkat siswa khusus di kelasnya sendiri (misal Kelas 7.1) dari akumulasi `total_points > 0`.
+  - Menerapkan *tie-breaker* konsisten: siswa dengan skor yang sama diurutkan berdasarkan siapa yang lebih dulu memperoleh skor tersebut (waktu audit di `point_logs`), lalu berdasarkan nama alfabetis.
+  - Menampilkan rasio peringkat terhadap total siswa di kelas (`#{rank} / {total}`).
+* **Animasi Petasan & Kembang Api Spektakuler 5 Besar (`petasanCelebration.js`)**:
+  - Menyala otomatis begitu siswa terdeteksi masuk dalam **5 Besar di kelasnya** (`rank <= 5`).
+  - Menampilkan mahkota 👑 beranimasi bounce pada avatar siswa, badge peringkat kelas berdenyut 🎆, kartu stat Top 5 bergradasi amber, dan banner toast selebrasi melayang.
+  - Siswa dapat mengeklik mahkota avatar, badge peringkat, atau kartu stat kelas kapan saja untuk menyalakan kembali atraksi petasan & suara kembang api sintesis Web Audio API tanpa dependensi file eksternal.
 
 ---
 

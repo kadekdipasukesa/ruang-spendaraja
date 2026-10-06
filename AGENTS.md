@@ -86,7 +86,10 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
 * `src/pages/RuangBelajar.jsx`: Controller utama ruang belajar. Memiliki bottom padding (`pb-32 sm:pb-36`) agar tidak terhalang oleh fixed navigation bar.
 * `src/components/RuangBelajar/RuangBelajarHeader.jsx`:
   - Kartu profil siswa kompak (mode mobile-friendly, palet amber/orange gaya `bee-2026.jsx`).
-  - Menampilkan `total_points` langsung dari `master_siswa`.
+  - Menampilkan `total_points` langsung dari `master_siswa` secara realtime.
+  - Foto profil resmi sesuai data `master_siswa.foto_profile` dengan listener realtime, fallback inisial cerdas (`getInitials`), dan pembukaan modal profil saat avatar diklik (`open-profile-modal`).
+  - Perhitungan peringkat siswa di kelasnya secara presisi melalui custom hook `src/hooks/RuangBelajar/useClassRank.js` dengan aturan tie-breaker konsisten (poin tertinggi, waktu pencapaian skor tercepat, alfabetis).
+  - Animasi petasan & kembang api selebrasi spektakuler (`src/utils/petasanCelebration.js`) dengan sintesis suara Web Audio API saat siswa berhasil mencapai peringkat 5 besar di kelasnya (dilengkapi mahkota avatar 👑, badge peringkat berdenyut 🎆, kartu stat interaktif, dan banner toast selebrasi).
   - **Fixed Bottom Navigation Bar** yang dirender via `createPortal` langsung ke `document.body` agar menempel sempurna di bawah viewport:
     - 📑 **Timeline** (`activeTab = 'timeline'`)
     - 📖 **Log** (`activeTab = 'log_score'`)
@@ -94,7 +97,7 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
 * `src/components/RuangBelajar/TimelineTugas.jsx`: Daftar modul materi & tugas dengan filter kategori.
 * `src/components/RuangBelajar/TaskDetailModal.jsx` & `ModalSubmitProyek.jsx`: Modal rincian tugas & form submit yang dirender via `createPortal` langsung ke `document.body` dengan `z-[99999]` agar selalu berada di lapisan terdepan dan tidak tertutupi navbar atas maupun floating bottom navigation bar.
 * `src/components/RuangBelajar/LogScoreTugas.jsx`: Riwayat poin dari tabel `point_logs`.
-* `src/components/RuangBelajar/LeaderboardKelas.jsx`: Peringkat siswa per kelas 7A-7K dengan filter siswa yang memiliki poin > 0, serta sistem *tie-breaker* otomatis di mana siswa dengan skor yang sama diurutkan berdasarkan siapa yang lebih dulu memperoleh/mencapai skor tersebut (waktu penyelesaian tercepat dari `point_logs`).
+* `src/components/RuangBelajar/LeaderboardKelas.jsx`: Papan peringkat siswa Kelas 7 dengan integrasi foto profil resmi `master_siswa.foto_profile`, fallback inisial cerdas (`StudentAvatar`), podium 3 besar juara bertingkat (Juara 1 Emas elevated, Juara 2 Perak, Juara 3 Perunggu), banner posisi ranking siswa aktif yang sedang login ("Lihat di Tabel"), segmented control filter kelas 7.1–7.10, live search, serta sistem *tie-breaker* otomatis (skor tertinggi, waktu perolehan tercepat dari `point_logs`, alfabetis nama). Desain berstandar anti-AI slop dengan tipografi tabular numerals (`font-mono tabular-nums`).
 * `src/components/RuangBelajar/TugasKhusus/Tugas1/`: Simulator Manajemen File & Folder:
   - `missionsConfig.js`: 25 misi bertingkat dengan evaluasi otomatis berbasis struktur item JSON.
   - `FloatingMissionPanel.jsx`: Panel panduan misi dengan auto-highlight `(Lokasi Target: ...)`.
