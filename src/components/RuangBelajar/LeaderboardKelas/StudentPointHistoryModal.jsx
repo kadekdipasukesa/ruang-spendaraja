@@ -70,15 +70,45 @@ export default function StudentPointHistoryModal({
   const totalPoints = student?.total_points ?? 0;
   const studentPhoto = student?.foto_profile;
 
-  // Tutup dengan tombol Escape
+  // Handle penutupan modal via Escape dan Tombol Back pada HP / Browser
   useEffect(() => {
     if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
+
+    let isPushed = false;
+
+    // Push state ke history browser hanya jika belum ada state modal aktif
+    if (!window.history.state?.studentPointHistoryModalOpen) {
+      window.history.pushState({ studentPointHistoryModalOpen: true }, '');
+      isPushed = true;
+    }
+
+    const handlePopState = (e) => {
+      // Saat tombol Back ditekan oleh user pada browser/HP,
+      // state browser sudah otomatis mundur (pop), tandai isPushed false agar cleanup tidak memanggil history.back() lagi
+      isPushed = false;
+      onClose();
     };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('keydown', handleKeyDown);
+
+      // Jika modal ditutup BUKAN oleh tombol Back browser/HP (misal via tombol Tutup Modal, klik backdrop, atau tombol Esc),
+      // maka state yang sebelumnya kita push perlu di-revert agar tidak meninggalkan state modal palsu.
+      if (isPushed && window.history.state?.studentPointHistoryModalOpen) {
+        window.history.back();
+      }
+    };
+  }, [isOpen]);
 
   // Fetch riwayat perolehan nilai dari tabel point_logs
   // Menggunakan siswa_id yang sah serta mampu menangani hingga 1000+ baris data
@@ -219,16 +249,6 @@ export default function StudentPointHistoryModal({
             {/* Ambient Glows */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/15 rounded-full blur-2xl pointer-events-none -ml-12 -mb-12" />
-
-            {/* Tombol Tutup (X) */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center justify-center transition-all cursor-pointer z-10"
-              title="Tutup (Esc)"
-            >
-              <X className="w-5 h-5" />
-            </button>
 
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
               {/* Avatar Profil */}
@@ -456,9 +476,9 @@ export default function StudentPointHistoryModal({
             <button
               type="button"
               onClick={onClose}
-              className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95"
+              className="bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-extrabold text-xs sm:text-sm px-6 py-2.5 rounded-xl transition-all shadow-xs cursor-pointer"
             >
-              Tutup
+              Tutup Modal
             </button>
           </div>
         </motion.div>
