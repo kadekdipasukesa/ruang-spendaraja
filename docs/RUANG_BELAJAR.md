@@ -143,10 +143,10 @@ src/
   - Menghitung posisi peringkat siswa khusus di kelasnya sendiri (misal Kelas 7.1) dari akumulasi `total_points > 0`.
   - Menerapkan *tie-breaker* konsisten: siswa dengan skor yang sama diurutkan berdasarkan siapa yang lebih dulu memperoleh skor tersebut (waktu audit di `point_logs`), lalu berdasarkan nama alfabetis.
   - Menampilkan rasio peringkat terhadap total siswa di kelas (`#{rank} / {total}`).
-* **Animasi Petasan & Kembang Api Spektakuler 5 Besar (`petasanCelebration.js`)**:
-  - Menyala otomatis begitu siswa terdeteksi masuk dalam **5 Besar di kelasnya** (`rank <= 5`).
-  - Menampilkan mahkota 👑 beranimasi bounce pada avatar siswa, badge peringkat kelas berdenyut 🎆, kartu stat Top 5 bergradasi amber, dan banner toast selebrasi melayang.
-  - Siswa dapat mengeklik mahkota avatar, badge peringkat, atau kartu stat kelas kapan saja untuk menyalakan kembali atraksi petasan & suara kembang api sintesis Web Audio API tanpa dependensi file eksternal.
+* **Desain Bersih, Fleksibel & Bebas AI Slop**:
+  - Tampilan proporsional dan responsif untuk layar HP maupun desktop, bebas dari tumpukan pill dan animasi berlebihan.
+  - Tiga metrik utama seimbang (Poin Master, Tugas Tuntas, dan Peringkat Kelas).
+  - Menghapus tombol interaktif pemicu petasan berulang (petasan selebrasi hanya berjalan otomatis satu kali saat siswa mencapai 5 besar kelas tanpa tombol spam).
 
 ---
 

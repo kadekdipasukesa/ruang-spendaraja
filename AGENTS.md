@@ -89,7 +89,8 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
   - Menampilkan `total_points` langsung dari `master_siswa` secara realtime.
   - Foto profil resmi sesuai data `master_siswa.foto_profile` dengan listener realtime, fallback inisial cerdas (`getInitials`), dan pembukaan modal profil saat avatar diklik (`open-profile-modal`).
   - Perhitungan peringkat siswa di kelasnya secara presisi melalui custom hook `src/hooks/RuangBelajar/useClassRank.js` dengan aturan tie-breaker konsisten (poin tertinggi, waktu pencapaian skor tercepat, alfabetis).
-  - Animasi petasan & kembang api selebrasi spektakuler (`src/utils/petasanCelebration.js`) dengan sintesis suara Web Audio API saat siswa berhasil mencapai peringkat 5 besar di kelasnya (dilengkapi mahkota avatar 👑, badge peringkat berdenyut 🎆, kartu stat interaktif, dan banner toast selebrasi).
+  - Desain modern, bersih & fleksibel untuk HP maupun desktop (anti-AI slop: tipografi tegas, 3 metrik seimbang tanpa pill berlebihan, bebas tombol pemicu petasan berulang).
+  - Integrasi selebrasi otomatis satu kali saat mencapai 5 besar kelas tanpa tombol spam petasan.
   - **Fixed Bottom Navigation Bar** yang dirender via `createPortal` langsung ke `document.body` agar menempel sempurna di bawah viewport:
     - 📑 **Timeline** (`activeTab = 'timeline'`)
     - 📖 **Log** (`activeTab = 'log_score'`)

@@ -7,13 +7,9 @@ import {
   Layers,
   LogIn,
   AlertCircle,
-  Sparkles,
-  Zap,
   Trophy,
-  GraduationCap,
   ArrowRight,
-  Crown,
-  Medal
+  Crown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
@@ -21,9 +17,9 @@ import { useClassRank } from '../../hooks/RuangBelajar/useClassRank';
 
 export default function RuangBelajarHeader({
   student,
-  stats,
-  isAdmin,
-  activeTab,
+  stats = { completed: 0, total: 0 },
+  isAdmin = false,
+  activeTab = 'timeline',
   setActiveTab,
   leaderboard = []
 }) {
@@ -32,7 +28,7 @@ export default function RuangBelajarHeader({
   const studentClass = student?.Kelas || student?.KELAS || '-';
   const studentAbsen = student?.['No Absen'] || student?.no_absen || '-';
 
-  // Custom hook untuk sinkronisasi ranking kelas, foto profil master_siswa & animasi petasan
+  // Custom hook untuk sinkronisasi ranking kelas, foto profil master_siswa & live points
   const {
     studentPhoto,
     photoError,
@@ -42,7 +38,6 @@ export default function RuangBelajarHeader({
     isTop5,
     livePoints,
     celebrationToast,
-    triggerCelebrationPetasan,
   } = useClassRank(student, leaderboard);
 
   const realTotalPoints = livePoints ?? (student?.total_points ?? 0);
@@ -66,51 +61,42 @@ export default function RuangBelajarHeader({
 
   return (
     <>
-      {/* Toast Notifikasi Animasi Selebrasi Petasan 5 Besar */}
+      {/* Toast Notifikasi Ringkas Top 5 (Otomatis muncul tanpa tombol spam petasan) */}
       <AnimatePresence>
         {celebrationToast && (
           <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            initial={{ opacity: 0, y: -16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-20 sm:top-24 left-1/2 -translate-x-1/2 z-[99999] bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 sm:gap-3 text-xs sm:text-sm font-black border-2 border-amber-300 ring-4 ring-amber-400/30 backdrop-blur-sm pointer-events-auto"
+            exit={{ opacity: 0, y: -16, scale: 0.98 }}
+            transition={{ duration: 0.25 }}
+            className="fixed top-20 sm:top-24 left-1/2 -translate-x-1/2 z-[99999] bg-slate-900/95 text-white px-4 sm:px-5 py-2.5 rounded-2xl shadow-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-amber-400/40 backdrop-blur-md pointer-events-auto"
           >
-            <span className="text-lg sm:text-xl">🎆</span>
-            <span>{celebrationToast}</span>
-            <button
-              type="button"
-              onClick={triggerCelebrationPetasan}
-              className="ml-2 bg-white/20 hover:bg-white/30 px-2 sm:px-3 py-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
-            >
-              Nyalakan Petasan 🎇
-            </button>
+            <Crown className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="text-slate-100">{celebrationToast}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Compact Main Header Card */}
-      <div className="relative bg-white rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-7 border border-slate-200 shadow-sm hover:shadow-lg hover:shadow-amber-200/20 transition-all duration-300 overflow-hidden">
-        {/* Soft Ambient Glows as seen in BEE-2026 */}
-        <div className="absolute top-0 right-0 w-72 h-72 sm:w-96 sm:h-96 bg-amber-200/20 blur-[80px] sm:blur-[100px] rounded-full pointer-events-none -mr-20 -mt-20" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 sm:w-80 sm:h-80 bg-blue-200/20 blur-[70px] sm:blur-[90px] rounded-full pointer-events-none -ml-20 -mb-20" />
-
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
-          {/* Profile Details */}
-          <div className="flex items-center gap-3 sm:gap-4.5 min-w-0">
-            <div className="relative flex-shrink-0">
-              {/* Avatar dengan foto profil resmi dari master_siswa */}
+      {/* Main Header Container: Clean, Anti-AI Slop, Flexible Mobile & Desktop */}
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-sm relative overflow-hidden transition-all">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
+          
+          {/* Sisi Kiri: Profil Siswa */}
+          <div className="flex items-center gap-3.5 sm:gap-4.5 min-w-0">
+            {/* Avatar Foto Profil */}
+            <div className="relative shrink-0">
               <div
                 onClick={handleOpenProfileModal}
-                className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[1.5rem] flex items-center justify-center font-black text-lg sm:text-2xl shadow-md transition-all overflow-hidden ${
-                  !isGuest ? 'cursor-pointer hover:scale-105 active:scale-95' : ''
+                className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center font-black text-xl shadow-xs transition-all overflow-hidden ${
+                  !isGuest ? 'cursor-pointer hover:ring-2 hover:ring-amber-500/50 hover:scale-[1.02] active:scale-95' : ''
                 } ${
                   isGuest
                     ? 'bg-slate-100 text-slate-400 border border-slate-200'
                     : isTop5
-                    ? 'bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 text-white shadow-amber-500/30 ring-2 sm:ring-4 ring-amber-300 ring-offset-2'
-                    : 'bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 text-white shadow-orange-500/20 ring-2 sm:ring-4 ring-amber-100/90'
+                    ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white ring-2 ring-amber-400 ring-offset-2'
+                    : 'bg-gradient-to-br from-slate-800 to-slate-900 text-white ring-1 ring-slate-200'
                 }`}
-                title={!isGuest ? 'Klik untuk melihat profil & foto siswa' : undefined}
+                title={!isGuest ? 'Klik untuk membuka profil' : undefined}
               >
                 {isGuest ? (
                   <User className="w-6 h-6 text-slate-400" />
@@ -123,252 +109,167 @@ export default function RuangBelajarHeader({
                     loading="eager"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-600 text-white font-black text-sm sm:text-xl select-none">
+                  <span className="select-none tracking-wider text-base sm:text-lg">
                     {getInitials(studentName)}
-                  </div>
+                  </span>
                 )}
               </div>
 
-              {/* Top 5 Crown Badge on Avatar */}
-              {!isGuest && isTop5 && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    triggerCelebrationPetasan();
-                  }}
-                  className="absolute -top-2 -left-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-amber-300 via-amber-400 to-yellow-500 border-2 border-white shadow-md flex items-center justify-center text-xs transform -rotate-12 hover:scale-125 transition-transform cursor-pointer animate-bounce-short z-10"
-                  title="👑 Selamat! Kamu masuk 5 Besar di kelasmu! Klik untuk bunyikan petasan selebrasi!"
-                >
-                  <span>👑</span>
-                </button>
-              )}
-
+              {/* Status Online Ringkas & Badge Mahkota Statis */}
               {!isGuest && (
-                <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 sm:h-4 sm:w-4">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3.5 w-3.5 sm:h-4 sm:w-4 bg-emerald-500 border-2 border-white shadow-2xs" />
-                </span>
+                <>
+                  <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5">
+                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white" />
+                  </span>
+
+                  {isTop5 && (
+                    <span
+                      className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center text-[10px] shadow-sm border border-white"
+                      title="Siswa Top 5 Kelas"
+                    >
+                      👑
+                    </span>
+                  )}
+                </>
               )}
             </div>
 
-            <div className="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
-              <div className="inline-flex items-center gap-1 bg-white border border-amber-200 px-2 sm:px-2.5 py-0.5 rounded-full shadow-2xs">
-                <Sparkles size={11} className="text-amber-500" />
-                <span className="text-[9px] sm:text-[10px] font-black text-amber-700 uppercase tracking-wider">
-                  Ruang Belajar Digital
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h1 className="text-base sm:text-2xl font-black text-slate-900 tracking-tight truncate max-w-full">
+            {/* Nama & Meta Identitas */}
+            <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-base sm:text-xl font-black text-slate-900 tracking-tight truncate max-w-full">
                   {studentName}
                 </h1>
 
                 {isAdmin && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300">
                     <Shield className="w-3 h-3 text-amber-600" />
                     Guru
                   </span>
                 )}
 
                 {isGuest && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
                     Tamu
                   </span>
                 )}
               </div>
 
-              <div className="text-[11px] sm:text-xs text-slate-500 font-medium flex items-center gap-1.5 flex-wrap">
+              {/* Detail Kelas & Peringkat */}
+              <div className="text-xs text-slate-500 font-medium flex items-center gap-2 flex-wrap">
                 {isGuest ? (
-                  <span className="text-slate-500 flex items-center gap-1 truncate text-[11px]">
-                    <AlertCircle className="w-3 h-3 text-amber-500 flex-shrink-0" />
-                    Masuk akun siswa untuk rekam poin otomatis.
+                  <span className="text-slate-500 flex items-center gap-1.5 text-xs">
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    Mode penjelajah. Masuk untuk simpan progres & raih poin.
                   </span>
                 ) : (
                   <>
-                    <span className="bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-lg font-bold text-amber-900 text-[10px] sm:text-xs">
-                      Kelas <strong className="text-amber-700 font-black">{studentClass}</strong>
+                    <span className="text-slate-600 font-semibold">
+                      Kelas <strong className="text-slate-900">{studentClass}</strong>
                     </span>
-                    <span className="bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-lg font-bold text-blue-900 text-[10px] sm:text-xs">
-                      Absen <strong className="text-blue-700 font-black">{studentAbsen}</strong>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-slate-600 font-semibold">
+                      Absen <strong className="text-slate-900">{studentAbsen}</strong>
                     </span>
 
-                    {/* Badge Ranking Siswa di Kelasnya */}
-                    {classRank ? (
-                      isTop5 ? (
-                        <button
-                          type="button"
-                          onClick={triggerCelebrationPetasan}
-                          className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-extrabold px-2.5 py-0.5 rounded-lg text-[10px] sm:text-xs shadow-sm hover:scale-105 active:scale-95 transition-all flex items-center gap-1 cursor-pointer animate-pulse ring-1 ring-amber-300"
-                          title="🎉 Selamat! Kamu masuk 5 Besar di kelasmu! Klik untuk bunyikan petasan selebrasi!"
-                        >
-                          {classRank === 1 ? (
-                            <Crown className="w-3 h-3 text-yellow-200 flex-shrink-0" />
-                          ) : (
-                            <Trophy className="w-3 h-3 text-amber-200 flex-shrink-0" />
-                          )}
-                          <span>Peringkat #{classRank} Kelas</span>
-                          <span className="text-[10px]">🎆</span>
-                        </button>
-                      ) : (
-                        <span className="bg-purple-50 border border-purple-200/80 px-2 py-0.5 rounded-lg font-bold text-purple-900 text-[10px] sm:text-xs flex items-center gap-1">
-                          <Trophy className="w-3 h-3 text-purple-600 flex-shrink-0" />
-                          <span>Peringkat #{classRank} Kelas</span>
+                    {classRank && (
+                      <>
+                        <span className="text-slate-300">•</span>
+                        <span className={`inline-flex items-center gap-1 font-bold ${isTop5 ? 'text-amber-700' : 'text-slate-600'}`}>
+                          {isTop5 && <Crown className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
+                          <span>Peringkat #{classRank}</span>
                         </span>
-                      )
-                    ) : realTotalPoints > 0 ? (
-                      <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-lg font-medium text-slate-600 text-[10px] sm:text-xs">
-                        Tercatat di Peringkat
-                      </span>
-                    ) : null}
-
-                    <span className="text-slate-400 font-medium hidden sm:inline">•</span>
-                    <span className="text-slate-600 font-bold hidden sm:flex items-center gap-1 text-xs">
-                      <GraduationCap className="w-3.5 h-3.5 text-amber-500" />
-                      Informatika SPENDA
-                    </span>
+                      </>
+                    )}
                   </>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          {/* Sisi Kanan: Kartu Metrik Ringkas & Proporsional */}
+          <div className="shrink-0 w-full lg:w-auto">
             {isGuest ? (
               <button
                 type="button"
                 onClick={handleOpenLoginModal}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl font-black text-xs shadow-md shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-2xl font-bold text-xs transition-all cursor-pointer shadow-sm active:scale-98"
                 id="btn-guest-header-login"
               >
-                <LogIn className="w-4 h-4" />
+                <LogIn className="w-4 h-4 text-amber-400" />
                 <span>Masuk Akun Siswa</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
               </button>
             ) : (
-              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
-                {/* Stat 1: Poin Master */}
-                <div className="bg-gradient-to-br from-amber-50/90 via-orange-50/30 to-white border border-amber-200/90 p-2 sm:p-3 rounded-2xl sm:rounded-[1.4rem] flex items-center gap-2 min-w-[115px] sm:min-w-[130px] shadow-2xs hover:shadow-xs transition-all">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-[1rem] bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center font-black shadow-xs flex-shrink-0">
-                    <Flame className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse fill-white" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1 text-[9px] sm:text-[10px] uppercase font-black tracking-wider text-amber-700 truncate">
-                      <Trophy className="w-2.5 h-2.5 text-amber-500 flex-shrink-0" />
-                      <span>Poin Master</span>
-                    </div>
-                    <div className="text-sm sm:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600 tracking-tight flex items-baseline gap-1">
-                      <span>{realTotalPoints}</span>
-                      <span className="text-[10px] sm:text-xs font-bold text-amber-600">pt</span>
-                    </div>
+              /* 3 Kolom Metrik Seimbang di Mobile & Desktop */
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-slate-50/80 p-2 sm:p-2.5 rounded-2xl border border-slate-200/80">
+                
+                {/* Metrik 1: Total Poin */}
+                <div className="bg-white rounded-xl p-2.5 sm:px-4 sm:py-3 border border-slate-200/70 text-center flex flex-col justify-center min-w-[85px] sm:min-w-[105px]">
+                  <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
+                    Poin
+                  </span>
+                  <div className="text-sm sm:text-lg font-black text-amber-700 font-mono tabular-nums leading-none flex items-center justify-center gap-0.5">
+                    <span>{realTotalPoints}</span>
+                    <span className="text-[10px] font-bold text-amber-600">pt</span>
                   </div>
                 </div>
 
-                {/* Stat 2: Tuntas */}
-                <div className="bg-gradient-to-br from-blue-50/90 via-indigo-50/30 to-white border border-blue-200/90 p-2 sm:p-3 rounded-2xl sm:rounded-[1.4rem] flex items-center gap-2 min-w-[115px] sm:min-w-[130px] shadow-2xs hover:shadow-xs transition-all">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-[1rem] bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-black shadow-xs flex-shrink-0">
-                    <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1 text-[9px] sm:text-[10px] uppercase font-black tracking-wider text-blue-700 truncate">
-                      <Zap className="w-2.5 h-2.5 text-blue-500 flex-shrink-0" />
-                      <span>Tuntas</span>
-                    </div>
-                    <div className="text-sm sm:text-lg font-black text-slate-800 tracking-tight">
-                      {stats.completed}{' '}
-                      <span className="text-[10px] sm:text-xs font-normal text-slate-400">
-                        / {stats.total}
-                      </span>
-                    </div>
+                {/* Metrik 2: Tugas Selesai */}
+                <div className="bg-white rounded-xl p-2.5 sm:px-4 sm:py-3 border border-slate-200/70 text-center flex flex-col justify-center min-w-[85px] sm:min-w-[105px]">
+                  <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
+                    Tuntas
+                  </span>
+                  <div className="text-sm sm:text-lg font-black text-slate-900 font-mono tabular-nums leading-none">
+                    <span>{stats.completed}</span>
+                    <span className="text-[10px] sm:text-xs font-normal text-slate-400">/{stats.total}</span>
                   </div>
                 </div>
 
-                {/* Stat 3: Ranking di Kelas */}
+                {/* Metrik 3: Peringkat Kelas (Klik untuk buka tab Peringkat tanpa memicu petasan) */}
                 <div
-                  onClick={() => {
-                    if (isTop5) triggerCelebrationPetasan();
-                    if (setActiveTab) setActiveTab('leaderboard');
-                  }}
-                  className={`border p-2 sm:p-3 rounded-2xl sm:rounded-[1.4rem] flex items-center gap-2 min-w-[115px] sm:min-w-[130px] shadow-2xs transition-all col-span-2 sm:col-span-1 cursor-pointer ${
-                    isTop5
-                      ? 'bg-gradient-to-br from-amber-100/90 via-orange-50 to-white border-amber-300 ring-2 ring-amber-300/60 hover:scale-[1.02]'
-                      : 'bg-gradient-to-br from-purple-50/90 via-indigo-50/30 to-white border-purple-200/90 hover:shadow-xs'
-                  }`}
-                  title={isTop5 ? '🎉 5 Besar Kelas! Klik untuk menyalakan petasan selebrasi!' : 'Klik untuk lihat Papan Peringkat'}
+                  onClick={() => setActiveTab && setActiveTab('leaderboard')}
+                  className="bg-white rounded-xl p-2.5 sm:px-4 sm:py-3 border border-slate-200/70 text-center flex flex-col justify-center min-w-[85px] sm:min-w-[105px] hover:border-amber-400 transition-all cursor-pointer group"
+                  title="Lihat Papan Peringkat Kelas"
                 >
-                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-[1rem] flex items-center justify-center font-black shadow-xs flex-shrink-0 ${
-                    isTop5
-                      ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-amber-500/20'
-                      : 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white'
-                  }`}>
-                    {classRank === 1 ? (
-                      <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-200 animate-bounce-short" />
-                    ) : isTop5 ? (
-                      <Medal className="w-4 h-4 sm:w-5 sm:h-5 text-amber-100 animate-pulse" />
+                  <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-amber-600 transition-colors block mb-0.5">
+                    Rank
+                  </span>
+                  <div className="text-sm sm:text-lg font-black text-slate-900 font-mono tabular-nums leading-none">
+                    {classRank ? (
+                      <>
+                        <span className={isTop5 ? 'text-amber-600' : 'text-slate-900'}>
+                          #{classRank}
+                        </span>
+                        <span className="text-[10px] sm:text-xs font-normal text-slate-400">
+                          /{totalInClass}
+                        </span>
+                      </>
                     ) : (
-                      <Trophy className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="text-xs text-slate-400 font-normal">-</span>
                     )}
                   </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1 text-[9px] sm:text-[10px] uppercase font-black tracking-wider text-slate-700 truncate">
-                      <span>{isTop5 ? 'Top 5 Kelas' : 'Rank Kelas'}</span>
-                      {isTop5 && <span className="text-[10px]">🎆</span>}
-                    </div>
-                    <div className="text-sm sm:text-lg font-black tracking-tight flex items-baseline gap-1">
-                      {classRank ? (
-                        <>
-                          <span className={isTop5 ? 'text-amber-600 font-black' : 'text-purple-700 font-black'}>
-                            #{classRank}
-                          </span>
-                          <span className="text-[10px] sm:text-xs font-bold text-slate-400">
-                            / {totalInClass}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-xs font-bold text-slate-400">-</span>
-                      )}
-                    </div>
-                  </div>
                 </div>
+
               </div>
             )}
           </div>
-        </div>
 
-        {/* Guest Alert Banner */}
-        {isGuest && (
-          <div className="mt-3 p-3 bg-amber-50/90 rounded-2xl border border-amber-200 text-amber-900 text-xs flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-              <span className="truncate">
-                Mode penjelajah. Masuk untuk mengumpulkan tugas & simpan poin.
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={handleOpenLoginModal}
-              className="text-xs font-black text-amber-700 hover:text-amber-900 underline ml-auto flex-shrink-0 cursor-pointer"
-            >
-              Masuk &rarr;
-            </button>
-          </div>
-        )}
+        </div>
       </div>
 
-      {/* 2. Membungkus Bottom Nav dengan createPortal */}
+      {/* Fixed Bottom Navigation (createPortal ke document.body) */}
       {typeof document !== 'undefined' &&
         createPortal(
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] pt-1.5 pb-3 sm:pb-4 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pt-1.5 pb-3 sm:pb-4 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <div className="max-w-md mx-auto flex items-center justify-around">
               {/* Tab 1: Timeline */}
               <button
                 type="button"
                 onClick={() => setActiveTab('timeline')}
-                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-3.5 rounded-2xl transition-all ${
+                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-4 rounded-2xl transition-all cursor-pointer ${
                   activeTab === 'timeline'
-                    ? 'text-amber-600 font-black scale-105'
+                    ? 'text-amber-600 font-black'
                     : 'text-slate-400 hover:text-slate-600 font-medium'
                 }`}
                 id="nav-bottom-timeline"
@@ -376,7 +277,7 @@ export default function RuangBelajarHeader({
                 <div
                   className={`p-1.5 rounded-xl transition-all ${
                     activeTab === 'timeline'
-                      ? 'bg-amber-100 text-amber-600 shadow-2xs'
+                      ? 'bg-amber-100 text-amber-700 shadow-2xs'
                       : 'bg-transparent text-slate-400'
                   }`}
                 >
@@ -389,9 +290,9 @@ export default function RuangBelajarHeader({
               <button
                 type="button"
                 onClick={() => setActiveTab('log_score')}
-                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-3.5 rounded-2xl transition-all ${
+                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-4 rounded-2xl transition-all cursor-pointer ${
                   activeTab === 'log_score'
-                    ? 'text-blue-600 font-black scale-105'
+                    ? 'text-blue-600 font-black'
                     : 'text-slate-400 hover:text-slate-600 font-medium'
                 }`}
                 id="nav-bottom-log"
@@ -399,7 +300,7 @@ export default function RuangBelajarHeader({
                 <div
                   className={`p-1.5 rounded-xl transition-all ${
                     activeTab === 'log_score'
-                      ? 'bg-blue-100 text-blue-600 shadow-2xs'
+                      ? 'bg-blue-100 text-blue-700 shadow-2xs'
                       : 'bg-transparent text-slate-400'
                   }`}
                 >
@@ -412,9 +313,9 @@ export default function RuangBelajarHeader({
               <button
                 type="button"
                 onClick={() => setActiveTab('leaderboard')}
-                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-3.5 rounded-2xl transition-all ${
+                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-4 rounded-2xl transition-all cursor-pointer ${
                   activeTab === 'leaderboard'
-                    ? 'text-orange-600 font-black scale-105'
+                    ? 'text-orange-600 font-black'
                     : 'text-slate-400 hover:text-slate-600 font-medium'
                 }`}
                 id="nav-bottom-peringkat"
@@ -422,7 +323,7 @@ export default function RuangBelajarHeader({
                 <div
                   className={`p-1.5 rounded-xl transition-all ${
                     activeTab === 'leaderboard'
-                      ? 'bg-orange-100 text-orange-600 shadow-2xs'
+                      ? 'bg-orange-100 text-orange-700 shadow-2xs'
                       : 'bg-transparent text-slate-400'
                   }`}
                 >
@@ -432,7 +333,7 @@ export default function RuangBelajarHeader({
               </button>
             </div>
           </div>,
-          document.body // Merender elemen ini langsung ke <body> utama
+          document.body
         )}
     </>
   );
