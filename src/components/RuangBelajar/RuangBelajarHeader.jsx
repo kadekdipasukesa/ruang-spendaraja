@@ -1,6 +1,5 @@
 import {
   User,
-  CheckCircle2,
   Shield,
   Flame,
   BookOpen,
@@ -9,7 +8,9 @@ import {
   AlertCircle,
   Trophy,
   ArrowRight,
-  Crown
+  Crown,
+  Sparkles,
+  CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
@@ -24,7 +25,8 @@ export default function RuangBelajarHeader({
   leaderboard = []
 }) {
   const isGuest = !student;
-  const studentName = student?.NAMA || student?.nama || 'Pengunjung (Mode Tamu)';
+  const studentFullName = student?.NAMA || student?.nama || 'Pengunjung (Mode Tamu)';
+  const firstName = studentFullName.split(' ')[0] || studentFullName;
   const studentClass = student?.Kelas || student?.KELAS || '-';
   const studentAbsen = student?.['No Absen'] || student?.no_absen || '-';
 
@@ -41,6 +43,9 @@ export default function RuangBelajarHeader({
   } = useClassRank(student, leaderboard);
 
   const realTotalPoints = livePoints ?? (student?.total_points ?? 0);
+  const totalTasks = stats?.total || 0;
+  const completedTasks = stats?.completed || 0;
+  const progressPercent = totalTasks > 0 ? Math.min(100, Math.round((completedTasks / totalTasks) * 100)) : 0;
 
   const handleOpenLoginModal = () => {
     window.dispatchEvent(new CustomEvent('open-login-modal'));
@@ -49,6 +54,8 @@ export default function RuangBelajarHeader({
   const handleOpenProfileModal = () => {
     if (!isGuest) {
       window.dispatchEvent(new CustomEvent('open-profile-modal'));
+    } else {
+      handleOpenLoginModal();
     }
   };
 
@@ -77,45 +84,52 @@ export default function RuangBelajarHeader({
         )}
       </AnimatePresence>
 
-      {/* Main Header Container: Clean, Anti-AI Slop, Flexible Mobile & Desktop */}
-      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-sm relative overflow-hidden transition-all">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
+      {/* Main Header Container: Clean Native App Channel Header Style */}
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/80 shadow-xs relative overflow-hidden transition-all">
+        {/* Subtle Ambient Top Accent Line */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-amber-500 opacity-90" />
+
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6 pt-1">
           
-          {/* Sisi Kiri: Profil Siswa */}
-          <div className="flex items-center gap-3.5 sm:gap-4.5 min-w-0">
-            {/* Avatar Foto Profil */}
-            <div className="relative shrink-0">
+          {/* Sisi Kiri: Profil Siswa + Salam + Progress Belajar */}
+          <div className="flex items-start sm:items-center gap-3.5 sm:gap-5 min-w-0 flex-1">
+            {/* Avatar Foto Profil dengan Story Ring */}
+            <div className="relative shrink-0 pt-0.5 sm:pt-0">
               <div
                 onClick={handleOpenProfileModal}
-                className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center font-black text-xl shadow-xs transition-all overflow-hidden ${
-                  !isGuest ? 'cursor-pointer hover:ring-2 hover:ring-amber-500/50 hover:scale-[1.02] active:scale-95' : ''
-                } ${
-                  isGuest
-                    ? 'bg-slate-100 text-slate-400 border border-slate-200'
-                    : isTop5
-                    ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white ring-2 ring-amber-400 ring-offset-2'
-                    : 'bg-gradient-to-br from-slate-800 to-slate-900 text-white ring-1 ring-slate-200'
+                className={`p-[2.5px] rounded-2xl transition-all ${
+                  isTop5
+                    ? 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-600 shadow-md shadow-amber-500/20'
+                    : !isGuest
+                    ? 'bg-gradient-to-tr from-blue-500 via-indigo-500 to-violet-500 shadow-xs'
+                    : 'bg-slate-200'
                 }`}
-                title={!isGuest ? 'Klik untuk membuka profil' : undefined}
               >
-                {isGuest ? (
-                  <User className="w-6 h-6 text-slate-400" />
-                ) : studentPhoto && !photoError ? (
-                  <img
-                    src={studentPhoto}
-                    alt={studentName}
-                    onError={() => setPhotoError(true)}
-                    className="w-full h-full object-cover object-center"
-                    loading="eager"
-                  />
-                ) : (
-                  <span className="select-none tracking-wider text-base sm:text-lg">
-                    {getInitials(studentName)}
-                  </span>
-                )}
+                <div
+                  className={`w-14 h-14 sm:w-16 sm:h-16 rounded-[14px] flex items-center justify-center font-black text-xl overflow-hidden ${
+                    !isGuest ? 'cursor-pointer hover:scale-[1.02] active:scale-95 bg-white' : 'bg-slate-100 text-slate-400'
+                  }`}
+                  title={!isGuest ? 'Klik untuk membuka profil' : 'Klik untuk masuk akun'}
+                >
+                  {isGuest ? (
+                    <User className="w-6 h-6 text-slate-400" />
+                  ) : studentPhoto && !photoError ? (
+                    <img
+                      src={studentPhoto}
+                      alt={studentFullName}
+                      onError={() => setPhotoError(true)}
+                      className="w-full h-full object-cover object-center"
+                      loading="eager"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-base sm:text-lg select-none">
+                      {getInitials(studentFullName)}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Status Online Ringkas & Badge Mahkota Statis */}
+              {/* Status Online Ringkas & Badge Mahkota */}
               {!isGuest && (
                 <>
                   <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5">
@@ -124,7 +138,7 @@ export default function RuangBelajarHeader({
 
                   {isTop5 && (
                     <span
-                      className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center text-[10px] shadow-sm border border-white"
+                      className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center text-xs shadow-sm border-2 border-white"
                       title="Siswa Top 5 Kelas"
                     >
                       👑
@@ -134,11 +148,17 @@ export default function RuangBelajarHeader({
               )}
             </div>
 
-            {/* Nama & Meta Identitas */}
-            <div className="space-y-1 min-w-0 flex-1">
+            {/* Nama & Meta Identitas + Progress Belajar */}
+            <div className="space-y-1.5 min-w-0 flex-1">
+              {/* Friendly Greeting Header ala YouTube / Mobile App */}
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                <span>{isGuest ? 'Selamat Datang' : `Halo, ${firstName}!`}</span>
+                {!isGuest && <span className="inline-block animate-pulse">👋</span>}
+              </div>
+
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-base sm:text-xl font-black text-slate-900 tracking-tight truncate max-w-full">
-                  {studentName}
+                  {studentFullName}
                 </h1>
 
                 {isAdmin && (
@@ -164,30 +184,58 @@ export default function RuangBelajarHeader({
                   </span>
                 ) : (
                   <>
-                    <span className="text-slate-600 font-semibold">
-                      Kelas <strong className="text-slate-900">{studentClass}</strong>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold text-[11px] border border-blue-200/60">
+                      Kelas {studentClass}
                     </span>
-                    <span className="text-slate-300">•</span>
-                    <span className="text-slate-600 font-semibold">
-                      Absen <strong className="text-slate-900">{studentAbsen}</strong>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[11px]">
+                      Absen {studentAbsen}
                     </span>
 
                     {classRank && (
-                      <>
-                        <span className="text-slate-300">•</span>
-                        <span className={`inline-flex items-center gap-1 font-bold ${isTop5 ? 'text-amber-700' : 'text-slate-600'}`}>
-                          {isTop5 && <Crown className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
-                          <span>Peringkat #{classRank}</span>
-                        </span>
-                      </>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab && setActiveTab('leaderboard')}
+                        className={`inline-flex items-center gap-1 font-bold text-[11px] px-2 py-0.5 rounded-md cursor-pointer transition-all ${
+                          isTop5
+                            ? 'bg-amber-100 text-amber-800 border border-amber-300/80 hover:bg-amber-200/80'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                        title="Klik untuk lihat Leaderboard"
+                      >
+                        {isTop5 ? '👑' : '🔥'}
+                        <span>Peringkat #{classRank}</span>
+                      </button>
                     )}
                   </>
                 )}
               </div>
+
+              {/* Progres Belajar: Jembatan Visual ke Roadmap Pembelajaran */}
+              {!isGuest && totalTasks > 0 && (
+                <div className="pt-1 max-w-sm">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 mb-1">
+                    <span className="flex items-center gap-1 text-slate-600">
+                      <BookOpen className="w-3 h-3 text-blue-600" />
+                      <span>Ketuntasan Modul</span>
+                    </span>
+                    <span className="text-slate-800 font-bold font-mono text-[11px]">
+                      {progressPercent}% ({completedTasks}/{totalTasks} Tuntas)
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 sm:h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/70">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercent}%` }}
+                      transition={{ duration: 0.8, ease: 'easeOut' }}
+                      className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-amber-500 rounded-full"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Sisi Kanan: Kartu Metrik Ringkas & Proporsional */}
+          {/* Sisi Kanan: Kartu Metrik Ringkas & Interaktif */}
           <div className="shrink-0 w-full lg:w-auto">
             {isGuest ? (
               <button
@@ -201,47 +249,58 @@ export default function RuangBelajarHeader({
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
               </button>
             ) : (
-              /* 3 Kolom Metrik Seimbang di Mobile & Desktop */
-              <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-slate-50/80 p-2 sm:p-2.5 rounded-2xl border border-slate-200/80">
+              /* 3 Kolom Metrik Interaktif di Mobile & Desktop */
+              <div className="grid grid-cols-3 gap-2 sm:gap-2.5 bg-slate-50/80 p-2 sm:p-2.5 rounded-2xl border border-slate-200/70">
                 
-                {/* Metrik 1: Total Poin */}
-                <div className="bg-white rounded-xl p-2.5 sm:px-4 sm:py-3 border border-slate-200/70 text-center flex flex-col justify-center min-w-[85px] sm:min-w-[105px]">
-                  <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
-                    Poin
+                {/* Metrik 1: Total Poin (Klik menuju Log Skor) */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab && setActiveTab('log_score')}
+                  className="bg-white rounded-xl p-2 sm:px-3.5 sm:py-2.5 border border-slate-200/70 text-center flex flex-col justify-center min-w-[80px] sm:min-w-[95px] shadow-2xs hover:border-amber-400 hover:bg-amber-50/20 transition-all cursor-pointer group"
+                  title="Klik untuk melihat Catatan Poin"
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 group-hover:text-amber-600 transition-colors block mb-0.5">
+                    Poin XP
                   </span>
-                  <div className="text-sm sm:text-lg font-black text-amber-700 font-mono tabular-nums leading-none flex items-center justify-center gap-0.5">
+                  <div className="text-sm sm:text-base font-black text-amber-700 font-mono tabular-nums leading-none flex items-center justify-center gap-0.5">
                     <span>{realTotalPoints}</span>
                     <span className="text-[10px] font-bold text-amber-600">pt</span>
                   </div>
-                </div>
+                </button>
 
-                {/* Metrik 2: Tugas Selesai */}
-                <div className="bg-white rounded-xl p-2.5 sm:px-4 sm:py-3 border border-slate-200/70 text-center flex flex-col justify-center min-w-[85px] sm:min-w-[105px]">
-                  <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
+                {/* Metrik 2: Modul Selesai (Klik menuju Timeline) */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab && setActiveTab('timeline')}
+                  className="bg-white rounded-xl p-2 sm:px-3.5 sm:py-2.5 border border-slate-200/70 text-center flex flex-col justify-center min-w-[80px] sm:min-w-[95px] shadow-2xs hover:border-blue-400 hover:bg-blue-50/20 transition-all cursor-pointer group"
+                  title="Klik untuk melihat Roadmap Modul"
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 group-hover:text-blue-600 transition-colors block mb-0.5">
                     Tuntas
                   </span>
-                  <div className="text-sm sm:text-lg font-black text-slate-900 font-mono tabular-nums leading-none">
-                    <span>{stats.completed}</span>
-                    <span className="text-[10px] sm:text-xs font-normal text-slate-400">/{stats.total}</span>
+                  <div className="text-sm sm:text-base font-black text-slate-900 font-mono tabular-nums leading-none">
+                    <span>{completedTasks}</span>
+                    <span className="text-[10px] font-normal text-slate-400">/{totalTasks}</span>
                   </div>
-                </div>
+                </button>
 
-                {/* Metrik 3: Peringkat Kelas (Klik untuk buka tab Peringkat tanpa memicu petasan) */}
-                <div
+                {/* Metrik 3: Peringkat Kelas (Klik menuju Leaderboard) */}
+                <button
+                  type="button"
                   onClick={() => setActiveTab && setActiveTab('leaderboard')}
-                  className="bg-white rounded-xl p-2.5 sm:px-4 sm:py-3 border border-slate-200/70 text-center flex flex-col justify-center min-w-[85px] sm:min-w-[105px] hover:border-amber-400 transition-all cursor-pointer group"
-                  title="Lihat Papan Peringkat Kelas"
+                  className="bg-white rounded-xl p-2 sm:px-3.5 sm:py-2.5 border border-slate-200/70 text-center flex flex-col justify-center min-w-[80px] sm:min-w-[95px] hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer group shadow-2xs"
+                  title="Klik untuk melihat Papan Peringkat Kelas"
                 >
-                  <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-amber-600 transition-colors block mb-0.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 group-hover:text-amber-600 transition-colors block mb-0.5">
                     Rank
                   </span>
-                  <div className="text-sm sm:text-lg font-black text-slate-900 font-mono tabular-nums leading-none">
+                  <div className="text-sm sm:text-base font-black text-slate-900 font-mono tabular-nums leading-none">
                     {classRank ? (
                       <>
                         <span className={isTop5 ? 'text-amber-600' : 'text-slate-900'}>
                           #{classRank}
                         </span>
-                        <span className="text-[10px] sm:text-xs font-normal text-slate-400">
+                        <span className="text-[10px] font-normal text-slate-400">
                           /{totalInClass}
                         </span>
                       </>
@@ -249,7 +308,7 @@ export default function RuangBelajarHeader({
                       <span className="text-xs text-slate-400 font-normal">-</span>
                     )}
                   </div>
-                </div>
+                </button>
 
               </div>
             )}
@@ -258,78 +317,103 @@ export default function RuangBelajarHeader({
         </div>
       </div>
 
-      {/* Fixed Bottom Navigation (createPortal ke document.body) */}
+      {/* Fixed Bottom Navigation (createPortal ke document.body) ala YouTube / Native Mobile App */}
       {typeof document !== 'undefined' &&
         createPortal(
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pt-1.5 pb-3 sm:pb-4 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-200/80 shadow-[0_-4px_25px_rgba(15,23,42,0.06)] pt-1.5 pb-3 sm:pb-3.5 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <div className="max-w-md mx-auto flex items-center justify-around">
-              {/* Tab 1: Timeline */}
+              {/* Tab 1: Timeline (Modul Roadmap) */}
               <button
                 type="button"
                 onClick={() => setActiveTab('timeline')}
-                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-4 rounded-2xl transition-all cursor-pointer ${
+                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-3 rounded-2xl transition-all cursor-pointer active:scale-95 ${
                   activeTab === 'timeline'
-                    ? 'text-amber-600 font-black'
+                    ? 'text-blue-600 font-black'
                     : 'text-slate-400 hover:text-slate-600 font-medium'
                 }`}
                 id="nav-bottom-timeline"
+                title="Roadmap Modul Tugas"
               >
                 <div
                   className={`p-1.5 rounded-xl transition-all ${
                     activeTab === 'timeline'
-                      ? 'bg-amber-100 text-amber-700 shadow-2xs'
+                      ? 'bg-blue-100 text-blue-700 shadow-2xs'
                       : 'bg-transparent text-slate-400'
                   }`}
                 >
                   <Layers className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] tracking-tight">Timeline</span>
+                <span className="text-[10px] tracking-tight">Modul</span>
               </button>
 
-              {/* Tab 2: Log */}
+              {/* Tab 2: Log Skor (Catatan Poin) */}
               <button
                 type="button"
                 onClick={() => setActiveTab('log_score')}
-                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-4 rounded-2xl transition-all cursor-pointer ${
+                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-3 rounded-2xl transition-all cursor-pointer active:scale-95 ${
                   activeTab === 'log_score'
-                    ? 'text-blue-600 font-black'
+                    ? 'text-indigo-600 font-black'
                     : 'text-slate-400 hover:text-slate-600 font-medium'
                 }`}
                 id="nav-bottom-log"
+                title="Riwayat Skor & Poin"
               >
                 <div
                   className={`p-1.5 rounded-xl transition-all ${
                     activeTab === 'log_score'
-                      ? 'bg-blue-100 text-blue-700 shadow-2xs'
+                      ? 'bg-indigo-100 text-indigo-700 shadow-2xs'
                       : 'bg-transparent text-slate-400'
                   }`}
                 >
                   <BookOpen className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] tracking-tight">Log</span>
+                <span className="text-[10px] tracking-tight">Log Skor</span>
               </button>
 
-              {/* Tab 3: Peringkat */}
+              {/* Tab 3: Peringkat (Klasemen Kelas) */}
               <button
                 type="button"
                 onClick={() => setActiveTab('leaderboard')}
-                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-4 rounded-2xl transition-all cursor-pointer ${
+                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-3 rounded-2xl transition-all cursor-pointer active:scale-95 ${
                   activeTab === 'leaderboard'
-                    ? 'text-orange-600 font-black'
+                    ? 'text-amber-600 font-black'
                     : 'text-slate-400 hover:text-slate-600 font-medium'
                 }`}
                 id="nav-bottom-peringkat"
+                title="Papan Peringkat Kelas"
               >
                 <div
                   className={`p-1.5 rounded-xl transition-all ${
                     activeTab === 'leaderboard'
-                      ? 'bg-orange-100 text-orange-700 shadow-2xs'
+                      ? 'bg-amber-100 text-amber-700 shadow-2xs'
                       : 'bg-transparent text-slate-400'
                   }`}
                 >
                   <Flame className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] tracking-tight">Peringkat</span>
+              </button>
+
+              {/* Tab 4: Profil Siswa (Ala YouTube 'You' tab / Instagram profile) */}
+              <button
+                type="button"
+                onClick={handleOpenProfileModal}
+                className="flex flex-col items-center justify-center gap-0.5 py-1 px-3 rounded-2xl transition-all cursor-pointer active:scale-95 text-slate-400 hover:text-slate-600 font-medium"
+                id="nav-bottom-profil"
+                title={!isGuest ? 'Buka Profil & Portofolio Siswa' : 'Masuk Akun'}
+              >
+                <div className="p-1.5 rounded-xl transition-all">
+                  {!isGuest && studentPhoto && !photoError ? (
+                    <img
+                      src={studentPhoto}
+                      alt="Avatar"
+                      className="w-5 h-5 rounded-full object-cover ring-1.5 ring-slate-300"
+                    />
+                  ) : (
+                    <User className="w-5 h-5 text-slate-400" />
+                  )}
+                </div>
+                <span className="text-[10px] tracking-tight">Profil</span>
               </button>
             </div>
           </div>,
@@ -338,3 +422,4 @@ export default function RuangBelajarHeader({
     </>
   );
 }
+

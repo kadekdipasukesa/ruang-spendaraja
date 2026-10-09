@@ -60,27 +60,30 @@ Halaman `Home` bertindak sebagai **Central App Launcher** untuk seluruh ekosiste
 
 ## 3. Global Navigation Bar (`src/components/Navbar.jsx` & `src/components/Navbar/`)
 
-Komponen `Navbar` berada di posisi paling atas layar, dibangun dengan arsitektur modular berkinerja tinggi, dan menyertakan integrasi foto profil siswa ke Cloudinary serta sinkronisasi Supabase Realtime.
+Komponen `Navbar` berada di posisi paling atas layar, dibangun dengan arsitektur **Seamless Top Bar (Full-Width Flush)** dan **Smart Reveal on Scroll Up** ala aplikasi mobile YouTube & Instagram:
 
 ```text
                ┌────────────────────────────────────────────────────────┐
-               │ Navbar Mengambang (Floating Pill Header)               │
-               │ [Logo Spenda]             [Poin] [Avatar Siswa] [Keluar]│
+               │ Seamless Full-Width Top Bar (Flush di Atas Layar)      │
+               │ [Logo / ← Beranda]   [Badge Konteks]   [XP] [Story Ring]│
                └────────────────────────────────────────────────────────┘
 ```
 
-### A. Pembagian Komponen Modular
-1. **`Navbar.jsx` (Root Controller)**:
-   - Mengatur event scroll (`useScroll`, `useMotionValueEvent`) dengan transisi auto-hide (sembunyi saat scroll ke bawah > 150px, muncul saat scroll ke atas).
+### A. Fitur & Pembagian Komponen Modular
+1. **`Navbar.jsx` (Root Controller - Seamless & Smart Reveal)**:
+   - **Seamless on Top (`isAtTop = true`)**: Saat berada di posisi paling atas layar (`scrollY <= 15px`), navbar **100% menyatu tanpa garis border dan tanpa bayangan (*transparent & borderless*)**. Seolah-olah navbar menyatu alami dengan background halaman (di Ruang Belajar menyatu dengan `bg-slate-50`, di Beranda menyatu dengan `bg-slate-950`).
+   - **Tracking Presisi 1:1 Murni Tanpa Timer Auto-Sliding**: Pergerakan navbar tidak menggunakan timer atau animasi `animate()` mandiri yang bisa meluncur sendiri. Navbar terdorong naik saat scroll down persis sebanding piksel scroll halaman (seolah-olah bagian atas kertas yang tergulung bersama konten), dan langsung tertarik turun responsif saat scroll up. Saat jari/kursor berhenti, navbar berhenti seketika di posisi tersebut tanpa bergerak sendiri.
+   - **Context Badge Tengah Dinamis**: Menampilkan pil kontekstual (misal: `Ruang Belajar • Informatika 7` dengan dot status hijau menyala, atau `Portal Belajar Terpadu` di Beranda).
    - Mengelola koneksi Supabase Realtime channel (`postgres_changes` tabel `master_siswa`) untuk pembaruan `total_points` dan `foto_profile` secara instan.
    - Mengorkestrasi pembukaan modal login dan modal detail profil.
 2. **`NavbarBrand.jsx`**:
-   - Menampilkan logo sekolah, judul "Ruang Spendaraja", serta versi rilis aplikasi.
+   - Menampilkan logo sekolah, judul "Ruang Spendaraja", serta subteks adaptif (`v.{__APP_VERSION__}` di beranda, atau `← Beranda` jika berada di dalam modul belajar).
+   - Tipografi beradaptasi otomatis antara tema terang (`text-slate-900` + `text-blue-600`) dan gelap (`text-white` + `text-blue-400`).
 3. **`NavbarPointsBadge.jsx`**:
-   - Menampilkan akumulasi poin siswa (khusus kelas 7 & admin) dengan ikon animasi kilau (*sparkles*).
+   - Menampilkan akumulasi poin siswa (khusus kelas 7 & admin) dalam bentuk **Gaming XP Chip** ringkas dengan ikon animasi kilau (*sparkles*). Adaptif terhadap palet tema terang (`amber-700`) dan gelap (`amber-300`).
 4. **`NavbarUserSection.jsx`**:
-   - Jika belum login: Tombol masuk beranimasi.
-   - Jika sudah login: Menampilkan avatar foto profil berbentuk bulat (atau inisial nama jika belum ada foto), nama pendek siswa, kelas, dan tombol keluar cepat (*quick logout*). Mengklik avatar akan membuka modal profil pengguna.
+   - Jika belum login: Tombol masuk beranimasi pil modern.
+   - Jika sudah login: Menampilkan avatar foto profil dengan **Instagram Story Gradient Ring** (ring gradien amber-rose menyala halus), nama pendek siswa, kelas, dan tombol keluar cepat. Pada Halaman Belajar (`/ruang-belajar`), nama disederhanakan agar tidak menduplikasi kartu profil besar di halaman. Mengklik avatar akan membuka modal profil pengguna.
 5. **`ModalLogin.jsx` & Manajemen Sesi (`src/utils/authStorage.js`)**:
    - Autocomplete pencarian nama siswa di tabel `master_siswa`.
    - Logika aktivasi akun baru (`is_registered === false`) dengan pembuatan password pertama kali minimal 6 karakter.

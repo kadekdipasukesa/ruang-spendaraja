@@ -52,7 +52,7 @@ export default function RuangBelajar() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 space-y-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 space-y-6">
         {/* Top Header Card */}
         <RuangBelajarHeader
           student={student}

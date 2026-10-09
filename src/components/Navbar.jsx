@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import { motion, useScroll, useMotionValue, useMotionValueEvent } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
 import { getStoredUserSession, updateUserSession, clearUserSession } from '../utils/authStorage';
 import NavbarBrand from './Navbar/NavbarBrand';
@@ -11,20 +12,116 @@ export default function Navbar() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [user, setUser] = useState(null);
-  const [isHidden, setIsHidden] = useState(false);
+  const [isAtTop, setIsAtTop] = useState(true);
+
+  const headerRef = useRef(null);
+  const translateY = useMotionValue(0);
+
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+  const isRuangBelajar = location.pathname.startsWith('/ruang-belajar');
+
+  const lightPaths = [
+    '/ruang-belajar',
+    '/bee-2026',
+    '/analisis-pelanggaran',
+    '/analisis-nilai',
+    '/ekstra-tik',
+    '/simulasi-interaktif',
+    '/portfolio-leaderboard',
+    '/dashboard-guru',
+    '/input-nilai',
+    '/face-absen',
+  ];
+  const isLightPage = lightPaths.some((p) => location.pathname.toLowerCase().startsWith(p));
 
   const { scrollY } = useScroll();
 
+  // Reset navbar saat berpindah halaman
+  useEffect(() => {
+    translateY.set(0);
+    setIsAtTop(window.scrollY <= 15);
+  }, [location.pathname, translateY]);
+
+  // Presisi 1:1 murni ala YouTube Mobile: Navbar bergerak murni mengikuti scroll tanpa timer/animasi sendiri
   useMotionValueEvent(scrollY, 'change', (latest) => {
-    const previous = scrollY.getPrevious();
-    // Jika scroll ke bawah lebih dari 150px, sembunyikan.
-    // Jika scroll ke atas, munculkan.
-    if (latest > previous && latest > 150) {
-      setIsHidden(true);
-    } else {
-      setIsHidden(false);
+    const previous = scrollY.getPrevious() ?? 0;
+    const delta = latest - previous;
+    const navHeight = headerRef.current?.offsetHeight || 56;
+
+    // Saat di posisi puncak layar (seamless, menyatu dengan konten)
+    if (latest <= 5) {
+      translateY.set(0);
+      setIsAtTop(true);
+      return;
     }
+
+    if (isAtTop && latest > 15) {
+      setIsAtTop(false);
+    }
+
+    // Hitung posisi translateY secara presisi 1:1 terhadap delta scroll
+    const currentY = translateY.get();
+    // Saat scroll up (delta < 0), beri akselerasi responsif 1.25x agar cepat muncul kembali
+    const effectiveDelta = delta < 0 ? delta * 1.25 : delta;
+    const nextY = Math.max(-navHeight, Math.min(0, currentY - effectiveDelta));
+    translateY.set(nextY);
   });
+
+  const getContextBadge = () => {
+    if (isHome) {
+      return (
+        <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-white/5 text-slate-300 border border-white/10 shadow-xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+          <span>Portal Belajar Terpadu</span>
+        </div>
+      );
+    }
+    if (isRuangBelajar) {
+      return (
+        <div
+          className={`hidden sm:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+            isLightPage
+              ? 'bg-slate-100/90 text-slate-700 border border-slate-200/80 shadow-xs'
+              : 'bg-white/5 text-slate-200 border border-white/10'
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>Ruang Belajar</span>
+          <span
+            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+              isLightPage ? 'bg-blue-100 text-blue-700' : 'bg-blue-500/20 text-blue-300'
+            }`}
+          >
+            Informatika 7
+          </span>
+        </div>
+      );
+    }
+    if (location.pathname.startsWith('/ekstra-tik')) {
+      return (
+        <div
+          className={`hidden sm:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
+            isLightPage
+              ? 'bg-slate-100/90 text-slate-700 border border-slate-200/80'
+              : 'bg-white/5 text-slate-200 border border-white/10'
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+          <span>Ekstra TIK</span>
+        </div>
+      );
+    }
+    if (location.pathname.startsWith('/jurnal-lab')) {
+      return (
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-slate-200 border border-white/10">
+          <span className="w-2 h-2 rounded-full bg-cyan-400" />
+          <span>Jurnal Lab Komputer</span>
+        </div>
+      );
+    }
+    return null;
+  };
 
   // Sinkronisasi realtime data siswa (poin & foto profil) dari Supabase
   useEffect(() => {
@@ -157,27 +254,45 @@ export default function Navbar() {
   return (
     <>
       <motion.nav
+        ref={headerRef}
         id="main-navbar"
-        variants={{
-          visible: { y: 0 },
-          hidden: { y: '-100%' },
-        }}
-        animate={isHidden ? 'hidden' : 'visible'}
-        transition={{ duration: 0.35, ease: 'easeInOut' }}
-        className="fixed top-0 left-0 w-full bg-slate-950/20 backdrop-blur-xl border-b border-white/5 px-4 sm:px-6 py-3.5 flex justify-between items-center z-[100] transition-all duration-300"
+        style={{ y: translateY }}
+        className={`fixed top-0 left-0 right-0 w-full z-[100] transition-colors duration-200 ${
+          isAtTop
+            ? 'bg-transparent border-b border-transparent shadow-none'
+            : isLightPage
+            ? 'bg-slate-50/95 sm:bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.05)] text-slate-800'
+            : 'bg-slate-950/95 backdrop-blur-xl border-b border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] text-white'
+        }`}
       >
-        <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent shadow-[0_1px_10px_rgba(245,158,11,0.2)]" />
+        {/* Subtle Ambient Border Line hanya muncul saat di-scroll */}
+        {!isAtTop && (
+          <div
+            className={`absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r ${
+              isLightPage
+                ? 'from-transparent via-blue-500/20 to-transparent'
+                : 'from-transparent via-amber-500/20 to-transparent'
+            }`}
+          />
+        )}
 
-        {/* Brand Logo & Versi */}
-        <NavbarBrand />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-2.5 flex justify-between items-center w-full">
+          {/* Brand Logo & Versi / Navigasi Beranda */}
+          <NavbarBrand isLightPage={isLightPage} isHome={isHome} />
 
-        {/* Sesi Pengguna: Poin, Avatar Profil, & Tombol Aksi */}
-        <NavbarUserSection
-          user={user}
-          onOpenLogin={() => setShowLoginModal(true)}
-          onOpenProfile={() => setShowProfileModal(true)}
-          onLogout={handleLogout}
-        />
+          {/* Center Context Pill (Badge Halaman Dinamis) */}
+          {getContextBadge()}
+
+          {/* Sesi Pengguna: Poin, Avatar Profil (Story Ring), & Tombol Aksi */}
+          <NavbarUserSection
+            user={user}
+            onOpenLogin={() => setShowLoginModal(true)}
+            onOpenProfile={() => setShowProfileModal(true)}
+            onLogout={handleLogout}
+            isLightPage={isLightPage}
+            isRuangBelajar={isRuangBelajar}
+          />
+        </div>
       </motion.nav>
 
       {/* Modal Masuk / Registrasi Akun */}

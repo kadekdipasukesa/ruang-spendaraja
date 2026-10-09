@@ -4,6 +4,15 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import { v2 as cloudinary } from "cloudinary";
 
+// Muat konfigurasi environment dari file .env (Node.js 20.12+)
+try {
+  if (typeof (process as any).loadEnvFile === "function") {
+    (process as any).loadEnvFile();
+  }
+} catch {
+  // File .env opsional jika env sudah terpasang dari sistem
+}
+
 // Konfigurasi Cloudinary Server-Side (API Key & Secret terlindungi di backend)
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "cjt4xpst",

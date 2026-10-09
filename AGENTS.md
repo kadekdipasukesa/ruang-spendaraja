@@ -10,6 +10,7 @@ Dokumen ini adalah referensi utama untuk pengembang dan AI Agent agar memahami s
 * **Styling**: Tailwind CSS, Lucide React (Ikon), Framer Motion (Animasi UI)
 * **Backend / Database**: Supabase (PostgreSQL Realtime Database & Storage)
 * **AI Engine**: Gemini API (@google/genai di sisi server)
+* **Environment Configuration**: File `.env` memuat `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `GEMINI_API_KEY`, dan `CLOUDINARY_*`. Dimuat otomatis oleh `process.loadEnvFile()` di `server.ts` dan Vite HMR untuk client.
 
 ---
 
@@ -85,16 +86,17 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
 ### A. Struktur Komponen
 * `src/pages/RuangBelajar.jsx`: Controller utama ruang belajar. Memiliki bottom padding (`pb-32 sm:pb-36`) agar tidak terhalang oleh fixed navigation bar.
 * `src/components/RuangBelajar/RuangBelajarHeader.jsx`:
-  - Kartu profil siswa kompak (mode mobile-friendly, palet amber/orange gaya `bee-2026.jsx`).
-  - Menampilkan `total_points` langsung dari `master_siswa` secara realtime.
-  - Foto profil resmi sesuai data `master_siswa.foto_profile` dengan listener realtime, fallback inisial cerdas (`getInitials`), dan pembukaan modal profil saat avatar diklik (`open-profile-modal`).
-  - Perhitungan peringkat siswa di kelasnya secara presisi melalui custom hook `src/hooks/RuangBelajar/useClassRank.js` dengan aturan tie-breaker konsisten (poin tertinggi, waktu pencapaian skor tercepat, alfabetis).
-  - Desain modern, bersih & fleksibel untuk HP maupun desktop (anti-AI slop: tipografi tegas, 3 metrik seimbang tanpa pill berlebihan, bebas tombol pemicu petasan berulang).
-  - Integrasi selebrasi otomatis satu kali saat mencapai 5 besar kelas tanpa tombol spam petasan.
-  - **Fixed Bottom Navigation Bar** yang dirender via `createPortal` langsung ke `document.body` agar menempel sempurna di bawah viewport:
-    - 📑 **Timeline** (`activeTab = 'timeline'`)
-    - 📖 **Log** (`activeTab = 'log_score'`)
-    - 🔥 **Peringkat** (`activeTab = 'leaderboard'`)
+  - Kartu profil siswa modern & terpadu ala Native App Channel Header (YouTube / Instagram Feed style, palet soft white `bg-white` border `slate-200/80` selaras dengan top navbar flush).
+  - Menampilkan `total_points` langsung dari `master_siswa` secara realtime dengan aksen XP amber/emas.
+  - Foto profil resmi dengan Instagram Story Ring gradien, status online dot emerald, dan fallback inisial cerdas (`getInitials`). Klik avatar membuka modal profil/portofolio siswa (`open-profile-modal`).
+  - Friendly Greeting Header (`Halo, [Nama] 👋`), nama siswa tegas, pill kelas/absen, serta chip peringkat interaktif yang dapat diklik langsung ke tab Leaderboard.
+  - **Learning Progress Bar (Ketuntasan Modul)**: Indikator visual progres belajar (`{progressPercent}% • {completedTasks}/{totalTasks} Tuntas`) yang menjembatani header profil secara mulus dengan alur roadmap tugas di bawahnya.
+  - **Interactive KPI Metric Chips**: 3 kartu metrik ringkas (Poin XP, Modul Tuntas, Peringkat Kelas) yang interaktif dengan navigasi klik langsung ke tab `log_score`, `timeline`, dan `leaderboard`.
+  - **Docked Bottom Navigation Bar** ala YouTube / Instagram (dirender via `createPortal` langsung ke `document.body` dengan safe-area padding):
+    - 📑 **Modul** (`activeTab = 'timeline'`) - Roadmap Tugas & Praktik
+    - 📖 **Log Skor** (`activeTab = 'log_score'`) - Riwayat Nilai & Poin
+    - 🔥 **Peringkat** (`activeTab = 'leaderboard'`) - Klasemen Juara Kelas 7
+    - 👤 **Profil** - Avatar siswa / profil shortcut yang langsung membuka modal profil & portofolio siswa (`open-profile-modal`).
 * `src/components/RuangBelajar/TimelineTugas.jsx`: Daftar modul materi & tugas dengan filter kategori.
 * `src/components/RuangBelajar/TaskDetailModal.jsx` & `ModalSubmitProyek.jsx`: Modal rincian tugas & form submit yang dirender via `createPortal` langsung ke `document.body` dengan `z-[99999]` agar selalu berada di lapisan terdepan dan tidak tertutupi navbar atas maupun floating bottom navigation bar.
 * `src/components/RuangBelajar/LogScoreTugas.jsx`: Riwayat poin dari tabel `point_logs`.
@@ -158,7 +160,7 @@ Siswa / Guru Menyelesaikan / Menilai Tugas
 
 Untuk memahami alur kerja lebih spesifik dan mendalam pada setiap modul, silakan baca dokumentasi pendukung berikut:
 1. **[`/docs/DESIGN_SYSTEM.md`](/docs/DESIGN_SYSTEM.md)**: Standar desain 4 arketipe halaman (Siswa, Praktikum, Portal, Admin) & aturan komponen mobile.
-2. **[`/docs/HOME_DAN_KOMPONEN_GLOBAL.md`](/docs/HOME_DAN_KOMPONEN_GLOBAL.md)**: Arsitektur Home App Launcher, Navbar Modular (`NavbarBrand`, `NavbarPointsBadge`, `NavbarUserSection`, `ModalLogin`, `ModalProfilUser`, `ModalGantiPassword`, `CameraCaptureModal`), Manajemen Sesi Komputer Lab vs Perangkat Pribadi (`authStorage.js`), Handshake Verifikasi Sandi Database Supabase, integrasi Foto Profil Cloudinary via Kamera Langsung & Supabase Realtime, Floating Online Presence, dan Live Chat Realtime.
+2. **[`/docs/HOME_DAN_KOMPONEN_GLOBAL.md`](/docs/HOME_DAN_KOMPONEN_GLOBAL.md)**: Arsitektur Home App Launcher, Seamless Top Bar Modular & Smart Reveal on Scroll Up (`NavbarBrand`, `NavbarPointsBadge`, `NavbarUserSection`, `ModalLogin`, `ModalProfilUser`, `ModalGantiPassword`, `CameraCaptureModal`), Manajemen Sesi Komputer Lab vs Perangkat Pribadi (`authStorage.js`), Handshake Verifikasi Sandi Database Supabase, integrasi Foto Profil Cloudinary via Kamera Langsung & Supabase Realtime, Floating Online Presence, dan Live Chat Realtime.
 3. **[`/docs/RUANG_BELAJAR.md`](/docs/RUANG_BELAJAR.md)**: Master Hub modul Ruang Belajar, Timeline, Log Skor, dan Leaderboard Kelas.
 4. **[`/docs/tugas/TUGAS_1_SIMULATOR_FOLDER.md`](/docs/tugas/TUGAS_1_SIMULATOR_FOLDER.md)**: Rincian teknis virtual file system & 25 misi Tugas 1.
 5. **[`/docs/tugas/TUGAS_2_BERPIKIR_KOMPUTASIONAL.md`](/docs/tugas/TUGAS_2_BERPIKIR_KOMPUTASIONAL.md)**: Rincian teknis 4 misi terpadu Bab 1 (Algoritma, Jadwal, Struktur Data, Biner).
