@@ -21,6 +21,12 @@ cloudinary.config({
   secure: true,
 });
 
+// Konfigurasi Supabase Server-Side untuk Memori & Chat Teman Belajar AI
+import { createClient } from "@supabase/supabase-js";
+const supabaseUrl = process.env.VITE_SUPABASE_URL || "https://qatnbjebroskmswrjvex.supabase.co";
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdG5iamVicm9za21zd3JqdmV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MDMyMDMsImV4cCI6MjA4NTA3OTIwM30.rRvcpptkY8kAvIwF8E2cQOLqR6AjJQtq8t2cqZRwQqM";
+const supabaseServer = createClient(supabaseUrl, supabaseAnonKey);
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -152,7 +158,7 @@ async function startServer() {
       `;
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: process.env.GEMINI_VISION_MODEL || "gemini-3.8-flash",
         contents: [
           {
             role: "user",
@@ -185,6 +191,313 @@ async function startServer() {
       console.error("❌ [SERVER GEMINI ERROR]:", error);
       res.status(500).json({
         error: error.message || "Gagal menganalisis LJK dengan Gemini.",
+      });
+    }
+  });
+
+  // Endpoint Mengambil Riwayat Chat & Ingatan Murid
+  app.get("/api/gemini/companion-history", async (req, res) => {
+    try {
+      const studentId = req.query.studentId ? Number(req.query.studentId) : null;
+      const character = (req.query.character as string) || "aurora";
+
+      if (!studentId || isNaN(studentId)) {
+        return res.json({ messages: [], memory: null });
+      }
+
+      const { data: memData } = await supabaseServer
+        .from("ai_companion_memory")
+        .select("profil_siswa, topik_terakhir, mood_siswa, total_obrolan, updated_at")
+        .eq("siswa_id", studentId)
+        .eq("character", character)
+        .maybeSingle();
+
+      const { data: msgData } = await supabaseServer
+        .from("ai_companion_messages")
+        .select("id, sender, message_text, status, created_at")
+        .eq("siswa_id", studentId)
+        .eq("character", character)
+        .order("created_at", { ascending: true })
+        .limit(25);
+
+      return res.json({
+        memory: memData || null,
+        messages: msgData || [],
+      });
+    } catch (err: any) {
+      console.warn("⚠️ [COMPANION HISTORY ERROR]:", err);
+      return res.status(500).json({ error: err.message, messages: [] });
+    }
+  });
+
+  // Endpoint Chat Teman Belajar AI Siswa: @aurora & @arunika (Realistis & Memori Supabase)
+  app.post("/api/gemini/companion-chat", async (req, res) => {
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return res.status(503).json({
+          error: "API Key Gemini belum disetel di server.",
+          reply: "Hai! Saat ini koneksi AI Gemini di server sedang offline, tapi aku tetap siap menemanimu belajar di Ruang Spendaraja ya! Semangat! 🌟",
+        });
+      }
+
+      const {
+        character = "aurora",
+        message,
+        history = [],
+        studentName = "Teman",
+        studentId = null,
+      } = req.body;
+
+      if (!message || typeof message !== "string") {
+        return res.status(400).json({ error: "Pesan tidak boleh kosong." });
+      }
+
+      const parsedStudentId = studentId ? Number(studentId) : null;
+      const ai = new GoogleGenAI({ apiKey });
+      const companionModel = process.env.GEMINI_COMPANION_MODEL || "gemini-2.5-flash";
+
+      // 1. Waktu Nyata WITA (UTC+8) untuk Simulasi Jadwal Murid Asli Spendaraja
+      const nowWita = new Date(Date.now() + 8 * 3600 * 1000);
+      const currentHour = nowWita.getUTCHours();
+      const currentMinute = nowWita.getUTCMinutes();
+      const timeString = `${String(currentHour).padStart(2, "0")}:${String(currentMinute).padStart(2, "0")} WITA`;
+
+      let timeScheduleContext = "";
+      let statusBadge = "🟢 Online (Lagi senggang)";
+
+      if (currentHour >= 7 && currentHour < 13) {
+        statusBadge = "🟡 Lagi di kelas / Sekolah";
+        timeScheduleContext = `Saat ini jam ${timeString} (jam pelajaran sekolah di SMPN 2 Singaraja). Kamu sedang di sekolah/kelas. Kamu bisa balas singkat, atau sesekali berbisik santai kalau lagi ada guru di depan kelas, atau saat jam istirahat.`;
+      } else if (currentHour >= 13 && currentHour < 16) {
+        statusBadge = "🚲 Otw pulang / Ekskul TIK";
+        timeScheduleContext = `Saat ini jam ${timeString} (jam pulang sekolah / istirahat siang / kegiatan ekskul). Kamu bisa bersikap santai, agak capek/lapar sehabis sekolah, atau lagi otw pulang.`;
+      } else if (currentHour >= 16 && currentHour < 21) {
+        statusBadge = "🟢 Online (Belajar & Ngerjain PR)";
+        timeScheduleContext = `Saat ini jam ${timeString} (jam santai sore/malam di rumah). Kamu dalam mode paling aktif, siap diskusi santai, dan ngerjain tugas/latihan bareng.`;
+      } else {
+        statusBadge = "😴 Istirahat / Jam Tidur";
+        timeScheduleContext = `Saat ini jam ${timeString} (larut malam). Anak SMP normalnya sudah tidur atau mengantuk karena besok pagi harus bangun sekolah. Jawablah dengan santai agak mengantuk atau ingatkan temanmu tidur agar tidak kesiangan, misal: "Udah malem nih, besok upacara/sekolah pagi, tidur duluan yaa! Besok kita lanjut lagi 😴".`;
+      }
+
+      // 2. Baca Memori Jangka Panjang dari Database Supabase (1 Baris per Siswa)
+      let memorySummary = {
+        profil_siswa: `Murid kelas 7 baru bernama ${studentName}.`,
+        topik_terakhir: "Baru pertama kali menyapa.",
+        mood_siswa: "santai",
+      };
+
+      if (parsedStudentId && !isNaN(parsedStudentId)) {
+        try {
+          const { data: memData } = await supabaseServer
+            .from("ai_companion_memory")
+            .select("profil_siswa, topik_terakhir, mood_siswa, total_obrolan")
+            .eq("siswa_id", parsedStudentId)
+            .eq("character", character)
+            .maybeSingle();
+
+          if (memData) {
+            memorySummary = {
+              profil_siswa: memData.profil_siswa || memorySummary.profil_siswa,
+              topik_terakhir: memData.topik_terakhir || memorySummary.topik_terakhir,
+              mood_siswa: memData.mood_siswa || "santai",
+            };
+          } else {
+            // Inisialisasi baris pertama jika belum ada
+            await supabaseServer.from("ai_companion_memory").insert({
+              siswa_id: parsedStudentId,
+              character,
+              profil_siswa: `Murid kelas 7 bernama ${studentName}, baru menyapa.`,
+              topik_terakhir: "Memulai perkenalan pertama.",
+              mood_siswa: "santai",
+              total_obrolan: 1,
+            });
+          }
+        } catch (dbErr) {
+          console.warn("⚠️ [Companion Memory DB Read Warning]:", dbErr);
+        }
+      }
+
+      // 3. Konfigurasi Persona Murid Asli & System Instruction
+      const isAurora = character === "aurora";
+      const basePersona = isAurora
+        ? `Kamu adalah Aurora (@aurora), murid perempuan Kelas 7 di SMP Negeri 2 Singaraja (Spendaraja).
+Kamu adalah teman sebaya (peer tutor) yang ramah, hangat, teliti, cerdas, dan rajin.
+Gaya bicaramu santun, akrab, mudah dipahami anak SMP, dan selalu menyemangati dengan emoji seperti 🌸, ✨, 📚, 😊.`
+        : `Kamu adalah Arunika (@arunika), murid laki-laki Kelas 7 di SMP Negeri 2 Singaraja (Spendaraja).
+Kamu adalah teman sebaya (study buddy) yang santai, energik, praktis, jago logika komputer, dan suka analogi game.
+Gaya bicaramu gaul sopan khas anak SMP, to the point, solutif dengan emoji seperti ⚡, 🚀, 💻, 😎, 🔥.`;
+
+      const systemInstruction = `${basePersona}
+
+TEMAN BICARAMU:
+- Nama murid: ${studentName}
+
+INGATAN TENTANG TEMANMU:
+- Profil yang kamu ingat tentang dia: "${memorySummary.profil_siswa}"
+- Terakhir kali kalian membahas: "${memorySummary.topik_terakhir}"
+
+SITUASI WAKTU REALISTIS:
+- ${timeScheduleContext}
+
+ATURAN GAYA BICARA MURID NYATA (SANGAT KETAT):
+1. JAWABAN WAJIB SINGKAT: MAKSIMAL 1 SAMPAI 3 KALIMAT SAJA! Persis seperti chat WhatsApp atau DM Instagram.
+2. DILARANG KERAS bertele-tele, membuat daftar poin panjang, atau membuat esai kuliah.
+3. DILARANG menggunakan kata pembuka klise bot kaku seperti "Halo!", "Tentu saja!", "Berikut adalah penjelasannya:".
+4. Sesekali kamu boleh menolak halus atau bilang lagi sibuk sebentar jika situasi jamnya memang lagi di kelas atau sudah malam.
+5. Bersikaplah 100% seperti murid SMP asli Spendaraja yang menjadi sahabat sebaya, bukan robot asisten kecerdasan buatan.`;
+
+      // 4. Format Percakapan untuk Gemini API
+      const contents: any[] = [];
+      if (Array.isArray(history)) {
+        history.slice(-6).forEach((h: any) => {
+          if (h.role && h.text) {
+            contents.push({
+              role: h.role === "assistant" ? "model" : "user",
+              parts: [{ text: h.text }],
+            });
+          }
+        });
+      }
+      contents.push({
+        role: "user",
+        parts: [{ text: message }],
+      });
+
+      // 5. Generate Jawaban dari Gemini dengan Multi-Model Fallback & Auto-Retry
+      let responseText = "";
+      const candidateModels = Array.from(
+        new Set([companionModel, "gemini-2.5-flash", "gemini-3.8-flash"])
+      );
+
+      for (const m of candidateModels) {
+        try {
+          const resGen = await ai.models.generateContent({
+            model: m,
+            contents,
+            config: {
+              systemInstruction,
+            },
+          });
+          if (resGen?.text) {
+            responseText = resGen.text;
+            break;
+          }
+        } catch (errTry: any) {
+          console.warn(`⚠️ [Gemini ${m} temporary spike/retry]:`, errTry.message || errTry);
+          await new Promise((resolve) => setTimeout(resolve, 800));
+        }
+      }
+
+      // Fallback karakter ramah jika Google AI server sedang mengalami lonjakan beban sesaat
+      if (!responseText) {
+        responseText = isAurora
+          ? `Halo ${studentName}! Tadi sinyalku agak ngadat sebentar nih 🌸 Coba colek atau tanyakan sekali lagi yaa!`
+          : `Yo ${studentName}! Jaringanku barusan sempet ngelag dikit bro ⚡ Gas tanyain sekali lagi ya!`;
+      }
+
+      const replyText = responseText;
+
+      // 6. Balas Langsung ke Siswa (Instan tanpa menunggu background update)
+      res.json({
+        reply: replyText,
+        character,
+        statusBadge,
+        timeString,
+      });
+
+      // 7. Background Task Asinkron: Simpan Chat & Perbarui Ringkasan Memori di Supabase
+      if (parsedStudentId && !isNaN(parsedStudentId)) {
+        (async () => {
+          try {
+            // A. Simpan sepasang pesan ke tabel riwayat aktif
+            await supabaseServer.from("ai_companion_messages").insert([
+              {
+                siswa_id: parsedStudentId,
+                character,
+                sender: "student",
+                message_text: message,
+                status: "read",
+              },
+              {
+                siswa_id: parsedStudentId,
+                character,
+                sender: "companion",
+                message_text: replyText,
+                status: "replied",
+              },
+            ]);
+
+            // B. Rangkum memori baru menggunakan Gemini Flash
+            const summaryPrompt = `Kamu adalah pencatat memori persahabatan anak SMP Spendaraja.
+Data murid: ${studentName} (Kelas 7).
+Catatan lama: "${memorySummary.profil_siswa}".
+Topik lama: "${memorySummary.topik_terakhir}".
+
+Percakapan baru:
+${studentName}: "${message}"
+${character}: "${replyText}"
+
+TUGASMU:
+Buat pembaruan ringkasan dalam format JSON satu baris:
+{"profil_siswa": "<Maksimal 1 kalimat singkat tentang kebiasaan/karakter/gaya bicara murid>", "topik_terakhir": "<Maksimal 1 kalimat tentang apa yang baru saja dibahas>"}`;
+
+            let summaryRaw = "";
+            for (const sm of candidateModels) {
+              try {
+                const summaryRes = await ai.models.generateContent({
+                  model: sm,
+                  contents: [{ role: "user", parts: [{ text: summaryPrompt }] }],
+                });
+                if (summaryRes?.text) {
+                  summaryRaw = summaryRes.text;
+                  break;
+                }
+              } catch {
+                // Lanjut ke model kandidat berikutnya jika ada spike
+              }
+            }
+            const jsonMatch = summaryRaw.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const parsedJson = JSON.parse(jsonMatch[0]);
+              if (parsedJson.profil_siswa || parsedJson.topik_terakhir) {
+                await supabaseServer
+                  .from("ai_companion_memory")
+                  .update({
+                    profil_siswa: parsedJson.profil_siswa || memorySummary.profil_siswa,
+                    topik_terakhir: parsedJson.topik_terakhir || memorySummary.topik_terakhir,
+                    last_interacted_at: new Date().toISOString(),
+                  })
+                  .eq("siswa_id", parsedStudentId)
+                  .eq("character", character);
+              }
+            }
+
+            // C. Auto-Retention: Bersihkan pesan lebih dari 20 chat agar database selalu ramping
+            const { data: excessMsgs } = await supabaseServer
+              .from("ai_companion_messages")
+              .select("id")
+              .eq("siswa_id", parsedStudentId)
+              .eq("character", character)
+              .order("created_at", { ascending: false })
+              .range(20, 100);
+
+            if (excessMsgs && excessMsgs.length > 0) {
+              const idsToDelete = excessMsgs.map((m: any) => m.id);
+              await supabaseServer.from("ai_companion_messages").delete().in("id", idsToDelete);
+            }
+          } catch (bgErr) {
+            console.warn("⚠️ [Companion Background Task Warning]:", bgErr);
+          }
+        })();
+      }
+
+      return;
+    } catch (err: any) {
+      console.error("❌ [COMPANION CHAT ERROR]:", err);
+      return res.status(500).json({
+        error: err.message || "Gagal menghasilkan respons AI.",
+        reply: "Ups, sinyalku agak terganggu sebentar. Tapi jangan menyerah ya, coba tanyakan lagi pertanyaannya! 💪",
       });
     }
   });

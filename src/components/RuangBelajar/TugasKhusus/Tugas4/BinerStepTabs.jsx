@@ -1,4 +1,4 @@
-import { BookOpen, Cpu, Binary, FileCode, CheckCircle2 } from 'lucide-react';
+import { BookOpen, Cpu, Binary, FileCode, CheckCircle2, Camera } from 'lucide-react';
 
 export default function BinerStepTabs({
   activeStage,
@@ -7,11 +7,13 @@ export default function BinerStepTabs({
   scores,
   stage2Questions,
   stage3Questions,
-  stage4Questions
+  stage4Questions,
+  uploadedPhotoInfo
 }) {
   const s2Done = stage2Questions.length > 0 && stage2Questions.every((q) => q.isCorrect);
   const s3Done = stage3Questions.length > 0 && stage3Questions.every((q) => q.isCorrect);
   const s4Done = stage4Questions.length > 0 && stage4Questions.every((q) => q.isCorrect);
+  const hasPhoto = Boolean(uploadedPhotoInfo?.secureUrl);
 
   const tabs = [
     {
@@ -20,7 +22,7 @@ export default function BinerStepTabs({
       subtitle: 'Alur & Saklar 8-Bit',
       icon: BookOpen,
       isCompleted: stage1Completed,
-      badge: stage1Completed ? 'Selesai' : 'Wajib Baca'
+      badge: stage1Completed ? 'Selesai' : 'Wajib'
     },
     {
       id: 2,
@@ -28,7 +30,7 @@ export default function BinerStepTabs({
       subtitle: '5 Soal (15 Poin)',
       icon: Binary,
       isCompleted: s2Done,
-      badge: `${scores.stage2}/15 Poin`
+      badge: `${scores.stage2}/15 Pt`
     },
     {
       id: 3,
@@ -36,7 +38,7 @@ export default function BinerStepTabs({
       subtitle: '5 Soal (15 Poin)',
       icon: Cpu,
       isCompleted: s3Done,
-      badge: `${scores.stage3}/15 Poin`
+      badge: `${scores.stage3}/15 Pt`
     },
     {
       id: 4,
@@ -44,12 +46,20 @@ export default function BinerStepTabs({
       subtitle: '5 Soal (20 Poin)',
       icon: FileCode,
       isCompleted: s4Done,
-      badge: `${scores.stage4}/20 Poin`
+      badge: `${scores.stage4}/20 Pt`
+    },
+    {
+      id: 5,
+      title: 'Foto Orek-Orek',
+      subtitle: 'Buku Tulis (Kamera)',
+      icon: Camera,
+      isCompleted: hasPhoto,
+      badge: hasPhoto ? 'Tersimpan' : 'Wajib'
     }
   ];
 
   return (
-    <nav className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3" aria-label="Tahapan Tugas">
+    <nav className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3" aria-label="Tahapan Tugas">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeStage === tab.id;

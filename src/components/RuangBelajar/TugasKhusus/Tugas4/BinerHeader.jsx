@@ -1,20 +1,22 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Award, User, RefreshCw, Send, CheckCircle2, Sparkles, LogIn } from 'lucide-react';
+import { ArrowLeft, Award, User, RefreshCw, Send, CheckCircle2, Sparkles, LogIn, Save } from 'lucide-react';
 
 export default function BinerHeader({
   user,
   totalScore,
   submitted,
   submitting,
+  savingDraft,
   previousSubmission,
   onOpenLogin,
   onResetAll,
+  onSaveDraft,
   onSubmitAll
 }) {
   const navigate = useNavigate();
   const studentName = user?.NAMA || user?.nama || 'Tamu Belajar';
   const studentClass = user?.KELAS || user?.Kelas || user?.kelas || '-';
-  const prevScore = previousSubmission ? (previousSubmission.nilai_akhir ?? previousSubmission.skor ?? 0) : 0;
+  const prevScore = previousSubmission ? (previousSubmission.skor ?? previousSubmission.nilai_akhir ?? 0) : 0;
 
   return (
     <header className="bg-gradient-to-r from-[#0a1931] via-[#0e2448] to-[#0a1931] border-2 border-[#1e3e70] rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-md relative overflow-hidden">
@@ -112,11 +114,23 @@ export default function BinerHeader({
             <RefreshCw className="w-4 h-4" />
           </button>
 
+          {/* Tombol Simpan Progres Draft */}
+          <button
+            type="button"
+            onClick={onSaveDraft}
+            disabled={savingDraft || submitting}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-[#142d55] hover:bg-[#1a3a6d] text-cyan-300 hover:text-white transition border border-[#254b85] text-xs font-bold shadow-sm cursor-pointer disabled:opacity-50"
+            title="Simpan progres pengerjaan saat ini ke database agar bisa dilanjutkan kapan saja"
+          >
+            <Save className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">{savingDraft ? 'Menyimpan...' : 'Simpan'}</span>
+          </button>
+
           {/* Tombol Kumpulkan */}
           <button
             type="button"
             onClick={onSubmitAll}
-            disabled={submitting}
+            disabled={submitting || savingDraft}
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#fbbf24] to-[#f59e0b] hover:from-[#f59e0b] hover:to-[#d97706] text-slate-950 font-black text-xs shadow-lg shadow-[#fbbf24]/20 transition active:scale-95 disabled:opacity-50 shrink-0 cursor-pointer"
           >
             <Send className="w-3.5 h-3.5" />

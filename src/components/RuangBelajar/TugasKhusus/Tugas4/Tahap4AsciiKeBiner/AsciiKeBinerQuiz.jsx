@@ -6,13 +6,15 @@ import {
   Sparkles,
   Send,
   HelpCircle,
-  Search
+  Search,
+  Camera
 } from 'lucide-react';
 import { BIT_WEIGHTS_8, ASCII_MAP_BY_CHAR } from '../binerAsciiData';
 
 export default function AsciiKeBinerQuiz({
   questions,
   onAnswerQuestion,
+  onNextStage,
   onSubmitTask,
   submitting,
   earnedScore,
@@ -111,27 +113,24 @@ export default function AsciiKeBinerQuiz({
               </div>
             </div>
 
-            {/* Kotak Petunjuk Nilai Desimal & Poin */}
-            <div className="flex items-center gap-3">
-              <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800 text-center min-w-[120px]">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Poin Soal Ini</span>
-                <div className="text-2xl font-black text-purple-400 font-mono mt-0.5">
-                  {currentQ.earnedPoints} <span className="text-xs text-slate-500">/ 4 pt</span>
-                </div>
-                <span className="text-[10px] text-slate-500 block mt-0.5">
-                  Percobaan: {currentQ.attempts || 0}x
-                </span>
+            {/* Kotak Status Poin Soal */}
+            <div className="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 text-center min-w-[130px]">
+              <span className="text-[10px] uppercase font-bold text-slate-400 block">Poin Soal Ini</span>
+              <div className="text-2xl font-black text-purple-400 font-mono mt-0.5">
+                {currentQ.earnedPoints} <span className="text-xs text-slate-500">/ 4 pt</span>
               </div>
+              <span className="text-[10px] text-slate-500 block mt-0.5">
+                Percobaan: {currentQ.attempts || 0}x
+              </span>
+            </div>
+          </div>
 
-              <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800 text-center min-w-[120px]">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Nilai Desimal</span>
-                <div className="text-2xl font-black text-amber-400 font-mono mt-0.5">
-                  {currentQ.desimal}
-                </div>
-                <span className="text-[10px] text-slate-500 block mt-0.5">
-                  Nomor ASCII
-                </span>
-              </div>
+          {/* Kotak Petunjuk Khusus: Cari Nilai Desimal di Tabel ASCII Tahap 1 */}
+          <div className="bg-purple-950/40 border border-purple-500/30 rounded-2xl p-4 flex items-start gap-3">
+            <HelpCircle className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+            <div className="text-xs text-purple-200 leading-relaxed">
+              <strong className="text-purple-300 font-bold block mb-1">💡 Petunjuk Pengerjaan:</strong>
+              Cari terlebih dahulu nilai desimal pada karakter &lsquo;<strong className="text-white font-mono text-sm">{currentQ.char}</strong>&rsquo; pada <strong>Tabel ASCII di Tahap 1</strong>, lalu hitung dan ketikkan hasil konversi angka desimal tersebut ke dalam kode biner 8-bit.
             </div>
           </div>
 
@@ -139,7 +138,7 @@ export default function AsciiKeBinerQuiz({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor={`input-ascii-${currentQ.id}`} className="text-xs font-bold text-slate-300 block">
-                Ketikkan Biner 8-Bit untuk Karakter &lsquo;{currentQ.char}&rsquo; (Desimal {currentQ.desimal}):
+                Ketikkan Biner 8-Bit untuk Karakter &lsquo;{currentQ.char}&rsquo;:
               </label>
               <div className="flex items-center gap-3">
                 <input
@@ -162,7 +161,7 @@ export default function AsciiKeBinerQuiz({
                 </button>
               </div>
               <p className="text-[11px] text-slate-500">
-                *Ubah angka desimal <strong>{currentQ.desimal}</strong> ke format biner 8-bit (kombinasi 0 dan 1).
+                *Petunjuk: Buka tab <strong>Tahap 1 (Materi &amp; Konsep)</strong> untuk mengecek nomor kode desimal karakter &lsquo;{currentQ.char}&rsquo; pada tabel ASCII.
               </p>
             </div>
 
@@ -200,15 +199,28 @@ export default function AsciiKeBinerQuiz({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onSubmitTask}
-          disabled={submitting}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:brightness-110 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/20 transition active:scale-95 disabled:opacity-50 cursor-pointer"
-        >
-          <Send className="w-4 h-4" />
-          <span>{submitting ? 'Menyimpan ke Cloud...' : 'Kumpulkan Tugas 4 (Simpan Nilai)'}</span>
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          {onNextStage && (
+            <button
+              type="button"
+              onClick={onNextStage}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:brightness-110 text-white font-black text-sm shadow-xl shadow-purple-500/20 transition active:scale-95 cursor-pointer"
+            >
+              <Camera className="w-4 h-4" />
+              <span>Tahap 5: Foto Orek-Orek</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onSubmitTask}
+            disabled={submitting}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:brightness-110 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/20 transition active:scale-95 disabled:opacity-50 cursor-pointer"
+          >
+            <Send className="w-4 h-4" />
+            <span>{submitting ? 'Menyimpan ke Cloud...' : 'Kumpulkan Tugas 4'}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -6,6 +6,9 @@ import LogScoreTugas from '../components/RuangBelajar/LogScoreTugas';
 import LeaderboardKelas from '../components/RuangBelajar/LeaderboardKelas';
 import ModalSubmitProyek from '../components/RuangBelajar/ModalSubmitProyek';
 import TaskDetailModal from '../components/RuangBelajar/TaskDetailModal';
+import AiCompanionBanner from '../components/RuangBelajar/AiCompanion/AiCompanionBanner';
+import AiCompanionModal from '../components/RuangBelajar/AiCompanion/AiCompanionModal';
+import AiFloatingButton from '../components/RuangBelajar/AiCompanion/AiFloatingButton';
 import { CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -34,6 +37,13 @@ export default function RuangBelajar() {
   } = useRuangBelajarDB();
 
   const [submitModalTask, setSubmitModalTask] = useState(null);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [aiModalTab, setAiModalTab] = useState('video'); // 'video' | 'chat'
+
+  const handleOpenAiModal = (tab = 'video') => {
+    setAiModalTab(tab);
+    setIsAiModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-32 sm:pb-36">
@@ -73,16 +83,22 @@ export default function RuangBelajar() {
           /* Active Tab Content */
           <div className="transition-all">
             {activeTab === 'timeline' && (
-              <TimelineTugas
-                tasks={tasks}
-                student={student}
-                isAdmin={isAdmin}
-                onOpenSubmitModal={(task) => setSubmitModalTask(task)}
-                onToggleActive={handleToggleTaskActive}
-                onUpdateWeight={handleUpdateTaskWeight}
-                onUpdateDeadline={handleUpdateTaskDeadline}
-                onSelectDetail={(task) => setSelectedTask(task)}
-              />
+              <div className="space-y-6">
+                {/* Banner AI Companion Aurora & Arunika */}
+                <AiCompanionBanner onOpenModal={handleOpenAiModal} />
+
+                {/* Timeline Roadmap Tugas */}
+                <TimelineTugas
+                  tasks={tasks}
+                  student={student}
+                  isAdmin={isAdmin}
+                  onOpenSubmitModal={(task) => setSubmitModalTask(task)}
+                  onToggleActive={handleToggleTaskActive}
+                  onUpdateWeight={handleUpdateTaskWeight}
+                  onUpdateDeadline={handleUpdateTaskDeadline}
+                  onSelectDetail={(task) => setSelectedTask(task)}
+                />
+              </div>
             )}
 
             {activeTab === 'log_score' && (
@@ -107,6 +123,18 @@ export default function RuangBelajar() {
           </div>
         )}
       </div>
+
+      {/* Floating Action Button Teman Belajar AI Aurora & Arunika */}
+      <AiFloatingButton onClick={() => handleOpenAiModal('chat')} />
+
+      {/* Modal Dialog AI Companion (YouTube Shorts & Live Chat) */}
+      <AiCompanionModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        initialTab={aiModalTab}
+        studentName={student?.NAMA || student?.nama || 'Teman'}
+        studentId={student?.id}
+      />
 
       {/* Submission Modal for Project/Link tasks */}
       {submitModalTask && (

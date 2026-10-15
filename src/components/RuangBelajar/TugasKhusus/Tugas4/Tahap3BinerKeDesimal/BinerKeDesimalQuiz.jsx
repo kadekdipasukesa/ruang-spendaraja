@@ -7,7 +7,6 @@ import {
   Sparkles,
   HelpCircle
 } from 'lucide-react';
-import { BIT_WEIGHTS_8 } from '../binerAsciiData';
 
 export default function BinerKeDesimalQuiz({
   questions,
@@ -88,7 +87,7 @@ export default function BinerKeDesimalQuiz({
       {/* Kotak Soal Aktif */}
       {currentQ && (
         <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-7 space-y-6">
-          {/* Tampilan Visual Bit & Bobot Pangkat 2 */}
+          {/* Tampilan Visual Bit Biner Murni */}
           <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800/80 space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
@@ -99,29 +98,22 @@ export default function BinerKeDesimalQuiz({
               </div>
             </div>
 
-            {/* Kartu 8 Bit dengan Bobot di Atasnya */}
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+            {/* Kartu 8 Bit Biner Murni Tanpa Bocoran Nilai Bobot */}
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 sm:gap-3">
               {currentQ.givenBiner.split('').map((bit, idx) => {
-                const weight = BIT_WEIGHTS_8[idx];
                 const isOn = bit === '1';
 
                 return (
                   <div
-                    key={weight}
-                    className={`p-3 rounded-2xl border text-center transition ${
+                    key={idx}
+                    className={`p-3.5 sm:p-4 rounded-2xl border text-center transition shadow-md flex items-center justify-center ${
                       isOn
-                        ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 ring-1 ring-cyan-500/30'
-                        : 'bg-slate-900/50 border-slate-800/80 text-slate-600'
+                        ? 'bg-cyan-950/50 border-cyan-500/60 text-cyan-300 ring-1 ring-cyan-500/40 shadow-cyan-500/10'
+                        : 'bg-slate-900/60 border-slate-800 text-slate-500'
                     }`}
                   >
-                    <span className={`text-[10px] font-mono block ${isOn ? 'text-cyan-400 font-bold' : 'text-slate-600'}`}>
-                      {weight}
-                    </span>
-                    <span className="text-3xl font-black font-mono leading-none my-1 block">
+                    <span className="text-3xl sm:text-4xl font-black font-mono leading-none">
                       {bit}
-                    </span>
-                    <span className={`text-[9px] uppercase font-bold block ${isOn ? 'text-emerald-400' : 'text-slate-600'}`}>
-                      {isOn ? `+${weight}` : '0'}
                     </span>
                   </div>
                 );
@@ -129,7 +121,7 @@ export default function BinerKeDesimalQuiz({
             </div>
 
             <p className="text-xs text-slate-400 text-center">
-              Petunjuk: Jumlahkan angka pada kartu yang memiliki bit bernilai <strong>1</strong> (warna menyala).
+              Petunjuk: Hitung nilai desimal dari deretan 8-bit biner di atas secara mandiri menggunakan konsep nilai tempat perpangkatan 2.
             </p>
           </div>
 

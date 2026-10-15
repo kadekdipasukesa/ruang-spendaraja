@@ -1,4 +1,4 @@
-import { CheckCircle2, Award, ArrowRight, ShieldCheck, Sparkles, X, Binary, Cpu, FileCode } from 'lucide-react';
+import { CheckCircle2, Award, ArrowRight, ShieldCheck, Sparkles, X, Binary, Cpu, FileCode, Camera, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ModalSubmissionSuccessBiner({
@@ -7,6 +7,7 @@ export default function ModalSubmissionSuccessBiner({
   totalScore = 0,
   scores = { stage2: 0, stage3: 0, stage4: 0 },
   student,
+  uploadedPhotoInfo,
   onGoToRuangBelajar
 }) {
   if (!isOpen) return null;
@@ -121,6 +122,41 @@ export default function ModalSubmissionSuccessBiner({
                 <span className="text-[9px] text-slate-500">ASCII ke Biner</span>
               </div>
             </div>
+          </div>
+
+          {/* Status Foto Orek-Orek (Tahap 5) */}
+          <div className="mb-5 p-3 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                uploadedPhotoInfo?.secureUrl
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+              }`}>
+                <Camera className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-slate-200 truncate">
+                  {uploadedPhotoInfo?.secureUrl ? 'Bukti Orak-Orek Terlampir' : 'Bukti Orak-Orek Buku Tulis'}
+                </p>
+                <p className="text-[10px] text-slate-400 truncate">
+                  {uploadedPhotoInfo?.secureUrl
+                    ? (uploadedPhotoInfo.originalFileName || 'Tersimpan di Cloudinary')
+                    : 'Bisa difoto lewat tab Tahap 5'}
+                </p>
+              </div>
+            </div>
+
+            {uploadedPhotoInfo?.secureUrl && (
+              <a
+                href={uploadedPhotoInfo.secureUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold transition shrink-0"
+              >
+                <span>Lihat</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
           </div>
 
           {/* Action Buttons */}

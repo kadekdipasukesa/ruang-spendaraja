@@ -38,6 +38,12 @@ src/
 │   ├── TaskCard.jsx                               # Kartu item tugas individual
 │   ├── TaskDetailModal.jsx                        # Modal rincian tugas & petunjuk pengerjaan
 │   ├── ModalSubmitProyek.jsx                      # Modal upload/kirim link proyek
+│   ├── AiCompanion/                               # Modul Teman Belajar AI Siswa (@aurora & @arunika)
+│   │   ├── aiCompanionData.js                     # Karakter data, greetings, video Shorts perkenalan
+│   │   ├── AiCompanionBanner.jsx                  # Banner pengenalan teman belajar di atas timeline tugas
+│   │   ├── AiCompanionModal.jsx                   # Modal theater YouTube Shorts + live chat interaktif
+│   │   └── AiFloatingButton.jsx                   # Floating action button (FAB) pojok kanan bawah
+│   │   # *Rencana Memori Jangka Panjang*: Lihat docs/AI_COMPANION_MEMORY_PLAN.md
 │   │
 │   └── TugasKhusus/Tugas1/                        # Komponen Simulator File Explorer
 │       ├── SimulationTopBar.jsx                   # Bar atas simulasi & tombol selesai

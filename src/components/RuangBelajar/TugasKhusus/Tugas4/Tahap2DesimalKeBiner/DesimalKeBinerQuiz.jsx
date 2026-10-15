@@ -5,12 +5,8 @@ import {
   AlertCircle,
   HelpCircle,
   Sparkles,
-  ArrowRight,
-  Calculator,
-  ChevronDown,
-  ChevronUp
+  ArrowRight
 } from 'lucide-react';
-import { BIT_WEIGHTS_8 } from '../binerAsciiData';
 
 export default function DesimalKeBinerQuiz({
   questions,
@@ -20,23 +16,9 @@ export default function DesimalKeBinerQuiz({
 }) {
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
   const [inputValues, setInputValues] = useState({});
-  const [showHelper, setShowHelper] = useState(false);
-  const [helperBits, setHelperBits] = useState([0, 0, 0, 0, 0, 0, 0, 0]);
 
   const currentQ = questions[activeQuestionIndex] || questions[0];
   const allAnswered = questions.length > 0 && questions.every((q) => q.isCorrect);
-
-  const toggleHelperBit = (idx) => {
-    setHelperBits((prev) => {
-      const next = [...prev];
-      next[idx] = next[idx] === 1 ? 0 : 1;
-      return next;
-    });
-  };
-
-  const helperSum = helperBits.reduce((acc, bit, idx) => {
-    return acc + (bit === 1 ? BIT_WEIGHTS_8[idx] : 0);
-  }, 0);
 
   const handleInputChange = (qId, val) => {
     // Hanya perbolehkan karakter 0 dan 1
@@ -185,61 +167,6 @@ export default function DesimalKeBinerQuiz({
               </div>
             )}
           </form>
-
-          {/* Kotak Bantuan Orek-Orek Bobot Bit (Collapsible Scratchpad) */}
-          <div className="border-t border-slate-800/80 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowHelper(!showHelper)}
-              className="text-xs font-bold text-slate-400 hover:text-amber-400 flex items-center gap-2 transition"
-            >
-              <Calculator className="w-4 h-4" />
-              <span>Buka Kotak Orek-Orek Saklar 8-Bit</span>
-              {showHelper ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
-
-            {showHelper && (
-              <div className="mt-3 bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                  Klik saklar untuk mencoba kombinasi bit:
-                </span>
-                <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-                  {helperBits.map((bit, idx) => {
-                    const weight = BIT_WEIGHTS_8[idx];
-                    const isOn = bit === 1;
-                    return (
-                      <button
-                        key={weight}
-                        type="button"
-                        onClick={() => toggleHelperBit(idx)}
-                        className={`p-2 rounded-xl border text-center transition ${
-                          isOn
-                            ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold'
-                            : 'bg-slate-900 text-slate-400 border-slate-800'
-                        }`}
-                      >
-                        <div className="text-[9px] font-mono">{weight}</div>
-                        <div className="text-lg font-black font-mono">{bit}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
-                  <span>Hasil Jumlah Saklar: <strong className="text-amber-400 font-mono">{helperSum}</strong></span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const str = helperBits.join('');
-                      handleInputChange(currentQ.id, str);
-                    }}
-                    className="text-[11px] text-cyan-400 hover:underline font-bold"
-                  >
-                    Salin ke Jawaban ➔
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       )}
 
