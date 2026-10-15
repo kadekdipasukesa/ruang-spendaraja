@@ -1,0 +1,36 @@
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
+    return res.status(405).json({ status: 'error', error: `Method ${req.method} Not Allowed` });
+  }
+
+  try {
+    const { scriptUrl, nama, kelas, noAbsen, nisn } = req.body || {};
+    const targetUrl =
+      scriptUrl ||
+      'https://script.google.com/a/macros/guru.smp.belajar.id/s/AKfycbxzlOsy8mXTGNL9EKXaIK1czzrY-Yytt4cucshshqLXe_neMr53QabznFAS-gTowIkknA/exec';
+
+    const response = await fetch(targetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'get_riwayat', nama, kelas, noAbsen, nisn }),
+      redirect: 'follow',
+    });
+
+    const responseText = await response.text();
+    let responseJson = null;
+    try {
+      responseJson = JSON.parse(responseText);
+    } catch {
+      responseJson = { status: 'fallback', presensi: [], tugas: [] };
+    }
+
+    return res.status(200).json(responseJson);
+  } catch (err) {
+    console.error('Error proxying get_riwayat to Google Apps Script on Vercel:', err);
+    return res.status(500).json({
+      status: 'error',
+      error: 'Gagal mengambil riwayat dari Google Apps Script: ' + (err.message || err.toString()),
+    });
+  }
+}

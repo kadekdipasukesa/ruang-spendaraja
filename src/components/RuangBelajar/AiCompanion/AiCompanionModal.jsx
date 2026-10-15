@@ -15,6 +15,24 @@ import {
 } from 'lucide-react';
 import { AI_COMPANION_CONFIG, AI_CHARACTERS } from './aiCompanionData';
 
+// Realistic Status Badge (Berdasarkan jam WITA)
+function getInitialStatusBadge() {
+  const nowWita = new Date(Date.now() + 8 * 3600 * 1000);
+  const hour = nowWita.getUTCHours();
+  if (hour >= 7 && hour < 13) return '🟡 Lagi di kelas / Sekolah';
+  if (hour >= 13 && hour < 16) return '🚲 Otw pulang / Ekskul TIK';
+  if (hour >= 16 && hour < 21) return '🟢 Online (Belajar & Ngerjain PR)';
+  return '😴 Istirahat / Jam Tidur';
+}
+
+function createUniqueMsgId() {
+  return `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+}
+
+function getCurrentTimeFormatted() {
+  return new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+}
+
 export default function AiCompanionModal({
   isOpen,
   onClose,
@@ -25,17 +43,7 @@ export default function AiCompanionModal({
   const [activeTab, setActiveTab] = useState(initialTab); // 'video' | 'chat'
   const [selectedCharacter, setSelectedCharacter] = useState('aurora'); // 'aurora' | 'arunika'
 
-  // Realistic Status Badge (Berdasarkan jam WITA)
-  const getInitialStatusBadge = () => {
-    const nowWita = new Date(Date.now() + 8 * 3600 * 1000);
-    const hour = nowWita.getUTCHours();
-    if (hour >= 7 && hour < 13) return '🟡 Lagi di kelas / Sekolah';
-    if (hour >= 13 && hour < 16) return '🚲 Otw pulang / Ekskul TIK';
-    if (hour >= 16 && hour < 21) return '🟢 Online (Belajar & Ngerjain PR)';
-    return '😴 Istirahat / Jam Tidur';
-  };
-
-  const [statusBadge, setStatusBadge] = useState(getInitialStatusBadge());
+  const [statusBadge, setStatusBadge] = useState(getInitialStatusBadge);
   const [memorySummary, setMemorySummary] = useState({ aurora: null, arunika: null });
 
   // Dapatkan ID dan Nama Siswa aktif (dengan fallback otomatis ke localStorage user_siswa)
@@ -105,6 +113,13 @@ export default function AiCompanionModal({
         const response = await fetch(
           `/api/gemini/companion-history?studentId=${effectiveStudentId}&character=${selectedCharacter}`
         );
+        if (!response.ok) {
+          return;
+        }
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          return;
+        }
         const data = await response.json();
         if (!isMounted) return;
 
@@ -171,10 +186,10 @@ export default function AiCompanionModal({
     if (!textToSend || isLoadingReply) return;
 
     const userMsg = {
-      id: Date.now().toString(),
+      id: createUniqueMsgId(),
       role: 'user',
       text: textToSend,
-      timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      timestamp: getCurrentTimeFormatted()
     };
 
     // Update state user message
@@ -202,7 +217,14 @@ export default function AiCompanionModal({
         })
       });
 
-      const data = await response.json();
+      let data = {};
+      if (response.ok) {
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+      }
       if (data.statusBadge) {
         setStatusBadge(data.statusBadge);
       }
@@ -214,10 +236,10 @@ export default function AiCompanionModal({
       );
 
       const botMsg = {
-        id: (Date.now() + 1).toString(),
+        id: createUniqueMsgId(),
         role: 'assistant',
         text: replyText,
-        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        timestamp: getCurrentTimeFormatted()
       };
 
       setMessages((prev) => ({
@@ -232,10 +254,10 @@ export default function AiCompanionModal({
         : `Mantap pertanyaannya! Triknya adalah perhatikan shortcut keyboard dan urutan logikanya. Coba praktikkan langsung ya! ⚡`;
 
       const botMsg = {
-        id: (Date.now() + 1).toString(),
+        id: createUniqueMsgId(),
         role: 'assistant',
         text: fallbackReply,
-        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        timestamp: getCurrentTimeFormatted()
       };
 
       setMessages((prev) => ({
