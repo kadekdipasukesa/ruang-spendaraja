@@ -55,6 +55,35 @@ export default function FloatingOnline({ user, activeTab }) {
         ? `usr_${user.id}` 
         : (user?.NISN ? `nisn_${user.NISN}` : (isUserReady ? `nama_${identifier}` : guest.guestId));
 
+    // Sinkronisasi foto profil terkini dari master_siswa
+    const [liveUserPhoto, setLiveUserPhoto] = useState(user?.foto_profile || null);
+
+    useEffect(() => {
+        if (user?.foto_profile) {
+            setLiveUserPhoto(user.foto_profile);
+        }
+        const studentId = user?.id || user?.ID;
+        const studentNisn = user?.NISN;
+        if (!studentId && !studentNisn) return;
+
+        let isMounted = true;
+        const fetchFreshPhoto = async () => {
+            try {
+                let query = supabase.from('master_siswa').select('id, foto_profile');
+                if (studentId) query = query.eq('id', studentId);
+                else if (studentNisn) query = query.eq('NISN', studentNisn);
+                const { data } = await query.maybeSingle();
+                if (isMounted && data?.foto_profile) {
+                    setLiveUserPhoto(data.foto_profile);
+                }
+            } catch (err) {
+                console.warn("Gagal mengambil foto profil pengguna di FloatingOnline:", err);
+            }
+        };
+        fetchFreshPhoto();
+        return () => { isMounted = false; };
+    }, [user?.id, user?.ID, user?.NISN, user?.foto_profile]);
+
     useEffect(() => {
         // Handler parsing data user online
         const updateUsersFromState = (channel) => {
@@ -75,6 +104,8 @@ export default function FloatingOnline({ user, activeTab }) {
                                 kelas: latest.kelas || 'N/A',
                                 posisi: latest.posisi || 'Beranda',
                                 online_at: latest.online_at || new Date().toISOString(),
+                                foto_profile: latest.foto_profile || null,
+                                siswa_id: latest.siswa_id || null,
                             });
                         }
                     }
@@ -113,6 +144,8 @@ export default function FloatingOnline({ user, activeTab }) {
                             kelas: userClass,
                             posisi: activeTab || 'Ruang Belajar', 
                             online_at: new Date().toISOString(),
+                            foto_profile: liveUserPhoto || user?.foto_profile || null,
+                            siswa_id: user?.id || null,
                         });
                     } catch (err) {
                         console.warn("Presence track error:", err);
@@ -123,7 +156,7 @@ export default function FloatingOnline({ user, activeTab }) {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [presenceKey, identifier, userClass, activeTab]);
+    }, [presenceKey, identifier, userClass, activeTab, liveUserPhoto, user?.foto_profile, user?.id]);
 
     return (
         <>

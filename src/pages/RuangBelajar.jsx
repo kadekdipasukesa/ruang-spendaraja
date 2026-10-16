@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRuangBelajarDB } from '../hooks/RuangBelajar/useRuangBelajarDB';
 import RuangBelajarHeader from '../components/RuangBelajar/RuangBelajarHeader';
 import TimelineTugas from '../components/RuangBelajar/TimelineTugas';
@@ -44,6 +44,51 @@ export default function RuangBelajar() {
     setAiModalTab(tab);
     setIsAiModalOpen(true);
   };
+
+  // Snapshot ringkasan status akademik siswa saat ini untuk AI Companion (Aurora & Arunika)
+  const studentContext = useMemo(() => {
+    if (!student) return null;
+
+    const rawClass = student?.Kelas || student?.KELAS || '';
+    const studentClassClean = rawClass.toString().replace(/^Kelas\s+/i, '').trim().toUpperCase();
+
+    // Hitung posisi ranking kelas siswa saat ini dari leaderboard aktif
+    const classList = (leaderboard || [])
+      .filter((item) => {
+        const itemPts = Number(item.total_points) || 0;
+        if (itemPts <= 0) return false;
+        const c = (item.Kelas || item.KELAS || '').toString().replace(/^Kelas\s+/i, '').trim().toUpperCase();
+        return c === studentClassClean;
+      })
+      .sort((a, b) => Number(b.total_points || 0) - Number(a.total_points || 0));
+
+    const myIndex = classList.findIndex(
+      (item) => Number(item.id) === Number(student.id) || (item.NISN && item.NISN === student?.NISN)
+    );
+    const rank = myIndex !== -1 ? myIndex + 1 : null;
+
+    // Filter tugas yang masih belum berstatus selesai/dinilai
+    const pending = (tasks || [])
+      .filter((t) => {
+        const sub = (submissions || []).find((s) => s.tugas_id === t.id);
+        const isDone = sub && (sub.status === 'sudah' || (sub.skor !== null && sub.skor !== undefined && sub.skor > 0));
+        return !isDone;
+      })
+      .map((t) => t.judul || t.kode_tugas);
+
+    return {
+      name: student.NAMA || student.nama || 'Teman',
+      kelas: student.Kelas || student.KELAS || 'Kelas 7',
+      absen: student['No Absen'] || student.no_absen || '-',
+      totalPoints: student.total_points || 0,
+      rank,
+      totalInClass: classList.length,
+      completedTasksCount: stats?.completed ?? 0,
+      totalTasksCount: stats?.total ?? 0,
+      pendingTasks: pending.slice(0, 5),
+      totalPelanggaran: student.total_pelanggaran || 0
+    };
+  }, [student, leaderboard, tasks, submissions, stats]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-32 sm:pb-36">
@@ -134,6 +179,7 @@ export default function RuangBelajar() {
         initialTab={aiModalTab}
         studentName={student?.NAMA || student?.nama || 'Teman'}
         studentId={student?.id}
+        studentContext={studentContext}
       />
 
       {/* Submission Modal for Project/Link tasks */}

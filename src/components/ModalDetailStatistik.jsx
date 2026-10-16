@@ -1,13 +1,53 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Users, MapPin } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
+
+/**
+ * Komponen Avatar Siswa Online
+ * Menampilkan foto profil dari Supabase master_siswa jika ada,
+ * dengan fallback inisial nama dan indikator online hijau.
+ */
+function AvatarUserOnline({ photoUrl, name }) {
+    const [imgFailed, setImgFailed] = useState(false);
+    const initial = name ? name.trim().charAt(0).toUpperCase() : '?';
+
+    // Reset error jika URL berubah
+    useEffect(() => {
+        setImgFailed(false);
+    }, [photoUrl]);
+
+    if (photoUrl && !imgFailed) {
+        return (
+            <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border border-emerald-500/40 bg-slate-800 shadow-xs">
+                <img
+                    src={photoUrl}
+                    alt={name || 'Siswa'}
+                    className="w-full h-full object-cover"
+                    onError={() => setImgFailed(true)}
+                    loading="lazy"
+                />
+                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border border-slate-900" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="relative w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-[11px] font-bold text-emerald-400 border border-emerald-500/20 uppercase shrink-0 shadow-xs">
+            <span>{initial}</span>
+            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border border-slate-900" />
+        </div>
+    );
+}
 
 /**
  * Modal Detail Statistik Pengguna Online
  * Dirender via createPortal langsung ke document.body dengan z-[99999]
- * agar selalu berada di posisi paling depan di atas seluruh elemen layar.
+ * Mengambil foto profil siswa dari tabel master_siswa jika tersedia.
  */
 export default function ModalDetailStatistik({ isOpen, onClose, onlineUsers = [], onlineCount }) {
+    const [dbPhotos, setDbPhotos] = useState({});
+
     // Kunci scroll body saat modal terbuka
     useEffect(() => {
         if (!isOpen) return;
@@ -27,6 +67,89 @@ export default function ModalDetailStatistik({ isOpen, onClose, onlineUsers = []
         };
     }, [isOpen, onClose]);
 
+    // Ambil foto profil siswa dari tabel master_siswa saat modal terbuka
+    useEffect(() => {
+        if (!isOpen || !onlineUsers || onlineUsers.length === 0) return;
+
+        let isMounted = true;
+        const fetchStudentPhotos = async () => {
+            try {
+                // Filter nama siswa resmi (bukan Tamu/Guest)
+                const names = Array.from(
+                    new Set(
+                        onlineUsers
+                            .map((u) => u.nama)
+                            .filter((n) => n && n !== 'Pengguna' && !n.startsWith('Tamu'))
+                    )
+                );
+
+                const ids = Array.from(
+                    new Set(
+                        onlineUsers
+                            .map((u) => u.siswa_id)
+                            .filter(Boolean)
+                    )
+                );
+
+                if (names.length === 0 && ids.length === 0) return;
+
+                // Query foto_profile dari tabel master_siswa
+                let query = supabase
+                    .from('master_siswa')
+                    .select('id, "NAMA", foto_profile')
+                    .not('foto_profile', 'is', null);
+
+                if (ids.length > 0) {
+                    query = query.in('id', ids);
+                } else {
+                    query = query.in('NAMA', names);
+                }
+
+                const { data, error } = await query;
+                if (error) {
+                    // Fallback kueri via nama jika filter ID gagal
+                    if (names.length > 0) {
+                        const fallback = await supabase
+                            .from('master_siswa')
+                            .select('id, "NAMA", foto_profile')
+                            .in('NAMA', names)
+                            .not('foto_profile', 'is', null);
+
+                        if (isMounted && fallback.data) {
+                            const newMap = {};
+                            fallback.data.forEach((s) => {
+                                if (s.foto_profile) {
+                                    if (s.NAMA) newMap[s.NAMA.trim().toLowerCase()] = s.foto_profile;
+                                    if (s.id) newMap[`id_${s.id}`] = s.foto_profile;
+                                }
+                            });
+                            setDbPhotos((prev) => ({ ...prev, ...newMap }));
+                        }
+                    }
+                    return;
+                }
+
+                if (isMounted && data) {
+                    const newMap = {};
+                    data.forEach((s) => {
+                        if (s.foto_profile) {
+                            if (s.NAMA) newMap[s.NAMA.trim().toLowerCase()] = s.foto_profile;
+                            if (s.id) newMap[`id_${s.id}`] = s.foto_profile;
+                        }
+                    });
+                    setDbPhotos((prev) => ({ ...prev, ...newMap }));
+                }
+            } catch (err) {
+                console.warn('Gagal mengambil foto profil pengguna online dari master_siswa:', err);
+            }
+        };
+
+        fetchStudentPhotos();
+        return () => {
+            isMounted = false;
+        };
+    }, [isOpen, onlineUsers]);
+
     if (!isOpen) return null;
 
     const totalUsers = onlineCount ?? onlineUsers.length;
@@ -43,7 +166,7 @@ export default function ModalDetailStatistik({ isOpen, onClose, onlineUsers = []
                 {/* Modal Header */}
                 <div className="p-4 sm:p-5 border-b border-emerald-500/20 flex justify-between items-center bg-emerald-500/5 shrink-0">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30 shadow-xs">
                             <Users size={16} />
                         </div>
                         <div>
@@ -57,7 +180,7 @@ export default function ModalDetailStatistik({ isOpen, onClose, onlineUsers = []
                         type="button"
                         onClick={onClose} 
                         className="text-slate-400 p-1.5 hover:text-white hover:bg-slate-800 rounded-full transition-colors cursor-pointer"
-                        title="Tutup"
+                        title="Tutup (Esc)"
                     >
                         <X size={18} />
                     </button>
@@ -70,28 +193,36 @@ export default function ModalDetailStatistik({ isOpen, onClose, onlineUsers = []
                             Tidak ada pengguna online lainnya saat ini
                         </div>
                     ) : (
-                        onlineUsers.map((u, index) => (
-                            <div 
-                                key={u.key || index} 
-                                className="flex justify-between items-center p-2.5 sm:p-3 hover:bg-emerald-500/5 rounded-2xl border border-slate-800/60 transition-all"
-                            >
-                                <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                                    <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-[11px] font-bold text-emerald-400 border border-emerald-500/20 uppercase shrink-0">
-                                        {u.nama ? u.nama.charAt(0) : '?'}
+                        onlineUsers.map((u, index) => {
+                            // Resolusi foto profil: dari presence -> dari ID master_siswa -> dari NAMA master_siswa
+                            const nameKey = u.nama ? u.nama.trim().toLowerCase() : '';
+                            const photoUrl =
+                                u.foto_profile ||
+                                (u.siswa_id && dbPhotos[`id_${u.siswa_id}`]) ||
+                                (nameKey && dbPhotos[nameKey]) ||
+                                null;
+
+                            return (
+                                <div 
+                                    key={u.key || index} 
+                                    className="flex justify-between items-center p-2.5 sm:p-3 hover:bg-emerald-500/5 rounded-2xl border border-slate-800/60 transition-all"
+                                >
+                                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                                        <AvatarUserOnline photoUrl={photoUrl} name={u.nama} />
+                                        <div className="flex flex-col text-left truncate">
+                                            <span className="text-xs font-semibold text-slate-200 truncate">{u.nama}</span>
+                                            <span className="text-[9px] text-emerald-400/70 font-medium flex items-center gap-1 truncate mt-0.5">
+                                                <MapPin size={10} className="shrink-0" />
+                                                <span className="truncate">{u.posisi || 'Beranda'}</span>
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="flex flex-col text-left truncate">
-                                        <span className="text-xs font-semibold text-slate-200 truncate">{u.nama}</span>
-                                        <span className="text-[9px] text-emerald-400/70 font-medium flex items-center gap-1 truncate mt-0.5">
-                                            <MapPin size={10} className="shrink-0" />
-                                            <span className="truncate">{u.posisi || 'Beranda'}</span>
-                                        </span>
-                                    </div>
+                                    <span className="text-[9px] px-2 py-1 bg-slate-800 text-emerald-400 rounded-lg border border-emerald-500/20 font-bold shrink-0">
+                                        {u.kelas || 'N/A'}
+                                    </span>
                                 </div>
-                                <span className="text-[9px] px-2 py-1 bg-slate-800 text-emerald-400 rounded-lg border border-emerald-500/20 font-bold shrink-0">
-                                    {u.kelas || 'N/A'}
-                                </span>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
 

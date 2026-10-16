@@ -1,6 +1,7 @@
 /* global process */
 import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
+import { findRelevantKnowledge } from '../../src/data/aiKnowledgeBank.js';
 
 const supabaseUrl =
   process.env.VITE_SUPABASE_URL ||
@@ -36,6 +37,7 @@ export default async function handler(req, res) {
     history = [],
     studentName = 'Teman',
     studentId = null,
+    studentContext = null,
   } = req.body || {};
 
   if (!message || typeof message !== 'string') {
@@ -105,19 +107,56 @@ export default async function handler(req, res) {
     }
   }
 
-  // 3. Konfigurasi Persona Murid Asli & System Instruction
+  // 3. Konteks Status Siswa Realtime (Ranking, Total XP, & Tugas Belum Selesai)
+  let studentStatsSnippet = '';
+  if (studentContext && typeof studentContext === 'object') {
+    const {
+      kelas = '',
+      totalPoints = 0,
+      rank = null,
+      totalInClass = null,
+      completedTasksCount = null,
+      totalTasksCount = null,
+      pendingTasks = [],
+    } = studentContext;
+
+    studentStatsSnippet = `
+DATA AKADEMIK & STATUS BELAJAR TEMANMU SAAT INI (GUNAKAN JIKA TEMANMU BERTANYA TENTANG NILAI / RANKING / TUGASNYA):
+- Kelas: ${kelas || 'Kelas 7 Spendaraja'}
+- Total XP: ${totalPoints} XP
+- Peringkat Kelas: ${rank ? `Juara ${rank} dari ${totalInClass || 'teman-temannya'}` : 'Belum masuk peringkat'}
+- Ketuntasan Tugas: ${completedTasksCount !== null && totalTasksCount !== null ? `${completedTasksCount} dari ${totalTasksCount} tugas selesai` : ''}
+${pendingTasks && pendingTasks.length > 0 ? `- Tugas Yang Masih Belum Selesai: ${pendingTasks.join(', ')}` : '- Status Tugas: Luar biasa, semua tugas yang ada sudah selesai dikerjakan!'}
+*(Catatan: Jika temanmu bertanya "aku ranking berapa", "tugasku ada yang kurang nggak", dsb., gunakan data di atas untuk menjawab akurat & menyemangati).*`;
+  }
+
+  // 4. Cari Kisi-kisi / Panduan Pedagogis dari Bank Pengetahuan Ruang Spendaraja
+  const matchedKnowledge = findRelevantKnowledge(message);
+  let knowledgeSnippet = '';
+  if (matchedKnowledge) {
+    const characterTip = isAurora ? matchedKnowledge.auroraTips : matchedKnowledge.arunikaTips;
+    knowledgeSnippet = `
+KISI-KISI / REFERENSI PEDAGOGIS TOPIK: "${matchedKnowledge.title}"
+- Rangkuman Topik: ${matchedKnowledge.summary}
+- Panduan Guru/Pedagogi: ${matchedKnowledge.pedagogyGuide}
+- Gaya Saran Khas Karaktermu (${isAurora ? 'Aurora' : 'Arunika'}): "${characterTip}"
+*(PENTING: Sebagai teman sebaya, dilarang membocorkan jawaban kuis atau contekan angka bulat! Bimbing konsep atau langkahnya agar temanmu mandiri).*`;
+  }
+
+  // 5. Konfigurasi Persona Murid Asli Aligned dengan aiCompanionData.js
   const basePersona = isAurora
-    ? `Kamu adalah Aurora (@aurora), murid perempuan Kelas 7 di SMP Negeri 2 Singaraja (Spendaraja).
-Kamu adalah teman sebaya (peer tutor) yang ramah, hangat, teliti, cerdas, dan rajin.
-Gaya bicaramu santun, akrab, mudah dipahami anak SMP, dan selalu menyemangati dengan emoji seperti 🌸, ✨, 📚, 😊.`
-    : `Kamu adalah Arunika (@arunika), murid laki-laki Kelas 7 di SMP Negeri 2 Singaraja (Spendaraja).
-Kamu adalah teman sebaya (study buddy) yang santai, energik, praktis, jago logika komputer, dan suka analogi game.
-Gaya bicaramu gaul sopan khas anak SMP, to the point, solutif dengan emoji seperti ⚡, 🚀, 💻, 😎, 🔥.`;
+    ? `Kamu adalah Aurora (@aurora), Murid Perempuan Kelas 7 di SMP Negeri 2 Singaraja (Spendaraja).
+Peranmu: Peer Tutor Cewek • Spesialis Penjelasan & Rangkuman Materi (Karakter: Ramah • Teliti • Hangat).
+Gaya bicaramu santun, akrab, penuh empati khas anak SMP, sabar menguraikan materi dengan runtut, dan selalu menyemangati dengan emoji seperti 🌸, ✨, 📚, 😊.`
+    : `Kamu adalah Arunika (@arunika), Murid Laki-laki Kelas 7 di SMP Negeri 2 Singaraja (Spendaraja).
+Peranmu: Study Buddy Cowok • Jago Logika, Praktikum & Shortcut Cepat (Karakter: Santai • Cepat • Solutif).
+Gaya bicaramu gaul sopan khas anak cowok SMP, to-the-point, suka trik cepat / shortcut keyboard / analogi game, dengan emoji seperti ⚡, 🚀, 💻, 😎, 🔥.`;
 
   const systemInstruction = `${basePersona}
 
 TEMAN BICARAMU:
 - Nama murid: ${studentName}
+${studentStatsSnippet}
 
 INGATAN TENTANG TEMANMU:
 - Profil yang kamu ingat tentang dia: "${memorySummary.profil_siswa}"
@@ -125,12 +164,13 @@ INGATAN TENTANG TEMANMU:
 
 SITUASI WAKTU REALISTIS:
 - ${timeScheduleContext}
+${knowledgeSnippet}
 
 ATURAN GAYA BICARA MURID NYATA (SANGAT KETAT):
-1. JAWABAN WAJIB SINGKAT: MAKSIMAL 1 SAMPAI 3 KALIMAT SAJA! Persis seperti chat WhatsApp atau DM Instagram.
+1. JAWABAN WAJIB SINGKAT: MAKSIMAL 1 SAMPAI 3 KALIMAT SAJA! Persis seperti chat WhatsApp atau DM Instagram anak SMP.
 2. DILARANG KERAS bertele-tele, membuat daftar poin panjang, atau membuat esai kuliah.
-3. DILARANG menggunakan kata pembuka klise bot kaku seperti "Halo!", "Tentu saja!", "Berikut adalah penjelasannya:".
-4. Sesekali kamu boleh menolak halus atau bilang lagi sibuk sebentar jika situasi jamnya memang lagi di kelas atau sudah malam.
+3. DILARANG menggunakan kata pembuka bot kaku seperti "Halo!", "Tentu saja!", "Berikut adalah penjelasannya:".
+4. Jika membahas materi tugas, bimbing dengan gaya khas karaktermu (${isAurora ? 'Aurora: sabar, teliti & menyemangati' : 'Arunika: santai, to-the-point & trik praktis'}).
 5. Bersikaplah 100% seperti murid SMP asli Spendaraja yang menjadi sahabat sebaya, bukan robot asisten kecerdasan buatan.`;
 
   // 4. Periksa Kunci API Gemini
@@ -224,6 +264,17 @@ ATURAN GAYA BICARA MURID NYATA (SANGAT KETAT):
             status: 'replied',
           },
         ]);
+
+        // Simpan topik terakhir secara ringkas di memori
+        const shortTopic = matchedKnowledge ? matchedKnowledge.title : message.slice(0, 50);
+        await supabase
+          .from('ai_companion_memory')
+          .update({
+            topik_terakhir: shortTopic,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('siswa_id', parsedStudentId)
+          .eq('character', character);
       } catch (saveErr) {
         console.warn('ai_companion_messages insert skipped:', saveErr);
       }

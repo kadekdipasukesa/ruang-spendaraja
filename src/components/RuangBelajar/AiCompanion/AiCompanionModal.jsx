@@ -38,7 +38,8 @@ export default function AiCompanionModal({
   onClose,
   initialTab = 'video',
   studentName = 'Teman',
-  studentId = null
+  studentId = null,
+  studentContext = null
 }) {
   const [activeTab, setActiveTab] = useState(initialTab); // 'video' | 'chat'
   const [selectedCharacter, setSelectedCharacter] = useState('aurora'); // 'aurora' | 'arunika'
@@ -210,6 +211,7 @@ export default function AiCompanionModal({
           message: textToSend,
           studentName: effectiveStudentName,
           studentId: effectiveStudentId,
+          studentContext: studentContext || null,
           history: currentChatHistory.map((m) => ({
             role: m.role,
             text: m.text
@@ -370,35 +372,47 @@ export default function AiCompanionModal({
                 {/* Character Detail Cards */}
                 <div className="space-y-3">
                   {/* Aurora Card */}
-                  <div className="p-4 rounded-2xl bg-gradient-to-r from-pink-950/40 to-slate-900 border border-pink-500/30 space-y-1.5">
-                    <div className="flex items-center justify-between">
+                  <div className="p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-pink-950/40 to-slate-900 border border-pink-500/30 flex items-center gap-3.5">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden shrink-0 border-2 border-pink-400/50 shadow-md bg-slate-800">
+                      <img
+                        src={AI_CHARACTERS.aurora.avatarUrl}
+                        alt="Aurora"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xl">🌸</span>
                         <strong className="text-sm font-bold text-pink-300">Aurora (@aurora)</strong>
-                        <span className="text-[10px] bg-pink-500/20 text-pink-300 border border-pink-500/30 px-2 py-0.2 rounded-full">
+                        <span className="text-[10px] bg-pink-500/20 text-pink-300 border border-pink-500/30 px-2 py-0.5 rounded-full font-semibold">
                           Murid Cewek
                         </span>
                       </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        Sopan, teliti, dan hangat. Suka merangkum materi TIK agar mudah dipahami langkah demi langkah 🌸
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      Sopan, teliti, dan hangat. Suka merangkum materi TIK agar mudah dipahami langkah demi langkah.
-                    </p>
                   </div>
 
                   {/* Arunika Card */}
-                  <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-950/40 to-slate-900 border border-cyan-500/30 space-y-1.5">
-                    <div className="flex items-center justify-between">
+                  <div className="p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-cyan-950/40 to-slate-900 border border-cyan-500/30 flex items-center gap-3.5">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden shrink-0 border-2 border-cyan-400/50 shadow-md bg-slate-800">
+                      <img
+                        src={AI_CHARACTERS.arunika.avatarUrl}
+                        alt="Arunika"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xl">⚡</span>
                         <strong className="text-sm font-bold text-cyan-300">Arunika (@arunika)</strong>
-                        <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.2 rounded-full">
+                        <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-semibold">
                           Murid Cowok
                         </span>
                       </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        Santai, energik, dan solutif. Jago shortcut keyboard, trik praktikum komputer, dan strategi push rank XP ⚡
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      Santai, energik, dan solutif. Jago shortcut keyboard, trik praktikum komputer, dan strategi meraih skor XP maksimal.
-                    </p>
                   </div>
                 </div>
 
@@ -439,26 +453,38 @@ export default function AiCompanionModal({
                   <button
                     type="button"
                     onClick={() => setSelectedCharacter('aurora')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
                       selectedCharacter === 'aurora'
                         ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-sm'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    <span>🌸</span>
+                    <div className="w-5 h-5 rounded-full overflow-hidden border border-white/50 shrink-0 bg-slate-800">
+                      <img
+                        src={AI_CHARACTERS.aurora.avatarUrl}
+                        alt="Aurora"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                     <span>@aurora</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSelectedCharacter('arunika')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
                       selectedCharacter === 'arunika'
                         ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-sm'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    <span>⚡</span>
+                    <div className="w-5 h-5 rounded-full overflow-hidden border border-white/50 shrink-0 bg-slate-800">
+                      <img
+                        src={AI_CHARACTERS.arunika.avatarUrl}
+                        alt="Arunika"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                     <span>@arunika</span>
                   </button>
                 </div>
@@ -499,16 +525,20 @@ export default function AiCompanionModal({
                   >
                     {isAssistant && (
                       <div
-                        className={`w-8 h-8 rounded-xl bg-gradient-to-tr ${currentCharacter.avatarBg} text-white flex items-center justify-center text-sm shrink-0 shadow-md`}
+                        className="w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-md border border-slate-700 bg-slate-800"
                       >
-                        {currentCharacter.icon}
+                        <img
+                          src={currentCharacter.avatarUrl}
+                          alt={currentCharacter.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     )}
 
                     <div
                       className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed shadow-sm ${
                         isAssistant
-                          ? 'bg-slate-800 border border-slate-700/80 text-slate-200'
+                           ? 'bg-slate-800 border border-slate-700/80 text-slate-200'
                           : 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-medium'
                       }`}
                     >
@@ -534,9 +564,13 @@ export default function AiCompanionModal({
               {isLoadingReply && (
                 <div className="flex items-center gap-2.5 text-slate-400 text-xs py-2">
                   <div
-                    className={`w-7 h-7 rounded-xl bg-gradient-to-tr ${currentCharacter.avatarBg} text-white flex items-center justify-center text-xs shadow-md animate-pulse`}
+                    className="w-7 h-7 rounded-xl overflow-hidden shrink-0 shadow-md border border-slate-700 animate-pulse bg-slate-800"
                   >
-                    {currentCharacter.icon}
+                    <img
+                      src={currentCharacter.avatarUrl}
+                      alt={currentCharacter.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="flex items-center gap-1 bg-slate-800/80 px-3 py-2 rounded-2xl border border-slate-700">
                     <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" />

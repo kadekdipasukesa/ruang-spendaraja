@@ -49,12 +49,20 @@ export default function AiFloatingButton({ onClick }) {
 
         <div className="relative z-10 flex items-center -space-x-2">
           {/* Aurora Avatar */}
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 to-rose-400 border-2 border-slate-900 flex items-center justify-center text-xs shadow-md">
-            🌸
+          <div className="w-8 h-8 rounded-full border-2 border-slate-900 overflow-hidden shadow-md shrink-0 bg-slate-800">
+            <img
+              src={AI_CHARACTERS.aurora.avatarUrl}
+              alt="Aurora"
+              className="w-full h-full object-cover"
+            />
           </div>
           {/* Arunika Avatar */}
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 border-2 border-slate-900 flex items-center justify-center text-xs shadow-md">
-            ⚡
+          <div className="w-8 h-8 rounded-full border-2 border-slate-900 overflow-hidden shadow-md shrink-0 bg-slate-800">
+            <img
+              src={AI_CHARACTERS.arunika.avatarUrl}
+              alt="Arunika"
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
 
