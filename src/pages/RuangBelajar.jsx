@@ -180,6 +180,7 @@ export default function RuangBelajar() {
         studentName={student?.NAMA || student?.nama || 'Teman'}
         studentId={student?.id}
         studentContext={studentContext}
+        isAdmin={isAdmin}
       />
 
       {/* Submission Modal for Project/Link tasks */}

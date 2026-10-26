@@ -11,6 +11,7 @@ export const CLOUDINARY_CONFIG = {
   uploadPresetProfile: 'photo_profile',
   uploadPresetTugas4: 'Tugas_4',
   uploadPresetTugas5: 'tugas_5',
+  uploadPresetTugas6: 'tugas_6',
   uploadUrl: 'https://api.cloudinary.com/v1_1/cjt4xpst/image/upload',
   uploadRawUrl: 'https://api.cloudinary.com/v1_1/cjt4xpst/auto/upload',
 };
@@ -411,5 +412,123 @@ export async function uploadTugas4ToCloudinary(fileToUpload, student = {}, onPro
 
   throw lastError || new Error('Gagal mengunggah foto ke Cloudinary. Periksa koneksi internet.');
 }
+
+/**
+ * Helper khusus pengumpulan tangkapan layar (screenshot) Tugas 6 (Gmail Surel Resmi) ke Cloudinary
+ * Mengompresi screenshot client-side (maks 1280px) agar upload super cepat dan hemat kuota
+ *
+ * @param {File|Blob} fileToUpload - File tangkapan layar dari siswa
+ * @param {Object} student - Data siswa (id, NISN, NAMA, Kelas)
+ * @param {string|number} stageId - Tahap screenshot (1, 2, atau 3)
+ * @param {Function} onProgress - Callback progress (0-100)
+ * @returns {Promise<{ secureUrl: string, fileName: string, fileSize: number }>}
+ */
+export async function uploadTugas6ScreenshotToCloudinary(fileToUpload, student = {}, stageId = 1, onProgress = null) {
+  if (!fileToUpload) {
+    throw new Error('Pilih berkas screenshot terlebih dahulu.');
+  }
+
+  // Kompresi otomatis gambar sebelum dikirim
+  let finalFile = fileToUpload;
+  try {
+    if (fileToUpload.type && fileToUpload.type.startsWith('image/')) {
+      const compressed = await compressImage(fileToUpload, {
+        maxWidth: 1280,
+        maxHeight: 1280,
+        quality: 0.8,
+      });
+      if (compressed?.blob) {
+        finalFile = compressed.blob;
+      }
+    }
+  } catch (err) {
+    console.warn('Kompresi screenshot Tugas 6 dilewati:', err);
+  }
+
+  const candidatePresets = [
+    CLOUDINARY_CONFIG.uploadPresetTugas6 || 'tugas_6',
+    CLOUDINARY_CONFIG.uploadPresetTugas5 || 'tugas_5',
+    CLOUDINARY_CONFIG.uploadPresetTugas4 || 'Tugas_4',
+    CLOUDINARY_CONFIG.uploadPresetEkstra || 'tugas_ekstra_tik7',
+    CLOUDINARY_CONFIG.uploadPreset || 'jurnal_lab_preset',
+  ];
+
+  const studentNameClean = (student.NAMA || student.nama || 'siswa')
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .slice(0, 20);
+  const studentClassClean = (student.Kelas || student.kelas || '7').replace(/[^a-zA-Z0-9]/g, '');
+  const customFileName = `tugas6_tahap${stageId}_${studentClassClean}_${studentNameClean}_${Date.now()}.jpg`;
+
+  const tryUploadWithPreset = (presetName) => {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('file', finalFile, customFileName);
+      formData.append('upload_preset', presetName);
+      formData.append('folder', 'Tugas/6');
+      formData.append('tags', `tugas_6,surel_gmail,tahap_${stageId}`);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', CLOUDINARY_CONFIG.uploadUrl);
+
+      if (xhr.upload && onProgress) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress(percent);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.secure_url) {
+              resolve({
+                secureUrl: response.secure_url,
+                fileName: customFileName,
+                fileSize: response.bytes || finalFile.size || 0,
+                format: response.format || 'jpg',
+                uploadedAt: new Date().toISOString(),
+              });
+              return;
+            }
+          } catch (e) {
+            reject(new Error('Gagal mengurai respons Cloudinary: ' + e.message));
+            return;
+          }
+        }
+        reject(new Error(`Gagal upload (${xhr.status}): ${xhr.responseText}`));
+      };
+
+      xhr.onerror = () => {
+        reject(new Error('Koneksi terputus saat mengunggah screenshot.'));
+      };
+
+      xhr.send(formData);
+    });
+  };
+
+  let lastError = null;
+  for (const preset of candidatePresets) {
+    try {
+      const result = await tryUploadWithPreset(preset);
+      return result;
+    } catch (err) {
+      lastError = err;
+      const msg = err.message || '';
+      const isPresetError =
+        msg.toLowerCase().includes('preset') ||
+        msg.toLowerCase().includes('whitelisted') ||
+        msg.toLowerCase().includes('not found');
+
+      if (!isPresetError) throw err;
+      console.warn(`Preset ${preset} gagal, mencoba preset berikutnya...`);
+    }
+  }
+
+  throw lastError || new Error('Gagal mengunggah screenshot ke Cloudinary.');
+}
+
 
 

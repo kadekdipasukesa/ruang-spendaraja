@@ -216,43 +216,43 @@ export const DUMMY_TUGAS = [
     submission: null
   },
   {
-    id: "tugas-inf-06",
-    kode_tugas: "TUGAS-06-SPREADSHEET-DATA",
+    id: "b8192a6c-4820-4e31-89d5-7c5ef93108c6",
+    kode_tugas: "TUGAS-06-SUREL-GMAIL",
     urutan: 6,
-    title: "Olah Data Nilai & Visualisasi Grafik Spreadsheet",
-    judul: "Olah Data Nilai & Visualisasi Grafik Spreadsheet",
+    title: "Tugas 6: Praktik Resmi Surel (Gmail) - Surat Izin Lomba Melukis",
+    judul: "Tugas 6: Praktik Resmi Surel (Gmail) - Surat Izin Lomba Melukis",
     subject: "Informatika",
-    category: "Analisis Data",
-    kategori: "Analisis Data",
-    difficulty: "Mudah",
-    tipe_tugas: "submit",
-    custom_route: null,
-    points: 85,
-    poin_maksimal: 85,
-    deadline: "2026-09-10T23:59:59",
-    priority: "Sedang",
+    category: "Literasi Digital",
+    kategori: "Literasi Digital",
+    difficulty: "Sedang",
+    tipe_tugas: "praktik",
+    custom_route: "/ruang-belajar/tugas/surel-gmail",
+    points: 100,
+    poin_maksimal: 100,
+    deadline: "2026-11-05T23:59:59",
+    priority: "Tinggi",
     status: "belum",
     is_active: true,
     target_kelas: "SEMUA",
     teacher: "Pak Dipa, S.Kom.",
     estimatedTime: "35 Menit",
-    description: "Mempraktikkan penggunaan fungsi formula dasar Spreadsheet (SUM, AVERAGE, MAX, MIN, IF) untuk merekap data nilai ulangan harian siswa serta membuat grafik diagram batang.",
-    deskripsi: "Mempraktikkan penggunaan fungsi formula dasar Spreadsheet (SUM, AVERAGE, MAX, MIN, IF) untuk merekap data nilai ulangan harian siswa serta membuat grafik diagram batang.",
+    description: "Mempraktikkan pengiriman surel formal resmi menggunakan aplikasi Gmail asli: menyusun alamat Kepada (To) wali kelas, Tembusan (Cc) kepala sekolah, serta isi surat izin tidak masuk sekolah pada 1 November 2026 karena penyerahan hadiah lomba melukis.",
+    deskripsi: "Mempraktikkan pengiriman surel formal resmi menggunakan aplikasi Gmail asli: menyusun alamat Kepada (To) wali kelas, Tembusan (Cc) kepala sekolah, serta isi surat izin tidak masuk sekolah pada 1 November 2026 karena penyerahan hadiah lomba melukis.",
     petunjuk: [
-      "Unduh template tabel nilai latihan.",
-      "Isi kolom total nilai dengan =SUM() dan rata-rata dengan =AVERAGE().",
-      "Tambahkan diagram batang untuk visualisasi sebaran nilai.",
-      "Kumpulkan tautan link Google Sheets Anda."
+      "Pelajari materi visual singkat dan jawab kuis checkpoint di setiap tahap.",
+      "Tahap 1: Buka aplikasi Gmail di HP/laptopmu, pastikan akun aktif di Kotak Masuk (Inbox), lalu unggah screenshot.",
+      "Tahap 2: Klik tombol + Tulis, masukkan email wali kelas di Kepada (To) dan email kepala sekolah di Tembusan (Cc) serta subjek surat, lalu unggah screenshot.",
+      "Tahap 3: Tuliskan isi pesan formal izin tidak masuk sekolah pada 1 November 2026 karena penerimaan hadiah lomba melukis kabupaten (tanpa perlu upload PDF), lalu unggah screenshot.",
+      "Klik Kumpul Tugas untuk mengirimkan 3 bukti screenshot pengerjaan ke Galeri Penilaian Admin untuk di-ACC (100 Poin)."
     ],
     instructions: [
-      "Unduh template tabel nilai latihan.",
-      "Isi kolom total nilai dengan =SUM() dan rata-rata dengan =AVERAGE().",
-      "Tambahkan diagram batang untuk visualisasi sebaran nilai.",
-      "Kumpulkan tautan link Google Sheets Anda."
+      "Pelajari materi visual singkat dan jawab kuis checkpoint di setiap tahap.",
+      "Tahap 1: Buka aplikasi Gmail di HP/laptopmu, pastikan akun aktif di Kotak Masuk (Inbox), lalu unggah screenshot.",
+      "Tahap 2: Klik tombol + Tulis, masukkan email wali kelas di Kepada (To) dan email kepala sekolah di Tembusan (Cc) serta subjek surat, lalu unggah screenshot.",
+      "Tahap 3: Tuliskan isi pesan formal izin tidak masuk sekolah pada 1 November 2026 karena penerimaan hadiah lomba melukis kabupaten (tanpa perlu upload PDF), lalu unggah screenshot.",
+      "Klik Kumpul Tugas untuk mengirimkan 3 bukti screenshot pengerjaan ke Galeri Penilaian Admin untuk di-ACC (100 Poin)."
     ],
-    attachments: [
-      { name: "Template_Latihan_Spreadsheet.xlsx", type: "excel", size: "48 KB", url: "#" }
-    ],
+    attachments: [],
     submission: null
   }
 ];

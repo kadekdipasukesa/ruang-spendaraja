@@ -438,12 +438,24 @@ ATURAN GAYA BICARA MURID NYATA (SANGAT KETAT):
 
       const replyText = responseText;
 
+      const debugPrompt = {
+        systemInstruction,
+        contents,
+        modelUsed: candidateModels[0] || companionModel,
+        matchedKnowledge: matchedKnowledge || null,
+        timeScheduleContext,
+        memorySummary,
+        studentStatsSnippet: studentStatsSnippet ? studentStatsSnippet.trim() : "",
+        timestamp: new Date().toISOString(),
+      };
+
       // 6. Balas Langsung ke Siswa (Instan tanpa menunggu background update)
       res.json({
         reply: replyText,
         character,
         statusBadge,
         timeString,
+        debugPrompt,
       });
 
       // 7. Background Task Asinkron: Simpan Chat & Perbarui Ringkasan Memori di Supabase

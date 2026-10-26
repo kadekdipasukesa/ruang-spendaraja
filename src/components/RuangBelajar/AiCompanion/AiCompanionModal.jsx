@@ -11,9 +11,11 @@ import {
   RefreshCw,
   CornerDownLeft,
   Volume2,
-  CheckCircle2
+  CheckCircle2,
+  Terminal
 } from 'lucide-react';
 import { AI_COMPANION_CONFIG, AI_CHARACTERS } from './aiCompanionData';
+import AdminPromptInspector from './AdminPromptInspector';
 
 // Realistic Status Badge (Berdasarkan jam WITA)
 function getInitialStatusBadge() {
@@ -39,18 +41,24 @@ export default function AiCompanionModal({
   initialTab = 'video',
   studentName = 'Teman',
   studentId = null,
-  studentContext = null
+  studentContext = null,
+  isAdmin: isAdminProp = false
 }) {
-  const [activeTab, setActiveTab] = useState(initialTab); // 'video' | 'chat'
+  const [activeTab, setActiveTab] = useState(initialTab); // 'video' | 'chat' | 'admin_prompt'
   const [selectedCharacter, setSelectedCharacter] = useState('aurora'); // 'aurora' | 'arunika'
 
   const [statusBadge, setStatusBadge] = useState(getInitialStatusBadge);
   const [memorySummary, setMemorySummary] = useState({ aurora: null, arunika: null });
+  const [lastDebugPrompt, setLastDebugPrompt] = useState(null);
+  const [lastSentMessage, setLastSentMessage] = useState('');
+  const [promptLogs, setPromptLogs] = useState([]);
 
-  // Dapatkan ID dan Nama Siswa aktif (dengan fallback otomatis ke localStorage user_siswa)
+  // Dapatkan ID dan Nama Siswa aktif (dengan fallback otomatis ke localStorage/sessionStorage user_siswa)
   const getActiveStudent = () => {
     let resolvedId = studentId;
     let resolvedName = studentName;
+    let resolvedRole = null;
+    let resolvedRole2 = null;
     try {
       const rawUser = localStorage.getItem('user_siswa') || sessionStorage.getItem('user_siswa');
       if (rawUser) {
@@ -59,19 +67,30 @@ export default function AiCompanionModal({
         if (!resolvedName || resolvedName === 'Teman') {
           resolvedName = parsed.NAMA || parsed.nama || parsed.name || 'Teman';
         }
+        resolvedRole = parsed.role;
+        resolvedRole2 = parsed.role_2;
       }
     } catch (e) {
       console.warn('Gagal membaca fallback student session:', e);
     }
     return {
       id: resolvedId ? Number(resolvedId) : null,
-      name: resolvedName || 'Teman'
+      name: resolvedName || 'Teman',
+      role: resolvedRole,
+      role2: resolvedRole2,
+      isAdmin: resolvedRole === 'admin' || resolvedRole2 === 'admin'
     };
   };
 
   const activeStudent = getActiveStudent();
   const effectiveStudentId = activeStudent.id;
   const effectiveStudentName = activeStudent.name;
+  const isAdmin = Boolean(
+    isAdminProp ||
+    activeStudent.isAdmin ||
+    studentContext?.role === 'admin' ||
+    studentContext?.role_2 === 'admin'
+  );
 
   // Chat States
   const [inputMessage, setInputMessage] = useState('');
@@ -194,6 +213,7 @@ export default function AiCompanionModal({
     };
 
     // Update state user message
+    setLastSentMessage(textToSend);
     setMessages((prev) => ({
       ...prev,
       [selectedCharacter]: [...prev[selectedCharacter], userMsg]
@@ -230,12 +250,28 @@ export default function AiCompanionModal({
       if (data.statusBadge) {
         setStatusBadge(data.statusBadge);
       }
+      if (data.debugPrompt) {
+        setLastDebugPrompt(data.debugPrompt);
+      }
 
       const replyText = data.reply || (
         selectedCharacter === 'aurora'
           ? "Tetap semangat belajar ya! Aku yakin kamu pasti bisa menuntaskan materi ini dengan nilai terbaik! 🌸✨"
           : "Gas terus belajarnya! Kalau ada error atau tantangan di kuis, langsung tanyain lagi ke aku ya! ⚡🚀"
       );
+
+      // Rekam ke promptLogs untuk Admin Console
+      setPromptLogs((prev) => [
+        ...prev,
+        {
+          id: createUniqueMsgId(),
+          timestamp: getCurrentTimeFormatted(),
+          character: selectedCharacter,
+          userMessage: textToSend,
+          replyText,
+          debugPrompt: data.debugPrompt || null
+        }
+      ]);
 
       const botMsg = {
         id: createUniqueMsgId(),
@@ -254,6 +290,18 @@ export default function AiCompanionModal({
       const fallbackReply = selectedCharacter === 'aurora'
         ? `Wah, pertanyaan yang bagus! Tetap fokus baca panduan langkahnya ya, jangan lupa teliti saat menjawab soal checkpoint. Aku selalu mendukungmu! 🌸`
         : `Mantap pertanyaannya! Triknya adalah perhatikan shortcut keyboard dan urutan logikanya. Coba praktikkan langsung ya! ⚡`;
+
+      setPromptLogs((prev) => [
+        ...prev,
+        {
+          id: createUniqueMsgId(),
+          timestamp: getCurrentTimeFormatted(),
+          character: selectedCharacter,
+          userMessage: textToSend,
+          replyText: fallbackReply,
+          debugPrompt: null
+        }
+      ]);
 
       const botMsg = {
         id: createUniqueMsgId(),
@@ -336,6 +384,24 @@ export default function AiCompanionModal({
             <MessageSquare className="w-4 h-4 text-cyan-400" />
             <span>Live Chat Teman AI</span>
           </button>
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('admin_prompt')}
+              className={`flex-1 sm:flex-initial px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-2xl flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                activeTab === 'admin_prompt'
+                  ? 'bg-slate-850 text-amber-300 border-t-2 border-amber-400 bg-gradient-to-t from-slate-900 to-amber-950/30'
+                  : 'text-amber-400/80 hover:text-amber-200'
+              }`}
+            >
+              <Terminal className="w-4 h-4 text-amber-400" />
+              <span>Prompt Inspector</span>
+              <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                Admin
+              </span>
+            </button>
+          )}
         </div>
 
         {/* TAB 1: VIDEO PERKENALAN YOUTUBE SHORTS */}
@@ -490,11 +556,25 @@ export default function AiCompanionModal({
                 </div>
               </div>
 
-              {/* Active Character Status Badge */}
+              {/* Active Character Status Badge & Admin Prompt Quick Action */}
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-800/90 border border-slate-700/80 text-slate-200 flex items-center gap-1.5 shadow-sm">
                   <span>{statusBadge}</span>
                 </span>
+
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('admin_prompt')}
+                    className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+                    title="Buka Admin Prompt Inspector untuk memeriksa system instruction dan kisi-kisi AI"
+                  >
+                    <Terminal className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">Cek Prompt AI</span>
+                    <span className="sm:hidden">Prompt</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -550,6 +630,20 @@ export default function AiCompanionModal({
                         </div>
                       )}
                       <p className="whitespace-pre-wrap">{msg.text}</p>
+                      {isAssistant && isAdmin && (
+                        <div className="mt-2 pt-1.5 border-t border-slate-700/60 flex items-center justify-between text-[10px]">
+                          <span className="text-slate-500 font-mono">Gemini AI</span>
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab('admin_prompt')}
+                            className="text-amber-400/90 hover:text-amber-300 font-bold flex items-center gap-1 font-mono transition cursor-pointer hover:underline"
+                            title="Inspeksi prompt lengkap yang menghasilkan jawaban ini"
+                          >
+                            <Terminal className="w-3 h-3" />
+                            <span>Inspeksi Prompt</span>
+                          </button>
+                        </div>
+                      )}
                       {!isAssistant && (
                         <div className="text-[10px] text-indigo-200 text-right mt-1">
                           {msg.timestamp}
@@ -628,6 +722,24 @@ export default function AiCompanionModal({
               </button>
             </form>
           </div>
+        )}
+
+        {/* TAB 3: ADMIN PROMPT INSPECTOR (ROLE=ADMIN ONLY) */}
+        {activeTab === 'admin_prompt' && isAdmin && (
+          <AdminPromptInspector
+            character={selectedCharacter}
+            onSelectCharacter={setSelectedCharacter}
+            studentName={effectiveStudentName}
+            studentId={effectiveStudentId}
+            studentContext={studentContext}
+            memorySummary={memorySummary}
+            lastDebugPrompt={lastDebugPrompt}
+            lastUserMessage={lastSentMessage}
+            promptLogs={promptLogs}
+            onClearLogs={() => setPromptLogs([])}
+            onBackToChat={() => setActiveTab('chat')}
+            onTestSend={handleSendMessage}
+          />
         )}
       </div>
     </div>

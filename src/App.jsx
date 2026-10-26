@@ -40,6 +40,8 @@ import TugasBerpikirKomputasional from './pages/TugasKhusus/TugasBerpikirKomputa
 import TugasSistemKomputer from './pages/TugasKhusus/TugasSistemKomputer';
 import TugasBinerAscii from './pages/TugasKhusus/TugasBinerAscii';
 import TugasWord from './pages/TugasKhusus/TugasWord';
+import TugasSurelGmail from './pages/TugasKhusus/TugasSurelGmail';
+import GaleriReviewTugas6 from './components/RuangBelajar/TugasKhusus/Tugas6/Admin/GaleriReviewTugas6';
 import EkstraTikPage from './pages/EkstraTikPage';
 
 
@@ -60,6 +62,9 @@ function AppContent() {
     '/ruang-belajar/tugas/pengolah-kata',
     '/tugas/pengolah-kata',
     '/tugas/word-brosur',
+    '/ruang-belajar/tugas/surel-gmail',
+    '/tugas/surel-gmail',
+    '/admin/review-tugas-6',
   ];
   const showNavbar = !hideNavbarPaths.includes(location.pathname.toLowerCase());
 
@@ -186,6 +191,12 @@ function AppContent() {
         <Route path="/ruang-belajar/tugas/pengolah-kata" element={<TugasWord />} />
         <Route path="/tugas/pengolah-kata" element={<TugasWord />} />
         <Route path="/tugas/word-brosur" element={<TugasWord />} />
+
+        {/* ─── ✉️ RUTE TUGAS 6: SUREL GMAIL RESMI ─── */}
+        <Route path="/ruang-belajar/tugas/surel-gmail" element={<TugasSurelGmail />} />
+        <Route path="/tugas/surel-gmail" element={<TugasSurelGmail />} />
+        <Route path="/admin/review-tugas-6" element={<GaleriReviewTugas6 />} />
+
 
       </Routes>
     </div>

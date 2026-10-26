@@ -185,6 +185,17 @@ ATURAN GAYA BICARA MURID NYATA (SANGAT KETAT):
       character,
       statusBadge,
       timeString,
+      debugPrompt: {
+        systemInstruction,
+        contents: [{ role: 'user', parts: [{ text: message }] }],
+        modelUsed: 'offline-fallback',
+        matchedKnowledge: matchedKnowledge || null,
+        timeScheduleContext,
+        memorySummary,
+        studentStatsSnippet: studentStatsSnippet ? studentStatsSnippet.trim() : '',
+        timestamp: new Date().toISOString(),
+        offline: true,
+      },
     });
   }
 
@@ -237,12 +248,24 @@ ATURAN GAYA BICARA MURID NYATA (SANGAT KETAT):
         : `Yo ${studentName}! Jaringanku barusan sempet ngelag dikit bro ⚡ Gas tanyain sekali lagi ya!`;
     }
 
+    const debugPrompt = {
+      systemInstruction,
+      contents,
+      modelUsed: candidateModels[0] || companionModel,
+      matchedKnowledge: matchedKnowledge || null,
+      timeScheduleContext,
+      memorySummary,
+      studentStatsSnippet: studentStatsSnippet ? studentStatsSnippet.trim() : '',
+      timestamp: new Date().toISOString(),
+    };
+
     // Balas ke client
     res.status(200).json({
       reply: responseText,
       character,
       statusBadge,
       timeString,
+      debugPrompt,
     });
 
     // Simpan ke Supabase di latar belakang
