@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Eye, ExternalLink, User, Download, Check } from 'lucide-react';
+import { FileText, Eye, ExternalLink, User, Download, Check, Star, Lock } from 'lucide-react';
 import { formatFileSize } from '../../services/ekstraTikService';
 
 export default function RiwayatTugasItem({
@@ -81,12 +81,21 @@ export default function RiwayatTugasItem({
           </span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          {item.nilai !== null && item.nilai !== undefined ? (
+            <span className="font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded text-[10px] border border-emerald-300 font-mono flex items-center gap-0.5 shadow-2xs">
+              ⭐ {item.nilai} pt
+            </span>
+          ) : (
+            <span className="font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[9px] border border-amber-200">
+              ⏳ Belum Dinilai
+            </span>
+          )}
           <span className="font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded text-[10px] border border-indigo-100 font-mono">
             Kelas {kelasSiswa}
           </span>
           {noAbsenSiswa && (
             <span className="text-slate-500 bg-white px-1.5 py-0.5 rounded text-[10px] border border-slate-200 font-mono">
-              Absen {noAbsenSiswa}
+              #{noAbsenSiswa}
             </span>
           )}
         </div>
@@ -106,6 +115,14 @@ export default function RiwayatTugasItem({
           <p className="text-[11px] text-slate-500 italic pt-1 border-t border-slate-100">
             "{catatan}"
           </p>
+        )}
+        {item.nilai !== null && item.nilai !== undefined && item.feedback_guru && (
+          <div className="text-[11px] text-emerald-900 bg-emerald-50/80 p-2 rounded-md border border-emerald-200/60 mt-1 space-y-0.5">
+            <span className="text-[10px] font-bold text-emerald-800 flex items-center gap-1">
+              💬 Catatan Guru:
+            </span>
+            <p className="italic text-slate-700 pl-1">"{item.feedback_guru}"</p>
+          </div>
         )}
       </div>
 

@@ -450,6 +450,45 @@ export async function kumpulTugasEkstraSupabase({
 }
 
 /**
+ * Menyimpan / Memperbarui Nilai dan Feedback Guru untuk Tugas Ekstra TIK
+ */
+export async function simpanNilaiTugasEkstra({ pengumpulanId, nilai, feedback_guru = '' }) {
+  const parsedNilai = nilai === null || nilai === '' ? null : Number(nilai);
+  const cleanFeedback = feedback_guru?.trim() || null;
+
+  const { data, error } = await supabase
+    .from('ekstra_tugas_pengumpulan')
+    .update({
+      nilai: parsedNilai,
+      feedback_guru: cleanFeedback
+    })
+    .eq('id', pengumpulanId)
+    .select('*, ekstra_tugas_master(judul_tugas), master_siswa:siswa_id(id, NAMA, Kelas, "No Absen", Gender, NISN)')
+    .single();
+
+  if (error) {
+    console.warn('Update nilai join gagal, mencoba fallback update sederhana:', error);
+    const fb = await supabase
+      .from('ekstra_tugas_pengumpulan')
+      .update({
+        nilai: parsedNilai,
+        feedback_guru: cleanFeedback
+      })
+      .eq('id', pengumpulanId)
+      .select()
+      .single();
+
+    if (fb.error) {
+      console.error('Fallback update nilai juga gagal:', fb.error);
+      throw new Error(fb.error.message || 'Gagal menyimpan nilai');
+    }
+    return fb.data;
+  }
+
+  return data;
+}
+
+/**
  * MANAJEMEN STATUS KUNCI ABSENSI (ADMIN TOGGLE)
  */
 export async function getStatusAbsenEkstra() {

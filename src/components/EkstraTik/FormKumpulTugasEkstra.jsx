@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { 
   UploadCloud, FileText, CheckCircle2, AlertCircle, File, Eye, ExternalLink, 
   RefreshCw, X, FolderCheck, Database, Image, Check, Users, Search, 
-  Download, Filter, ShieldCheck, UserCheck
+  Download, Filter, ShieldCheck, UserCheck, Star, Lock, Award
 } from 'lucide-react';
 import { 
   kumpulTugasEkstraSupabase, 
@@ -179,6 +179,10 @@ export default function FormKumpulTugasEkstra({ user, anggotaList = [], onOpenLo
       setErrorMsg('Silakan pilih tugas yang ingin dikumpulkan');
       return;
     }
+    if (isSelectedTugasGraded) {
+      setErrorMsg('Tugas ini sudah dinilai oleh guru/pengurus lab dan telah dikunci. Berkas tidak dapat diubah.');
+      return;
+    }
     if (!selectedFile) {
       setErrorMsg('Silakan pilih berkas tugas yang ingin dikumpulkan');
       return;
@@ -249,6 +253,23 @@ export default function FormKumpulTugasEkstra({ user, anggotaList = [], onOpenLo
     const csv = generateTugasCsv(filteredRiwayat);
     downloadCsvFile(csv, `Rekap_Tugas_Ekstra_TIK_${new Date().toISOString().split('T')[0]}.csv`);
   };
+
+  const existingSubmissionForSelectedTugas = useMemo(() => {
+    if (!selectedTugasId) return null;
+    return riwayatTugas.find((item) => {
+      if (item.id_tugas !== selectedTugasId) return false;
+      if (activeSiswaId && item.siswa_id && String(item.siswa_id) === String(activeSiswaId)) return true;
+      if (activeNisn && item.nisn && String(item.nisn).trim() === String(activeNisn).trim()) return true;
+      if (activeNama && item.nama && activeNama.trim().toLowerCase() === item.nama.trim().toLowerCase()) return true;
+      return false;
+    });
+  }, [riwayatTugas, selectedTugasId, activeSiswaId, activeNisn, activeNama]);
+
+  const isSelectedTugasGraded = Boolean(
+    existingSubmissionForSelectedTugas &&
+    existingSubmissionForSelectedTugas.nilai !== null &&
+    existingSubmissionForSelectedTugas.nilai !== undefined
+  );
 
   const currentSelectedTugasObj = masterTugasList.find((t) => t.id === selectedTugasId);
 
@@ -407,140 +428,199 @@ export default function FormKumpulTugasEkstra({ user, anggotaList = [], onOpenLo
               )}
             </div>
 
-            {/* Area Unggah File Drag & Drop */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Berkas Tugas (Word, PDF, Scratch .sb3, Gambar)
-              </label>
-
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept=".doc,.docx,.pdf,.sb3,.png,.jpg,.jpeg,.zip,.rar"
-              />
-
-              {!selectedFile ? (
-                <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-2xl p-6 sm:p-8 text-center cursor-pointer transition ${
-                    isDragging
-                      ? 'border-indigo-500 bg-indigo-50/50'
-                      : 'border-slate-300 hover:border-indigo-400 bg-slate-50/50 hover:bg-slate-50'
-                  }`}
-                >
-                  <UploadCloud className="w-10 h-10 text-indigo-500 mx-auto mb-2 opacity-80" />
-                  <p className="text-xs sm:text-sm font-bold text-slate-700 mb-1">
-                    Tarik & Lepas berkas di sini, atau{' '}
-                    <span className="text-indigo-600 underline">Pilih File</span>
-                  </p>
-                  <p className="text-[11px] text-slate-400">
-                    Mendukung Word (.docx), PDF, Scratch (.sb3), Canva, Gambar. Maksimal 25MB.
-                  </p>
+            {/* Area Status Tugas Terkunci vs Unggah File */}
+            {isSelectedTugasGraded ? (
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50 to-indigo-50 border border-emerald-200/90 shadow-2xs space-y-3 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Tugas Telah Dinilai & Dikunci</span>
+                  </span>
+                  <span className="p-1.5 rounded-xl bg-white border border-emerald-200 text-emerald-700 shadow-2xs">
+                    <Lock className="w-4 h-4" />
+                  </span>
                 </div>
-              ) : (
-                <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-                      <FileText className="w-5 h-5" />
+
+                <div className="flex items-center gap-3.5 bg-white p-3 sm:p-4 rounded-xl border border-emerald-100">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex flex-col items-center justify-center shadow-md shadow-amber-500/20 shrink-0 font-mono">
+                    <Star className="w-4 h-4 text-amber-100 fill-amber-100" />
+                    <span className="text-base font-black leading-none mt-0.5">{existingSubmissionForSelectedTugas.nilai}</span>
+                    <span className="text-[8px] text-amber-100 uppercase tracking-wider font-sans font-bold">Poin</span>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-slate-800 text-xs sm:text-sm truncate">
+                      {existingSubmissionForSelectedTugas.file_name}
+                    </h4>
+                    <p className="text-[11px] text-slate-400 flex items-center gap-1 font-mono mt-0.5">
+                      <FileText className="w-3 h-3 text-indigo-500 shrink-0" />
+                      <span>{existingSubmissionForSelectedTugas.submitted_at ? new Date(existingSubmissionForSelectedTugas.submitted_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</span>
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenPreview(existingSubmissionForSelectedTugas, { canDownload: true })}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Lihat Berkas Saya</span>
+                      </button>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs sm:text-sm font-bold text-slate-800 truncate">
-                        {selectedFile.name}
+                  </div>
+                </div>
+
+                {existingSubmissionForSelectedTugas.feedback_guru && (
+                  <div className="p-3 rounded-xl bg-white/95 border border-emerald-100 text-[11px] text-emerald-950 space-y-1">
+                    <span className="font-bold text-emerald-800 flex items-center gap-1 text-[11px]">
+                      💬 Catatan Evaluasi Guru:
+                    </span>
+                    <p className="italic text-slate-700 pl-1 leading-relaxed">"{existingSubmissionForSelectedTugas.feedback_guru}"</p>
+                  </div>
+                )}
+
+                <div className="text-[10px] text-slate-400 text-center flex items-center justify-center gap-1 pt-1">
+                  <Lock className="w-3 h-3" />
+                  <span>Nilai resmi telah tercatat. Tugas ini tidak dapat diunggah ulang atau diperbaiki.</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Area Unggah File Drag & Drop */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Berkas Tugas (Word, PDF, Scratch .sb3, Gambar)
+                  </label>
+
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept=".doc,.docx,.pdf,.sb3,.png,.jpg,.jpeg,.zip,.rar"
+                  />
+
+                  {!selectedFile ? (
+                    <div
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-2xl p-6 sm:p-8 text-center cursor-pointer transition ${
+                        isDragging
+                          ? 'border-indigo-500 bg-indigo-50/50'
+                          : 'border-slate-300 hover:border-indigo-400 bg-slate-50/50 hover:bg-slate-50'
+                      }`}
+                    >
+                      <UploadCloud className="w-10 h-10 text-indigo-500 mx-auto mb-2 opacity-80" />
+                      <p className="text-xs sm:text-sm font-bold text-slate-700 mb-1">
+                        Tarik & Lepas berkas di sini, atau{' '}
+                        <span className="text-indigo-600 underline">Pilih File</span>
                       </p>
-                      <p className="text-[11px] text-slate-500">
-                        {formatFileSize(selectedFile.size)} • Siap diunggah ke Cloudinary
+                      <p className="text-[11px] text-slate-400">
+                        Mendukung Word (.docx), PDF, Scratch (.sb3), Canva, Gambar. Maksimal 25MB.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm font-bold text-slate-800 truncate">
+                            {selectedFile.name}
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            {formatFileSize(selectedFile.size)} • Siap diunggah ke Cloudinary
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedFile(null);
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                        title="Batal pilih file"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Pesan Siswa */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Catatan Siswa (Opsional)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={catatan}
+                    onChange={(e) => setCatatan(e.target.value)}
+                    placeholder="Contoh: Pak, ini tugas surat resmi Microsoft Word saya..."
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                {/* Progress Bar Upload */}
+                {submitting && uploadProgress > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px] text-indigo-700 font-bold">
+                      <span>Mengunggah ke Cloudinary ({uploadProgress}%)...</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="bg-indigo-600 h-2 transition-all duration-200" 
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Message */}
+                {errorMsg && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{errorMsg}</span>
+                  </div>
+                )}
+
+                {/* Success Message */}
+                {successItem && (
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-bold">Tugas Berhasil Terunggah!</strong>
+                      <p className="text-[11px] text-emerald-700 mt-0.5">
+                        Berkas telah disimpan di Cloudinary dan tercatat di database Supabase.
                       </p>
                     </div>
                   </div>
+                )}
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedFile(null);
-                      if (fileInputRef.current) fileInputRef.current.value = '';
-                    }}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                    title="Batal pilih file"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Pesan Siswa */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Catatan Siswa (Opsional)
-              </label>
-              <textarea
-                rows={2}
-                value={catatan}
-                onChange={(e) => setCatatan(e.target.value)}
-                placeholder="Contoh: Pak, ini tugas surat resmi Microsoft Word saya..."
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            {/* Progress Bar Upload */}
-            {submitting && uploadProgress > 0 && (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-[11px] text-indigo-700 font-bold">
-                  <span>Mengunggah ke Cloudinary ({uploadProgress}%)...</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                  <div 
-                    className="bg-indigo-600 h-2 transition-all duration-200" 
-                    style={{ width: `${uploadProgress}%` }}
-                  />
-                </div>
-              </div>
+                {/* Tombol Submit */}
+                <button
+                  type="submit"
+                  disabled={submitting || !selectedFile}
+                  className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md shadow-indigo-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {submitting ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Mengunggah ke Cloudinary...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-4 h-4" />
+                      <span>Kirim Tugas ke Cloudinary</span>
+                    </>
+                  )}
+                </button>
+              </>
             )}
-
-            {/* Error Message */}
-            {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-
-            {/* Success Message */}
-            {successItem && (
-              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="font-bold">Tugas Berhasil Terunggah!</strong>
-                  <p className="text-[11px] text-emerald-700 mt-0.5">
-                    Berkas telah disimpan di Cloudinary dan tercatat di database Supabase.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Tombol Submit */}
-            <button
-              type="submit"
-              disabled={submitting || !selectedFile}
-              className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md shadow-indigo-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-            >
-              {submitting ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Mengunggah ke Cloudinary...</span>
-                </>
-              ) : (
-                <>
-                  <UploadCloud className="w-4 h-4" />
-                  <span>Kirim Tugas ke Cloudinary</span>
-                </>
-              )}
-            </button>
           </form>
         </div>
 
