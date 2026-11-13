@@ -14,6 +14,7 @@ import {
   formatFileSize 
 } from '../../services/ekstraTikService';
 import ModalPreviewDokumen from './ModalPreviewDokumen';
+import RiwayatTugasItem from './RiwayatTugasItem';
 
 export default function FormKumpulTugasEkstra({ user, anggotaList = [], onOpenLogin }) {
   const [masterTugasList, setMasterTugasList] = useState([]);
@@ -210,14 +211,15 @@ export default function FormKumpulTugasEkstra({ user, anggotaList = [], onOpenLo
     }
   };
 
-  const handleOpenPreview = (item) => {
+  const handleOpenPreview = (item, extra = {}) => {
     setPreviewFile({
-      fileName: item.file_name,
-      fileUrl: item.file_url,
-      previewUrl: item.file_url,
-      judulTugas: item.ekstra_tugas_master?.judul_tugas || 'Tugas Ekstra TIK',
-      nama: item.nama,
-      kelas: item.kelas
+      fileName: item.file_name || item.fileName,
+      fileUrl: item.file_url || item.fileUrl,
+      previewUrl: item.file_url || item.fileUrl,
+      judulTugas: item.ekstra_tugas_master?.judul_tugas || item.judul_tugas || item.judulTugas || 'Tugas Ekstra TIK',
+      nama: item.nama || item.master_siswa?.NAMA,
+      kelas: item.kelas || item.master_siswa?.Kelas,
+      canDownload: typeof extra?.canDownload === 'boolean' ? extra.canDownload : undefined
     });
     setIsPreviewOpen(true);
   };
@@ -243,7 +245,7 @@ export default function FormKumpulTugasEkstra({ user, anggotaList = [], onOpenLo
   }, [riwayatTugas, filterKelas, searchQuery]);
 
   const handleDownloadCsv = () => {
-    if (filteredRiwayat.length === 0) return;
+    if (!isAdmin || filteredRiwayat.length === 0) return;
     const csv = generateTugasCsv(filteredRiwayat);
     downloadCsvFile(csv, `Rekap_Tugas_Ekstra_TIK_${new Date().toISOString().split('T')[0]}.csv`);
   };
@@ -569,15 +571,17 @@ export default function FormKumpulTugasEkstra({ user, anggotaList = [], onOpenLo
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={handleDownloadCsv}
-                disabled={filteredRiwayat.length === 0}
-                className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg border border-slate-200 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Unduh Rekap Tugas (.CSV)"
-              >
-                <Download className="w-3.5 h-3.5 text-emerald-600" />
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={handleDownloadCsv}
+                  disabled={filteredRiwayat.length === 0}
+                  className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg border border-slate-200 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Unduh Rekap Tugas (.CSV)"
+                >
+                  <Download className="w-3.5 h-3.5 text-emerald-600" />
+                </button>
+              )}
 
               <button
                 type="button"
@@ -695,96 +699,16 @@ export default function FormKumpulTugasEkstra({ user, anggotaList = [], onOpenLo
             ) : (
               <div className="space-y-3 overflow-y-auto max-h-[480px] pr-1 mt-1">
                 {filteredRiwayat.map((item) => (
-                  <div
+                  <RiwayatTugasItem
                     key={item.id}
-                    className="p-3.5 bg-slate-50 hover:bg-indigo-50/20 rounded-xl border border-slate-200 hover:border-indigo-300 transition space-y-2 shadow-2xs"
-                  >
-                    <div className="flex items-center justify-between gap-1.5 text-[11px]">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-[10px] shrink-0">
-                          {(item.nama || '?').charAt(0).toUpperCase()}
-                        </div>
-                        <span className="font-bold text-slate-800 truncate">
-                          {item.nama || 'Siswa Ekstra TIK'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded text-[10px] border border-indigo-100">
-                          Kelas {item.kelas || '-'}
-                        </span>
-                        {item.no_absen && (
-                          <span className="text-slate-500 bg-white px-1.5 py-0.5 rounded text-[10px] border border-slate-200">
-                            Absen {item.no_absen}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="bg-white p-2.5 rounded-lg border border-slate-100 space-y-1">
-                      <h4 className="text-xs font-semibold text-slate-800 flex items-center gap-1">
-                        <span className="text-indigo-600">📑</span>
-                        <span>{item.ekstra_tugas_master?.judul_tugas || item.judul_tugas || 'Tugas Ekstra TIK'}</span>
-                      </h4>
-                      <p className="text-[11px] text-slate-600 truncate flex items-center gap-1 font-mono">
-                        <FileText className="w-3 h-3 text-indigo-500 shrink-0" />
-                        <span className="truncate">{item.file_name}</span>
-                      </p>
-                      {item.catatan_siswa && (
-                        <p className="text-[11px] text-slate-500 italic pt-1 border-t border-slate-100">
-                          "{item.catatan_siswa}"
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
-                      <span>
-                        {new Date(item.submitted_at).toLocaleDateString('id-ID', {
-                          weekday: 'short',
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric'
-                        })} • {new Date(item.submitted_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WITA
-                      </span>
-                      <span className="text-emerald-600 font-semibold flex items-center gap-0.5">
-                        <Check className="w-3 h-3" />
-                        Tersimpan
-                      </span>
-                    </div>
-
-                    {/* Tombol Preview, Buka, dan Unduh */}
-                    <div className="flex items-center gap-1.5 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenPreview(item)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition cursor-pointer"
-                        title="Pratinjau Dokumen di Modal Multi-Engine"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Preview Dokumen</span>
-                      </button>
-
-                      <a
-                        href={item.file_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg border border-slate-200 transition"
-                        title="Buka File Langsung di Tab Baru"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-
-                      <a
-                        href={item.file_url}
-                        download={item.file_name}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg border border-slate-200 transition"
-                        title="Unduh Berkas ke Perangkat"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </a>
-                    </div>
-                  </div>
+                    item={item}
+                    user={user}
+                    activeSiswaId={activeSiswaId}
+                    activeNama={activeNama}
+                    activeKelas={activeKelas}
+                    isAdmin={isAdmin}
+                    onPreview={handleOpenPreview}
+                  />
                 ))}
               </div>
             )}

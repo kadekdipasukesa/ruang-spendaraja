@@ -120,18 +120,20 @@ export default function ModalPreviewDokumen({ isOpen, onClose, fileData }) {
               <span className="hidden sm:inline">Buka Langsung</span>
             </a>
 
-            {/* Tombol Unduh Dokumen */}
-            <a
-              href={cleanUrl}
-              download={fileName}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:text-white bg-emerald-950/60 hover:bg-emerald-800 rounded-xl transition border border-emerald-500/30"
-              title="Unduh File ke Perangkat"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Unduh</span>
-            </a>
+            {/* Tombol Unduh Dokumen (Hanya jika diizinkan/milik sendiri) */}
+            {fileData?.canDownload !== false && (
+              <a
+                href={cleanUrl}
+                download={fileName}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:text-white bg-emerald-950/60 hover:bg-emerald-800 rounded-xl transition border border-emerald-500/30"
+                title="Unduh File ke Perangkat"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Unduh</span>
+              </a>
+            )}
 
             {/* Tombol Tutup */}
             <button
