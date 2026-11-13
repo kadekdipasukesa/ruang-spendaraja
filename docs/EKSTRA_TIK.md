@@ -12,7 +12,7 @@ Dokumen ini menjelaskan arsitektur baru berbasis **Supabase Database** (PostgreS
   2. **Tampilan Log Kehadiran Gaya WhatsApp**: Seluruh kehadiran siswa disajikan dalam **1 kolom rapi tanpa tab pemisah siswa** yang dikelompokkan per tanggal pertemuan dengan bubble sticky header ala WhatsApp, filter pencarian instan, dan status pill warna cerah.
   3. **Export Rekap Presensi (.CSV)**: Tombol unduh laporan matriks presensi seluruh 42 siswa dan semua tanggal pertemuan ke file `.csv` yang dapat langsung dibuka di Microsoft Excel dengan data siswa lengkap diambil dari `master_siswa`.
   4. **Pengumpulan Tugas ke Cloudinary**: Siswa mengunggah berkas tugas (Word `.docx`, PDF, Scratch `.sb3`, gambar, zip) hingga 25MB langsung ke Cloudinary menggunakan preset **`tugas_ekstra_tik7`** dan metadata tersimpan di tabel `ekstra_tugas_pengumpulan`.
-  5. **In-App Document Live Preview**: Pratinjau dokumen langsung di dalam web menggunakan Cloudinary/Google Viewer modal (`ModalPreviewDokumen.jsx`).
+  5. **In-App Document Live Preview**: Pratinjau dokumen langsung di dalam web menggunakan Cloudinary/Google/Office Online Viewer modal (`ModalPreviewDokumen.jsx`).
   6. **Admin Sesi Toggle**: Guru/Admin (`role === 'admin' || role === 'guru' || role_2 === 'admin'`) dapat membuka dan menutup sesi absensi secara realtime menggunakan tabel Supabase `game_controls` (`game_id = 'ekstra_tik_absen'`).
 
 ---
@@ -119,7 +119,8 @@ File `/scripts/migration_add_siswa_id.sql` berisi script SQL lengkap untuk:
 3. **Visibilitas Penuh Admin & Pengawasan Tugas**:
    - Panel Riwayat Tugas dilengkapi *Scope Switcher*: tab **"Semua Siswa"** (menampilkan seluruh tugas yang dikumpulkan oleh ke-42 anggota) dan **"Siswa Terpilih"** (khusus siswa aktif di form).
    - Dilengkapi *Real-time Subscription* (`subscribeTugasPengumpulanEkstra`) via Supabase Postgres Changes sehingga berkas tugas baru langsung muncul di panel admin tanpa perlu me-refresh halaman.
-   - Dilengkapi pencarian nama siswa / nama berkas, filter per kelas (7.1 s.d 7.11), filter per tugas master, dan tombol unduh rekap berkas tugas berformat `.CSV` (Excel).
+   - Dilengkapi pencarian nama siswa / nama berkas, filter per kelas (7.1 s.d 7.11), filter per tugas master, dan tombol unduh rekap berkas tugas berformat `.CSV` (Excel) **khusus role Admin atau Guru**.
+   - **Proteksi Unduh Berkas Siswa (`RiwayatTugasItem.jsx`)**: Tombol unduh berkas tugas siswa lain ditiadakan dari tampilan siswa dan hanya muncul jika berkas tersebut milik siswa yang bersangkutan atau dibuka oleh akun Admin/Guru.
    - Arsitektur *Resilient Query*: Dilengkapi fallback query otomatis jika PostgREST relationship cache belum terindeks, memastikan data pengumpulan di tabel `ekstra_tugas_pengumpulan` tidak pernah kosong atau terlewat di sisi admin.
 
 ---
@@ -131,6 +132,10 @@ File `/scripts/migration_add_siswa_id.sql` berisi script SQL lengkap untuk:
    - Disediakan tombol saklar manual mesin viewer (*Switch Engine*): pengguna dapat beralih antara mesin **Office Viewer** dan **Google Docs Viewer** secara instan dengan 1 klik.
 2. **Penanganan Timeout & Tombol Alternatif**:
    - Dilengkapi deteksi otomatis pemuatan lambat (*Slow Loading Fallback Box*) dengan tombol **"Buka di Tab Baru"** dan **"Unduh Berkas"** langsung dari Cloudinary.
-   - Memastikan pengguna dan guru tidak pernah mengalami kendala dokumen tidak dapat diakses saat mereview tugas ekstrakurikuler.
+   - Tombol unduh di dalam modal pratinjau mengikuti hak kepemilikan (`canDownload`) sehingga siswa tidak dapat menyalin/mengunduh berkas tugas siswa lain melalui modal pratinjau.
 
+---
 
+## 8. Dokumentasi Komprehensif Seluruh Komponen UI
+Untuk dokumentasi teknis mendalam mengenai setiap berkas komponen di dalam `src/components/EkstraTik/` (props, state, alur kerja, dan proteksi hak akses), silakan merujuk ke dokumen:
+👉 **[Dokumentasi Komponen Ekstra TIK](KOMPONEN_EKSTRA_TIK.md)**.
