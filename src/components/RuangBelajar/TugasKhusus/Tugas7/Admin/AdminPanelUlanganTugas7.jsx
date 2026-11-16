@@ -425,6 +425,38 @@ export default function AdminPanelUlanganTugas7({
               </button>
             )}
 
+            {/* Tombol Force Ongoing (jika sesi gantung di starting) */}
+            {currentSesi?.status === 'starting' && (
+              <button
+                type="button"
+                onClick={async () => {
+                  setActionLoading(true);
+                  try {
+                    const { data } = await supabase
+                      .from('ujian_sesi')
+                      .update({ status: 'ongoing', waktu_mulai: new Date().toISOString() })
+                      .eq('id', currentSesi.id)
+                      .select()
+                      .single();
+                    if (data) {
+                      setCurrentSesi(data);
+                      if (onRefreshSesi) onRefreshSesi(data);
+                    }
+                    showNotif('Status ulangan berhasil diaktifkan ke ONGOING!');
+                  } catch (e) {
+                    alert('Gagal set status ongoing: ' + e.message);
+                  } finally {
+                    setActionLoading(false);
+                  }
+                }}
+                disabled={actionLoading}
+                className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-black rounded-xl text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-blue-700/30 transition cursor-pointer active:scale-98"
+              >
+                <Zap size={16} />
+                <span>AKTIFKAN STATUS ONGOING SEKARANG</span>
+              </button>
+            )}
+
             {/* Tombol Selesaikan Ujian (jika sesi ongoing) */}
             {currentSesi?.status === 'ongoing' && (
               <button

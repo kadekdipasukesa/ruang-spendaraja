@@ -12,11 +12,25 @@ export default function TugasUlanganQuestionCard({
   onToggleRagu,
   isBlocked = false,
   cheatCount = 0,
+  onReloadSoal,
 }) {
   if (!soal) {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-500 animate-pulse font-bold">
-        Memuat butir soal...
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 sm:p-12 text-center text-slate-300 font-bold space-y-4 shadow-xl">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+        <h4 className="text-base sm:text-lg text-white">Sedang Memuat Butir Soal Ujian...</h4>
+        <p className="text-xs text-slate-400 font-normal max-w-sm mx-auto">
+          Sistem sedang menyiapkan 50 butir soal CBT untuk Anda.
+        </p>
+        {onReloadSoal && (
+          <button
+            type="button"
+            onClick={onReloadSoal}
+            className="mt-3 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-lg shadow-blue-600/30 active:scale-98"
+          >
+            Muat Butir Soal Sekarang
+          </button>
+        )}
       </div>
     );
   }

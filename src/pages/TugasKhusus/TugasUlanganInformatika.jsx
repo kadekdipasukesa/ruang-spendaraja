@@ -115,9 +115,25 @@ export default function TugasUlanganInformatika() {
     }
   };
 
-  // --- LOAD SOAL TERACAK SAAT SESI ONGOING ---
-  useEffect(() => {
-    if (sesi?.status === 'ongoing' && soalUjian.length === 0) {
+  // --- INISIALISASI SOAL UJIAN (ACAK PER SISWA & PERSISTEN DI LOCALSTORAGE) ---
+  const initSoalUjian = useCallback((sesiId, userId) => {
+    try {
+      const storageKey = `tugas7_soal_order_${sesiId || 'default'}_${userId || 'guest'}`;
+      const savedOrder = localStorage.getItem(storageKey);
+
+      if (savedOrder) {
+        try {
+          const parsed = JSON.parse(savedOrder);
+          if (Array.isArray(parsed) && parsed.length === SOAL_POOL.length) {
+            setSoalUjian(parsed);
+            startTimeRef.current = Date.now();
+            return;
+          }
+        } catch (e) {
+          console.warn('Gagal parse cache soal:', e);
+        }
+      }
+
       // 1. Acak urutan 50 butir soal dengan Fisher-Yates
       const shuffledQuestions = shuffleSoal(SOAL_POOL);
 
@@ -127,8 +143,30 @@ export default function TugasUlanganInformatika() {
         opsi: shuffleOpsi(s.opsi),
       }));
 
+      // Simpan ke localStorage agar urutan soal konsisten jika reload browser
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(randomized));
+      } catch (e) {
+        console.warn('Gagal simpan urutan soal ke localStorage:', e);
+      }
+
       setSoalUjian(randomized);
       startTimeRef.current = Date.now();
+    } catch (err) {
+      console.error('Error inisialisasi soal ujian:', err);
+      // Fallback mutlak: gunakan SOAL_POOL langsung agar tidak pernah macet kosong
+      setSoalUjian(SOAL_POOL);
+    }
+  }, []);
+
+  // --- AUTO LOAD SOAL SAAT SESI ONGOING ATAU STARTING ---
+  useEffect(() => {
+    if (!sesi) return;
+
+    if (sesi.status === 'ongoing' || sesi.status === 'starting') {
+      if (soalUjian.length === 0) {
+        initSoalUjian(sesi.id, user?.id);
+      }
 
       // Coba masuk fullscreen otomatis saat mulai
       try {
@@ -141,7 +179,7 @@ export default function TugasUlanganInformatika() {
         console.warn('Gagal request fullscreen otomatis:', err);
       }
     }
-  }, [sesi?.status, soalUjian.length]);
+  }, [sesi, soalUjian.length, initSoalUjian, user?.id]);
 
   // --- REALTIME SUBSCRIPTION SESI UJIAN ---
   useEffect(() => {
@@ -208,6 +246,11 @@ export default function TugasUlanganInformatika() {
     setCountdown(count);
     playBeep(440, 0.1);
 
+    // Pre-load soal di latar belakang saat hitungan mundur berputar
+    if (sesi?.id && user?.id) {
+      initSoalUjian(sesi.id, user.id);
+    }
+
     const interval = setInterval(() => {
       count--;
       if (count > 0) {
@@ -219,6 +262,21 @@ export default function TugasUlanganInformatika() {
       } else {
         clearInterval(interval);
         setCountdown(null);
+
+        // Pastikan status lokal berubah menjadi ongoing
+        setSesi((prev) => (prev ? { ...prev, status: 'ongoing' } : prev));
+
+        // Pastikan soal terisi
+        if (sesi?.id) {
+          initSoalUjian(sesi.id, user?.id);
+          // Sinkronkan status database ke ongoing
+          supabase
+            .from('ujian_sesi')
+            .update({ status: 'ongoing', waktu_mulai: new Date().toISOString() })
+            .eq('id', sesi.id)
+            .catch((err) => console.warn('Gagal set status ongoing:', err));
+        }
+
         // Pastikan masuk fullscreen
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen().catch(() => {});
@@ -372,6 +430,14 @@ export default function TugasUlanganInformatika() {
       setCheatCount(pesertaAktif.cheat_count || 0);
       if (pesertaAktif.status_ujian === 'blocked') {
         setIsBlocked(true);
+      }
+
+      // Jika sesi sudah berjalan atau sedang hitungan mundur, siapkan butir soal
+      if (sesiData.status === 'ongoing' || sesiData.status === 'starting') {
+        initSoalUjian(sesiData.id, user.id);
+        if (sesiData.status === 'starting') {
+          startCountdownSequence();
+        }
       }
     } catch (err) {
       console.error('Error join sesi:', err);
@@ -569,7 +635,16 @@ export default function TugasUlanganInformatika() {
           isAdmin={isAdmin}
           onOpenAdminPanel={() => setShowAdminPanel(true)}
           onStartByAdmin={async () => {
-            await supabase.from('ujian_sesi').update({ status: 'starting' }).eq('id', sesi.id);
+            try {
+              // 1. Ubah ke starting untuk memicu countdown di seluruh client
+              await supabase.from('ujian_sesi').update({ status: 'starting' }).eq('id', sesi.id);
+              // 2. Jadwalkan update ke ongoing dalam 3.5 detik
+              setTimeout(async () => {
+                await supabase.from('ujian_sesi').update({ status: 'ongoing' }).eq('id', sesi.id);
+              }, 3500);
+            } catch (e) {
+              console.error('Gagal start ulangan oleh admin:', e);
+            }
           }}
         />
         {showAdminPanel && (
@@ -639,6 +714,7 @@ export default function TugasUlanganInformatika() {
             onToggleRagu={handleToggleRagu}
             isBlocked={isBlocked}
             cheatCount={cheatCount}
+            onReloadSoal={() => initSoalUjian(sesi?.id, user?.id)}
           />
 
           <TugasUlanganNavGrid
