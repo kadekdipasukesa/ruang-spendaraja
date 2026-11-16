@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '../../../../../lib/supabaseClient';
 import {
   ShieldAlert,
@@ -20,6 +20,7 @@ import {
   Archive,
   PlusCircle,
   Radio,
+  ExternalLink,
 } from 'lucide-react';
 
 export default function AdminPanelUlanganTugas7({
@@ -28,6 +29,7 @@ export default function AdminPanelUlanganTugas7({
   onRefreshSesi,
 }) {
   const [daftarSesi, setDaftarSesi] = useState([]);
+  const [selectedRoomId, setSelectedRoomId] = useState(propSesi?.id || null);
   const [currentSesi, setCurrentSesi] = useState(propSesi || null);
   const [peserta, setPeserta] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -36,6 +38,12 @@ export default function AdminPanelUlanganTugas7({
   const [actionLoading, setActionLoading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [copiedPin, setCopiedPin] = useState(false);
+
+  // Ref agar ID room terpilih tidak tertimpa re-render atau loop
+  const selectedRoomIdRef = useRef(propSesi?.id || null);
+  useEffect(() => {
+    selectedRoomIdRef.current = selectedRoomId;
+  }, [selectedRoomId]);
 
   // State pencarian & filter tabel peserta
   const [searchQuery, setSearchQuery] = useState('');
@@ -66,86 +74,8 @@ export default function AdminPanelUlanganTugas7({
     return pin;
   };
 
-  // 1. AMBIL SEMUA DAFTAR ROOM / SESI DARI DATABASE
-  const fetchAllRooms = useCallback(async (autoSelectId = null) => {
-    setLoading(true);
-    try {
-      // Ambil seluruh sesi non-archived terbaru
-      const { data: sesiRows, error: sesiErr } = await supabase
-        .from('ujian_sesi')
-        .select('*')
-        .neq('status', 'archived')
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (sesiErr) throw sesiErr;
-
-      // Ambil count peserta untuk semua sesi
-      const { data: allPeserta } = await supabase
-        .from('ujian_peserta')
-        .select('sesi_id');
-
-      const countsMap = {};
-      (allPeserta || []).forEach((p) => {
-        countsMap[p.sesi_id] = (countsMap[p.sesi_id] || 0) + 1;
-      });
-
-      const enriched = (sesiRows || []).map((s) => ({
-        ...s,
-        peserta_count: countsMap[s.id] || 0,
-      }));
-
-      setDaftarSesi(enriched);
-
-      // Tentukan sesi mana yang sedang aktif dipantau
-      if (enriched.length > 0) {
-        let selected = null;
-
-        if (autoSelectId) {
-          selected = enriched.find((s) => s.id === autoSelectId);
-        } else if (propSesi?.id) {
-          selected = enriched.find((s) => s.id === propSesi.id);
-        }
-
-        // Jika belum ada pilihan, prioritaskan sesi ongoing dengan peserta terbanyak
-        if (!selected) {
-          const ongoingList = enriched.filter((s) => s.status === 'ongoing');
-          if (ongoingList.length > 0) {
-            ongoingList.sort((a, b) => b.peserta_count - a.peserta_count);
-            selected = ongoingList[0];
-          } else {
-            // Prioritas berikutnya: waiting
-            const waitingList = enriched.filter((s) => s.status === 'waiting');
-            if (waitingList.length > 0) {
-              selected = waitingList[0];
-            } else {
-              selected = enriched[0];
-            }
-          }
-        }
-
-        if (selected) {
-          setCurrentSesi(selected);
-          setNewDurasi(selected.durasi_menit || 90);
-          fetchPeserta(selected.id);
-          if (onRefreshSesi) onRefreshSesi(selected);
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching rooms:', err);
-      showNotif('Gagal memuat daftar room: ' + err.message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [propSesi?.id, onRefreshSesi]);
-
-  // Initial mount
-  useEffect(() => {
-    fetchAllRooms();
-  }, [fetchAllRooms]);
-
-  // 2. AMBIL DATA PESERTA UNTUK SESI TERPILIH (QUERY AMAN DENGAN master_siswa(*))
-  const fetchPeserta = async (sesiId) => {
+  // 1. AMBIL DATA PESERTA DENGAN QUERY AMAN (master_siswa(*))
+  const fetchPeserta = useCallback(async (sesiId) => {
     if (!sesiId) return;
     setLoadingPeserta(true);
     try {
@@ -163,13 +93,97 @@ export default function AdminPanelUlanganTugas7({
     } finally {
       setLoadingPeserta(false);
     }
-  };
+  }, []);
 
-  // 3. REALTIME LISTENER PESERTA PADA ROOM AKTIF
+  // 2. AMBIL SEMUA DAFTAR ROOM / SESI DARI DATABASE (TANPA MEMICU LOOPING PARENT)
+  const fetchAllRooms = useCallback(async (targetRoomId = null) => {
+    setLoading(true);
+    try {
+      const { data: sesiRows, error: sesiErr } = await supabase
+        .from('ujian_sesi')
+        .select('*')
+        .neq('status', 'archived')
+        .order('created_at', { ascending: false })
+        .limit(25);
+
+      if (sesiErr) throw sesiErr;
+
+      // Ambil count peserta
+      const { data: allPeserta } = await supabase
+        .from('ujian_peserta')
+        .select('sesi_id');
+
+      const countsMap = {};
+      (allPeserta || []).forEach((p) => {
+        countsMap[p.sesi_id] = (countsMap[p.sesi_id] || 0) + 1;
+      });
+
+      const enriched = (sesiRows || []).map((s) => ({
+        ...s,
+        peserta_count: countsMap[s.id] || 0,
+      }));
+
+      setDaftarSesi(enriched);
+
+      if (enriched.length > 0) {
+        let chosen = null;
+
+        // 1) Jika ada targetRoomId eksplisit
+        if (targetRoomId) {
+          chosen = enriched.find((s) => s.id === targetRoomId);
+        }
+
+        // 2) Jika admin sudah memilih room sebelumnya, TETAPKAN pilihan admin! (Jangan pindah-pindah)
+        if (!chosen && selectedRoomIdRef.current) {
+          chosen = enriched.find((s) => s.id === selectedRoomIdRef.current);
+        }
+
+        // 3) Jika belum pernah ada room yang dipilih, tentukan default awal
+        if (!chosen) {
+          if (propSesi?.id) {
+            chosen = enriched.find((s) => s.id === propSesi.id);
+          }
+
+          if (!chosen) {
+            // Prioritas: ongoing dengan peserta terbanyak
+            const ongoingList = enriched.filter((s) => s.status === 'ongoing');
+            if (ongoingList.length > 0) {
+              ongoingList.sort((a, b) => b.peserta_count - a.peserta_count);
+              chosen = ongoingList[0];
+            } else {
+              const waitingList = enriched.filter((s) => s.status === 'waiting');
+              chosen = waitingList.length > 0 ? waitingList[0] : enriched[0];
+            }
+          }
+        }
+
+        if (chosen) {
+          setSelectedRoomId(chosen.id);
+          selectedRoomIdRef.current = chosen.id;
+          setCurrentSesi(chosen);
+          setNewDurasi(chosen.durasi_menit || 90);
+          fetchPeserta(chosen.id);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching rooms:', err);
+      showNotif('Gagal memuat daftar room: ' + err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [propSesi?.id, fetchPeserta]);
+
+  // Initial mount HANYA 1 KALI (tidak re-run saat parent render)
   useEffect(() => {
-    if (!currentSesi?.id) return;
+    fetchAllRooms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    const channelId = `admin_live_${currentSesi.id}_${Math.random().toString(36).substring(2, 7)}`;
+  // 3. REALTIME LISTENER PESERTA PADA ROOM YANG SEDANG DIPILIH ADMIN
+  useEffect(() => {
+    if (!selectedRoomId) return;
+
+    const channelId = `admin_live_${selectedRoomId}_${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
       .channel(channelId)
       .on(
@@ -178,22 +192,34 @@ export default function AdminPanelUlanganTugas7({
           event: '*',
           schema: 'public',
           table: 'ujian_peserta',
-          filter: `sesi_id=eq.${currentSesi.id}`,
+          filter: `sesi_id=eq.${selectedRoomId}`,
         },
-        () => fetchPeserta(currentSesi.id)
+        () => fetchPeserta(selectedRoomId)
       )
       .subscribe();
 
     return () => supabase.removeChannel(channel);
-  }, [currentSesi?.id]);
+  }, [selectedRoomId, fetchPeserta]);
 
-  // GANTI ROOM YANG SEDANG DIPANTAU
+  // GANTI ROOM YANG SEDANG DIPANTAU ADMIN (MANDIRI & ANTI-BOUNCE)
   const handleSelectRoom = (sesiItem) => {
+    if (!sesiItem?.id) return;
+    // Kunci ID room terpilih
+    setSelectedRoomId(sesiItem.id);
+    selectedRoomIdRef.current = sesiItem.id;
     setCurrentSesi(sesiItem);
     setNewDurasi(sesiItem.durasi_menit || 90);
     fetchPeserta(sesiItem.id);
-    if (onRefreshSesi) onRefreshSesi(sesiItem);
-    showNotif(`Beralih ke Room PIN: ${sesiItem.pin_ujian} (${sesiItem.status.toUpperCase()})`);
+    showNotif(`Memantau Room PIN: ${sesiItem.pin_ujian} (${sesiItem.status.toUpperCase()})`);
+  };
+
+  // TERAPKAN ROOM INI KE HALAMAN UTAMA CBT (SYNC KE PARENT SECARA EKSPLISIT)
+  const handleApplyRoomToExamPage = () => {
+    if (!currentSesi) return;
+    if (onRefreshSesi) {
+      onRefreshSesi(currentSesi);
+      showNotif(`Room [${currentSesi.pin_ujian}] diterapkan sebagai sesi ujian aktif!`);
+    }
   };
 
   // BUAT ROOM BARU (TOKEN PIN BARU)
@@ -223,6 +249,10 @@ export default function AdminPanelUlanganTugas7({
       if (error) throw error;
 
       showNotif(`Room Baru Berhasil Dibuat! PIN: ${newPin}`);
+      setSelectedRoomId(data.id);
+      selectedRoomIdRef.current = data.id;
+      setCurrentSesi(data);
+      if (onRefreshSesi) onRefreshSesi(data);
       await fetchAllRooms(data.id);
     } catch (err) {
       console.error('Gagal buat room baru:', err);
@@ -375,6 +405,8 @@ export default function AdminPanelUlanganTugas7({
         .eq('id', currentSesi.id);
 
       showNotif(`Room [${currentSesi.pin_ujian}] diarsipkan.`);
+      selectedRoomIdRef.current = null;
+      setSelectedRoomId(null);
       await fetchAllRooms();
     } catch (e) {
       alert('Gagal arsip room: ' + e.message);
@@ -400,7 +432,7 @@ export default function AdminPanelUlanganTugas7({
 
       if (error) throw error;
       showNotif(`Akses ujian untuk ${namaSiswa} telah dibuka kembali.`);
-      fetchPeserta(currentSesi?.id);
+      if (selectedRoomId) fetchPeserta(selectedRoomId);
     } catch (err) {
       alert('Gagal membuka blokir: ' + err.message);
     }
@@ -492,8 +524,8 @@ export default function AdminPanelUlanganTugas7({
             <button
               type="button"
               onClick={() => {
-                fetchAllRooms(currentSesi?.id);
-                if (currentSesi?.id) fetchPeserta(currentSesi.id);
+                fetchAllRooms(selectedRoomId);
+                if (selectedRoomId) fetchPeserta(selectedRoomId);
               }}
               disabled={loading}
               className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
@@ -518,7 +550,7 @@ export default function AdminPanelUlanganTugas7({
             <div className="flex items-center gap-2">
               <Radio size={16} className="text-blue-400 animate-pulse" />
               <h2 className="text-sm font-black text-white uppercase tracking-wider">
-                Daftar Ruang Ulangan CBT ({daftarSesi.length} Room)
+                Daftar Ruang Ulangan CBT ({daftarSesi.length} Room Tersedia)
               </h2>
             </div>
             <button
@@ -540,7 +572,7 @@ export default function AdminPanelUlanganTugas7({
               </div>
             ) : (
               daftarSesi.map((room) => {
-                const isSelected = currentSesi?.id === room.id;
+                const isSelected = selectedRoomId === room.id;
                 const isOngoing = room.status === 'ongoing';
                 const isWaiting = room.status === 'waiting';
                 const isStarting = room.status === 'starting';
@@ -552,13 +584,13 @@ export default function AdminPanelUlanganTugas7({
                     onClick={() => handleSelectRoom(room)}
                     className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${
                       isSelected
-                        ? 'bg-blue-950/60 border-blue-500 shadow-md shadow-blue-500/20 ring-2 ring-blue-500/40'
+                        ? 'bg-blue-950/80 border-blue-400 shadow-lg shadow-blue-500/25 ring-2 ring-blue-500'
                         : 'bg-slate-950/50 border-slate-800 hover:bg-slate-800/60 hover:border-slate-700'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1 mb-2">
                       <span className="font-mono text-base font-black text-white tracking-wider flex items-center gap-1.5">
-                        <KeyRound size={13} className="text-blue-400" />
+                        <KeyRound size={13} className={isSelected ? 'text-blue-400' : 'text-slate-400'} />
                         {room.pin_ujian}
                       </span>
                       <span
@@ -587,7 +619,9 @@ export default function AdminPanelUlanganTugas7({
                     </div>
 
                     {isSelected && (
-                      <div className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-bl-full" />
+                      <div className="absolute top-0 right-0 px-2 py-0.5 bg-blue-600 text-white text-[8px] font-black uppercase rounded-bl-lg">
+                        DIPILIH
+                      </div>
                     )}
                   </button>
                 );
@@ -603,7 +637,7 @@ export default function AdminPanelUlanganTugas7({
           <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl flex flex-col justify-between relative overflow-hidden">
             <div>
               <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
-                <span>Room Dipantau</span>
+                <span>Room Terpilih</span>
                 <span
                   className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border ${
                     currentSesi?.status === 'ongoing'
@@ -637,6 +671,16 @@ export default function AdminPanelUlanganTugas7({
               <span>Siswa terhubung di room ini:</span>
               <strong className="text-white font-mono text-sm">{peserta.length} Siswa</strong>
             </div>
+
+            {/* Tombol Terapkan ke Layar Depan */}
+            <button
+              type="button"
+              onClick={handleApplyRoomToExamPage}
+              className="mt-3 w-full py-1.5 px-3 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-300 text-[11px] font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <ExternalLink size={12} />
+              <span>Gunakan Sebagai Sesi Ulangan Depan</span>
+            </button>
           </div>
 
           {/* Card Durasi & Pengaturan */}
