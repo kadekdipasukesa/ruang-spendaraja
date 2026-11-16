@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" width="100%" height="100%" className="w-full h-auto max-w-2xl mx-auto">
+  <defs>
+    <style>
+      .step-label { font-family: system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
+      .step-sub { font-family: system-ui, -apple-system, sans-serif; font-size: 11px; fill: #475569; text-anchor: middle; }
+      .code-pill { font-family: monospace; font-size: 12px; font-weight: bold; fill: #0369a1; text-anchor: middle; }
+      .arrow { stroke: #0284c7; stroke-width: 2.5; fill: none; }
+    </style>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto">
+      <polygon points="0 0, 7 3.5, 0 7" fill="#0284c7" />
+    </marker>
+    <filter id="box-sh" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1" />
+    </filter>
+  </defs>
+
+  <!-- Step 1: Keyboard -->
+  <g transform="translate(25, 20)">
+    <g filter="url(#box-sh)">
+      <!-- Keyboard base -->
+      <rect x="10" y="30" width="150" height="75" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="2" />
+      <!-- Keys -->
+      <g fill="#e2e8f0" stroke="#94a3b8" stroke-width="1">
+        <rect x="20" y="38" width="16" height="12" rx="2" />
+        <rect x="40" y="38" width="16" height="12" rx="2" />
+        <rect x="60" y="38" width="16" height="12" rx="2" />
+        <rect x="80" y="38" width="16" height="12" rx="2" />
+        <rect x="100" y="38" width="16" height="12" rx="2" />
+        <rect x="120" y="38" width="16" height="12" rx="2" />
+
+        <rect x="20" y="54" width="16" height="12" rx="2" />
+        <rect x="40" y="54" width="16" height="12" rx="2" fill="#3b82f6" stroke="#1d4ed8" /> <!-- Key B -->
+        <rect x="60" y="54" width="16" height="12" rx="2" />
+        <rect x="80" y="54" width="16" height="12" rx="2" />
+        <rect x="100" y="54" width="16" height="12" rx="2" />
+        <rect x="120" y="54" width="16" height="12" rx="2" />
+
+        <rect x="30" y="70" width="70" height="12" rx="2" /> <!-- Spacebar -->
+        <rect x="104" y="70" width="32" height="12" rx="2" />
+      </g>
+      <!-- Key B text -->
+      <text x="48" y="63" font-family="system-ui, sans-serif" font-size="10px" font-weight="bold" fill="#ffffff" text-anchor="middle">B</text>
+    </g>
+    <text x="85" y="135" class="step-label">1. Karakter 'B' Ditekan</text>
+    <text x="85" y="152" class="step-sub">pada Keyboard</text>
+  </g>
+
+  <!-- Arrow 1 -> 2: ASCII 66 -> 01000010 -->
+  <g>
+    <path d="M190 70 L280 70" class="arrow" marker-end="url(#arrow-blue)" />
+    <rect x="195" y="42" width="125" height="22" rx="4" fill="#e0f2fe" stroke="#38bdf8" />
+    <text x="257" y="57" class="code-pill">ASCII 66 → 01000010</text>
+  </g>
+
+  <!-- Step 2: CPU Case -->
+  <g transform="translate(325, 10)">
+    <g filter="url(#box-sh)">
+      <rect width="90" height="110" rx="6" fill="#1e293b" stroke="#0f172a" stroke-width="2" />
+      <!-- Power button -->
+      <circle cx="45" cy="20" r="4" fill="#38bdf8" />
+      <!-- Binary processing chip -->
+      <rect x="15" y="35" width="60" height="45" rx="4" fill="#0284c7" />
+      <text x="45" y="53" font-family="monospace" font-size="12px" font-weight="bold" fill="#ffffff" text-anchor="middle">0100</text>
+      <text x="45" y="70" font-family="monospace" font-size="12px" font-weight="bold" fill="#ffffff" text-anchor="middle">0010</text>
+    </g>
+    <text x="45" y="145" class="step-label">2. CPU Mengolah Data</text>
+    <text x="45" y="162" class="step-sub">dalam Kode Biner</text>
+  </g>
+
+  <!-- Arrow 2 -> 3: 01000010 -> 'B' -->
+  <g>
+    <path d="M425 70 L515 70" class="arrow" marker-end="url(#arrow-blue)" />
+    <rect x="430" y="42" width="115" height="22" rx="4" fill="#e0f2fe" stroke="#38bdf8" />
+    <text x="487" y="57" class="code-pill">01000010 → 'B'</text>
+  </g>
+
+  <!-- Step 3: LCD Monitor -->
+  <g transform="translate(535, 15)">
+    <g filter="url(#box-sh)">
+      <!-- Monitor frame -->
+      <rect width="145" height="95" rx="6" fill="#0f172a" stroke="#334155" stroke-width="2" />
+      <!-- Inner LCD screen -->
+      <rect x="10" y="10" width="125" height="75" rx="3" fill="#ffffff" />
+      <!-- Letter B on screen -->
+      <text x="72" y="65" font-family="system-ui, sans-serif" font-size="48px" font-weight="900" fill="#0f172a" text-anchor="middle">B</text>
+      <!-- Stand -->
+      <rect x="62" y="96" width="20" height="12" fill="#475569" />
+      <rect x="47" y="108" width="50" height="5" rx="2" fill="#334155" />
+    </g>
+    <text x="72" y="140" class="step-label">3. Dikonversi Kembali &amp;</text>
+    <text x="72" y="157" class="step-sub">Tampil Huruf 'B' di LCD</text>
+  </g>
+</svg>
+

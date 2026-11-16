@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 650 320" width="100%" height="100%" className="w-full h-auto max-w-lg mx-auto">
+  <defs>
+    <style>
+      .window-title { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: bold; fill: #ffffff; }
+      .field-tag { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: bold; fill: #0284c7; }
+      .field-label { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: bold; fill: #334155; }
+      .field-val { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; fill: #1e293b; }
+      .body-txt { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; fill: #475569; font-style: italic; }
+      .btn-kirim { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: bold; fill: #ffffff; }
+    </style>
+    <filter id="mail-sh" x="-2%" y="-2%" width="104%" height="108%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <!-- Email Window Box -->
+  <g filter="url(#mail-sh)">
+    <rect x="15" y="15" width="620" height="290" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <!-- Window Bar (Dark slate) -->
+    <rect x="15" y="15" width="620" height="34" rx="8" fill="#1e293b" />
+    <rect x="15" y="40" width="620" height="9" fill="#1e293b" />
+    <text x="32" y="37" class="window-title">Pesan Baru</text>
+    <!-- Window Controls: _ ↗ ✕ -->
+    <text x="560" y="37" font-family="system-ui, sans-serif" font-size="14px" fill="#94a3b8">_</text>
+    <text x="585" y="37" font-family="system-ui, sans-serif" font-size="14px" fill="#94a3b8">↗</text>
+    <text x="610" y="37" font-family="system-ui, sans-serif" font-size="14px" fill="#94a3b8">✕</text>
+  </g>
+
+  <!-- [ P ] Kepada Field -->
+  <g transform="translate(30, 68)">
+    <text x="0" y="14" class="field-tag">[ P ] Kepada</text>
+    <text x="95" y="14" class="field-val">: wali_kelas7a@smpn2singaraja.sch.id</text>
+    <line x1="0" y1="24" x2="590" y2="24" stroke="#e2e8f0" stroke-width="1" />
+  </g>
+
+  <!-- [ Q ] Cc / Bcc Field -->
+  <g transform="translate(30, 104)">
+    <text x="0" y="14" class="field-tag">[ Q ] Cc / Bcc</text>
+    <text x="95" y="14" class="field-val">: bk_sekolah@smpn2singaraja.sch.id</text>
+    <text x="530" y="14" font-family="system-ui, sans-serif" font-size="12px" fill="#64748b">Cc Bcc</text>
+    <line x1="0" y1="24" x2="590" y2="24" stroke="#e2e8f0" stroke-width="1" />
+  </g>
+
+  <!-- [ R ] Subjek Field -->
+  <g transform="translate(30, 140)">
+    <text x="0" y="14" class="field-tag">[ R ] Subjek</text>
+    <text x="95" y="14" class="field-val" font-weight="bold">: Permohonan Izin Mengikuti Lomba Kabupaten</text>
+    <line x1="0" y1="24" x2="590" y2="24" stroke="#e2e8f0" stroke-width="1" />
+  </g>
+
+  <!-- Body Content Preview -->
+  <g transform="translate(30, 185)">
+    <text x="0" y="14" class="body-txt">Dengan hormat, bersama surat elektronik ini saya memohon izin...</text>
+  </g>
+
+  <!-- Bottom Toolbar: Kirim button, Formatting, [ S ] Paperclip Attachment -->
+  <g transform="translate(30, 255)">
+    <!-- Kirim Button -->
+    <rect width="75" height="34" rx="17" fill="#1d4ed8" />
+    <text x="37" y="22" class="btn-kirim" text-anchor="middle">Kirim</text>
+
+    <!-- Font format A -->
+    <text x="95" y="24" font-family="system-ui, sans-serif" font-size="16px" font-weight="bold" fill="#475569">A</text>
+
+    <!-- [ S ] Paperclip Icon -->
+    <g transform="translate(118, 2)">
+      <rect width="185" height="30" rx="6" fill="#f0f9ff" stroke="#38bdf8" stroke-width="1" />
+      <!-- Paperclip drawing -->
+      <path d="M12 18 L12 9 C12 6 15 4 18 4 C21 4 24 6 24 9 L24 20 C24 24 19 26 16 26 C12 26 8 23 8 19 L8 10" fill="none" stroke="#0284c7" stroke-width="2" stroke-linecap="round" />
+      <text x="36" y="20" class="field-tag" font-size="12px">[ S ] Ikon Klip Kertas</text>
+      <text x="145" y="20" font-family="system-ui, sans-serif" font-size="10px" fill="#0369a1">(Attachment)</text>
+    </g>
+  </g>
+</svg>
+

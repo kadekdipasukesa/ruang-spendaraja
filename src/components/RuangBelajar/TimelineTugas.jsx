@@ -64,6 +64,11 @@ export default function TimelineTugas({
           label: '💻 Praktik Modul & Proyek',
           className: 'bg-blue-50 text-blue-700 border-blue-200'
         };
+      case 'kuis_murni':
+        return {
+          label: '📝 Ulangan CBT Terpadu',
+          className: 'bg-amber-50 text-amber-700 border-amber-200'
+        };
       default:
         return {
           label: '📄 Lembar Kerja Tugas',
@@ -122,6 +127,13 @@ export default function TimelineTugas({
         btnClass: isSK
           ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white shadow-sm shadow-amber-600/20 font-bold'
           : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-sm shadow-purple-600/20 font-bold',
+        icon: Play
+      };
+    }
+    if (task.tipe_tugas === 'kuis_murni' || task.custom_route?.includes('ulangan-informatika')) {
+      return {
+        label: 'Masuk Ruang Ulangan CBT',
+        btnClass: 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm shadow-amber-600/20 font-bold',
         icon: Play
       };
     }

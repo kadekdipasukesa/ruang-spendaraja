@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 320" width="100%" height="100%" className="w-full h-auto max-w-lg mx-auto">
+  <defs>
+    <style>
+      .win-header { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: bold; fill: #1e293b; }
+      .tree-text { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; fill: #0f172a; }
+      .tree-bold { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: bold; fill: #0f172a; }
+      .tree-highlight { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: bold; fill: #15803d; }
+      .guide-line { stroke: #94a3b8; stroke-width: 1.5; stroke-dasharray: 2,2; fill: none; }
+    </style>
+    <filter id="win-sh" x="-3%" y="-3%" width="106%" height="110%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity="0.1" />
+    </filter>
+  </defs>
+
+  <!-- Window Container -->
+  <g filter="url(#win-sh)">
+    <rect x="15" y="15" width="510" height="285" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+    <!-- Window Title Bar -->
+    <rect x="15" y="15" width="510" height="36" rx="8" fill="#f1f5f9" />
+    <text x="35" y="38" class="win-header">Hierarki Folder &amp; File - Explorer (Drive C:\Arsip_Siswa)</text>
+    <line x1="15" y1="51" x2="525" y2="51" stroke="#cbd5e1" stroke-width="1.5" />
+  </g>
+
+  <!-- Level 0: Arsip_Siswa -->
+  <g transform="translate(45, 68)">
+    <!-- Collapse arrow -->
+    <path d="M0 6 L8 12 L0 18 Z" fill="#475569" transform="rotate(45 4 10)" />
+    <!-- Folder Icon Yellow -->
+    <path d="M18 4 L28 4 L33 9 L46 9 C48 9 50 11 50 13 L50 24 C50 26 48 28 46 28 L18 28 C16 28 14 26 14 24 L14 8 C14 6 16 4 18 4 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1" />
+    <text x="58" y="21" class="tree-bold">Arsip_Siswa</text>
+  </g>
+
+  <!-- Guide line from Arsip_Siswa down -->
+  <line x1="75" y1="95" x2="75" y2="245" class="guide-line" />
+
+  <!-- Level 1: Semester_1 -->
+  <g transform="translate(75, 110)">
+    <line x1="0" y1="14" x2="18" y2="14" class="guide-line" />
+    <path d="M22 4 L32 4 L37 9 L50 9 C52 9 54 11 54 13 L54 24 C54 26 52 28 50 28 L22 28 C20 28 18 26 18 24 L18 8 C18 6 20 4 22 4 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1" />
+    <text x="62" y="21" class="tree-bold">Semester_1</text>
+  </g>
+
+  <!-- Guide line from Semester_1 down -->
+  <line x1="115" y1="138" x2="115" y2="200" class="guide-line" />
+
+  <!-- Level 2: Tugas_Harian -->
+  <g transform="translate(115, 145)">
+    <line x1="0" y1="14" x2="16" y2="14" class="guide-line" />
+    <path d="M20 6 L28 6 L32 10 L44 10 C45 10 46 11 46 13 L46 22 C46 24 45 25 44 25 L20 25 C19 25 18 24 18 22 L18 9 C18 7 19 6 20 6 Z" fill="#fde047" stroke="#ca8a04" stroke-width="1" />
+    <text x="54" y="20" class="tree-text">Tugas_Harian</text>
+  </g>
+
+  <!-- Level 2: Administrasi -->
+  <g transform="translate(115, 178)">
+    <line x1="0" y1="14" x2="16" y2="14" class="guide-line" />
+    <path d="M20 6 L28 6 L32 10 L44 10 C45 10 46 11 46 13 L46 22 C46 24 45 25 44 25 L20 25 C19 25 18 24 18 22 L18 9 C18 7 19 6 20 6 Z" fill="#fde047" stroke="#ca8a04" stroke-width="1" />
+    <text x="54" y="20" class="tree-bold">Administrasi</text>
+  </g>
+
+  <!-- Guide line inside Administrasi to Daftar_Hadir.xlsx -->
+  <line x1="155" y1="202" x2="155" y2="222" class="guide-line" />
+
+  <!-- Level 3: Daftar_Hadir.xlsx (Target File Highlighted) -->
+  <g transform="translate(155, 210)">
+    <line x1="0" y1="14" x2="16" y2="14" class="guide-line" />
+    <!-- Excel Icon -->
+    <rect x="20" y="5" width="16" height="18" rx="2" fill="#15803d" />
+    <text x="28" y="18" font-family="system-ui, sans-serif" font-size="11px" font-weight="900" fill="#ffffff" text-anchor="middle">X</text>
+    <rect x="42" y="3" width="145" height="22" rx="4" fill="#dcfce7" stroke="#22c55e" stroke-width="1" />
+    <text x="48" y="18" class="tree-highlight">Daftar_Hadir.xlsx</text>
+  </g>
+
+  <!-- Level 1: Semester_2 -->
+  <g transform="translate(75, 248)">
+    <line x1="0" y1="14" x2="18" y2="14" class="guide-line" />
+    <path d="M22 4 L32 4 L37 9 L50 9 C52 9 54 11 54 13 L54 24 C54 26 52 28 50 28 L22 28 C20 28 18 26 18 24 L18 8 C18 6 20 4 22 4 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1" />
+    <text x="62" y="21" class="tree-bold">Semester_2</text>
+  </g>
+
+  <!-- Level 2 inside Semester_2: Jadwal_Ujian.pdf -->
+  <g transform="translate(115, 274)">
+    <line x1="0" y1="10" x2="16" y2="10" class="guide-line" />
+    <rect x="20" y="2" width="22" height="15" rx="2" fill="#dc2626" />
+    <text x="31" y="13" font-family="system-ui, sans-serif" font-size="9px" font-weight="bold" fill="#ffffff" text-anchor="middle">PDF</text>
+    <text x="48" y="15" class="tree-text">Jadwal_Ujian.pdf</text>
+  </g>
+</svg>
+

@@ -42,6 +42,7 @@ import TugasBinerAscii from './pages/TugasKhusus/TugasBinerAscii';
 import TugasWord from './pages/TugasKhusus/TugasWord';
 import TugasSurelGmail from './pages/TugasKhusus/TugasSurelGmail';
 import GaleriReviewTugas6 from './components/RuangBelajar/TugasKhusus/Tugas6/Admin/GaleriReviewTugas6';
+import TugasUlanganInformatika from './pages/TugasKhusus/TugasUlanganInformatika';
 import EkstraTikPage from './pages/EkstraTikPage';
 
 
@@ -65,6 +66,9 @@ function AppContent() {
     '/ruang-belajar/tugas/surel-gmail',
     '/tugas/surel-gmail',
     '/admin/review-tugas-6',
+    '/ruang-belajar/tugas/ulangan-informatika',
+    '/tugas/ulangan-informatika',
+    '/ulangan',
   ];
   const showNavbar = !hideNavbarPaths.includes(location.pathname.toLowerCase());
 
@@ -84,6 +88,8 @@ function AppContent() {
     if (path.includes('/tugas/sistem-komputer') || path.includes('/tugas/perkakas-digital')) return 'Tugas 3: Sistem Komputer';
     if (path.includes('/tugas/biner-ascii') || path.includes('/tugas/bilangan-biner')) return 'Tugas 4: Biner & ASCII';
     if (path.includes('/tugas/pengolah-kata') || path.includes('/tugas/word-brosur')) return 'Tugas 5: Pengolah Kata';
+    if (path.includes('/tugas/surel-gmail')) return 'Tugas 6: Surel Gmail';
+    if (path.includes('/tugas/ulangan-informatika') || path === '/ulangan') return 'Tugas 7: Ulangan CBT';
 
     // 🗓️ Laboratorium & Agenda
     if (path === '/ekstra-tik') return 'Ekstra TIK';
@@ -196,6 +202,10 @@ function AppContent() {
         <Route path="/ruang-belajar/tugas/surel-gmail" element={<TugasSurelGmail />} />
         <Route path="/tugas/surel-gmail" element={<TugasSurelGmail />} />
         <Route path="/admin/review-tugas-6" element={<GaleriReviewTugas6 />} />
+
+        {/* ─── 📝 RUTE TUGAS 7: ULANGAN INFORMATIKA (CBT) ─── */}
+        <Route path="/ruang-belajar/tugas/ulangan-informatika" element={<TugasUlanganInformatika />} />
+        <Route path="/tugas/ulangan-informatika" element={<TugasUlanganInformatika />} />
 
 
       </Routes>

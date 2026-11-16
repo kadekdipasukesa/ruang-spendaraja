@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import StatistikSiswa from '../components/Ulangan/StatistikSiswa';
-import SesiCard from '../components/Ulangan/SesiCard';
+import StatistikSiswa from '../components/Remidi/StatistikSiswa';
+import SesiCard from '../components/Remidi/SesiCard';
 import { Plus, StopCircle, Clock } from 'lucide-react'; // Tambah Clock icon
 import { SOAL_POOL, hitungNilaiSiswa } from '../utils/soalUlanganPool';
 

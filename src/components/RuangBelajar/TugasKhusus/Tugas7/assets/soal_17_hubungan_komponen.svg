@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 180" width="100%" height="100%" className="w-full h-auto max-w-2xl mx-auto">
+  <defs>
+    <style>
+      .box-title { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
+      .box-sub { font-family: system-ui, -apple-system, sans-serif; font-size: 11px; fill: #475569; text-anchor: middle; }
+      .arrow { stroke: #334155; stroke-width: 2.5; fill: none; }
+    </style>
+    <marker id="arrow-both-left" markerWidth="7" markerHeight="7" refX="0" refY="3.5" orient="auto">
+      <polygon points="7 0, 0 3.5, 7 7" fill="#334155" />
+    </marker>
+    <marker id="arrow-both-right" markerWidth="7" markerHeight="7" refX="7" refY="3.5" orient="auto">
+      <polygon points="0 0, 7 3.5, 0 7" fill="#334155" />
+    </marker>
+    <filter id="box-shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1" />
+    </filter>
+  </defs>
+
+  <!-- 1. Perangkat Keras (Hardware) -->
+  <g transform="translate(15, 30)" filter="url(#box-shadow)">
+    <rect width="150" height="100" rx="8" fill="#f8fafc" stroke="#64748b" stroke-width="2" />
+    <!-- Hardware icon: monitor & chip -->
+    <rect x="52" y="15" width="22" height="16" rx="2" fill="#94a3b8" />
+    <rect x="78" y="15" width="20" height="16" rx="2" fill="#3b82f6" />
+    <text x="75" y="55" class="box-title">Perangkat Keras</text>
+    <text x="75" y="72" class="box-sub">(Hardware)</text>
+    <text x="75" y="88" class="box-sub" font-size="9px">[CPU, RAM, Disk]</text>
+  </g>
+
+  <!-- Arrow 1 <-> 2 -->
+  <line x1="170" y1="80" x2="195" y2="80" class="arrow" marker-start="url(#arrow-both-left)" marker-end="url(#arrow-both-right)" />
+
+  <!-- 2. Sistem Operasi (Operating System) -->
+  <g transform="translate(200, 30)" filter="url(#box-shadow)">
+    <rect width="150" height="100" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="2" />
+    <circle cx="75" cy="24" r="10" fill="#3b82f6" />
+    <circle cx="75" cy="24" r="5" fill="#ffffff" />
+    <text x="75" y="55" class="box-title">Sistem Operasi</text>
+    <text x="75" y="72" class="box-sub">(Operating System)</text>
+    <text x="75" y="88" class="box-sub" font-size="9px">[Windows, Linux]</text>
+  </g>
+
+  <!-- Arrow 2 <-> 3 -->
+  <line x1="355" y1="80" x2="380" y2="80" class="arrow" marker-start="url(#arrow-both-left)" marker-end="url(#arrow-both-right)" />
+
+  <!-- 3. Bagian [ Y ] (Program Siap Pakai Sesuai Kebutuhan) - Garis Putus-putus Highlight -->
+  <g transform="translate(385, 30)" filter="url(#box-shadow)">
+    <rect width="165" height="100" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2.5" stroke-dasharray="6,4" />
+    <text x="82" y="45" class="box-title" fill="#b45309" font-size="14px">Bagian [ Y ]</text>
+    <text x="82" y="68" class="box-sub" font-weight="bold" fill="#92400e">(Program Siap Pakai</text>
+    <text x="82" y="84" class="box-sub" font-weight="bold" fill="#92400e">Sesuai Kebutuhan)</text>
+  </g>
+
+  <!-- Arrow 3 <-> 4 -->
+  <line x1="555" y1="80" x2="575" y2="80" class="arrow" marker-start="url(#arrow-both-left)" marker-end="url(#arrow-both-right)" />
+
+  <!-- 4. Pengguna (Brainware / User) -->
+  <g transform="translate(580, 30)" filter="url(#box-shadow)">
+    <rect width="145" height="100" rx="8" fill="#f0fdf4" stroke="#22c55e" stroke-width="2" />
+    <!-- User Icon -->
+    <circle cx="72" cy="23" r="8" fill="#15803d" />
+    <path d="M57 39 C57 32 87 32 87 39 Z" fill="#15803d" />
+    <text x="72" y="58" class="box-title" fill="#166534">Pengguna</text>
+    <text x="72" y="75" class="box-sub">(Brainware /</text>
+    <text x="72" y="90" class="box-sub">User)</text>
+  </g>
+</svg>
+

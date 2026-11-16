@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { Plus, Clock, Users, ShieldAlert } from 'lucide-react';
-import StatistikSiswa from '../components/Ulangan/StatistikSiswa';
+import StatistikSiswa from '../components/Remidi/StatistikSiswa';
 import DownloadCsvRemidi from '../components/Remidi/DownloadCsvRemidi';
 
 export default function AdminRemidi() {

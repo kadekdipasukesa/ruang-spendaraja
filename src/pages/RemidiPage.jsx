@@ -4,8 +4,8 @@ import { SOAL_POOL, shuffleSoal, hitungNilaiSiswa, shuffleOpsi } from '../utils/
 import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-import PinInput from '../components/Ulangan/PinInput';
-import QuestionCard from '../components/Ulangan/QuestionCard';
+import PinInput from '../components/Remidi/PinInput';
+import QuestionCard from '../components/Remidi/QuestionCard';
 import RemidiHeader from '../components/Remidi/RemidiHeader';
 import { useAntiCheatRemidi } from '../hooks/Remidi/useAntiCheatRemidi';
 
