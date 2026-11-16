@@ -70,7 +70,7 @@ export default function TugasUlanganInformatika() {
   // Waktu mulai pengerjaan untuk telemetri
   const startTimeRef = useRef(Date.now());
 
-  // --- CEK LOGIN & ADMIN ROLE ---
+  // --- CEK LOGIN & ADMIN ROLE & AUTO FETCH SESI AKTIF ---
   useEffect(() => {
     const rawUser = localStorage.getItem('user_siswa');
     if (!rawUser) {
@@ -88,7 +88,32 @@ export default function TugasUlanganInformatika() {
     } catch (e) {
       navigate('/');
     }
+
+    // Cek apakah ada sesi ujian yang sedang aktif / ruang tunggu
+    supabase
+      .from('ujian_sesi')
+      .select('*')
+      .in('status', ['waiting', 'starting', 'ongoing'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data && data.pin_ujian) {
+          setPinInput(data.pin_ujian);
+        }
+      })
+      .catch((err) => console.warn('Cek sesi aktif:', err));
   }, [navigate]);
+
+  // Handler saat admin memperbarui / membuat token sesi baru di Admin Panel
+  const handleSesiUpdatedByAdmin = (updatedSesi) => {
+    if (updatedSesi) {
+      setSesi(updatedSesi);
+      if (updatedSesi.pin_ujian) {
+        setPinInput(updatedSesi.pin_ujian);
+      }
+    }
+  };
 
   // --- LOAD SOAL TERACAK SAAT SESI ONGOING ---
   useEffect(() => {
@@ -526,7 +551,7 @@ export default function TugasUlanganInformatika() {
           <AdminPanelUlanganTugas7
             sesi={sesi}
             onClose={() => setShowAdminPanel(false)}
-            onRefreshSesi={() => handleJoinSession()}
+            onRefreshSesi={handleSesiUpdatedByAdmin}
           />
         )}
       </>
@@ -551,7 +576,7 @@ export default function TugasUlanganInformatika() {
           <AdminPanelUlanganTugas7
             sesi={sesi}
             onClose={() => setShowAdminPanel(false)}
-            onRefreshSesi={handleJoinSession}
+            onRefreshSesi={handleSesiUpdatedByAdmin}
           />
         )}
       </>
@@ -665,7 +690,7 @@ export default function TugasUlanganInformatika() {
         <AdminPanelUlanganTugas7
           sesi={sesi}
           onClose={() => setShowAdminPanel(false)}
-          onRefreshSesi={handleJoinSession}
+          onRefreshSesi={handleSesiUpdatedByAdmin}
         />
       )}
     </div>
