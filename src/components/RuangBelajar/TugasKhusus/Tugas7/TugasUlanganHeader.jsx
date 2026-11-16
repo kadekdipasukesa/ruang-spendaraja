@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { AlertTriangle, Clock, BookOpen, Shield, ShieldAlert, Award, ExternalLink } from 'lucide-react';
 
 export default function TugasUlanganHeader({
@@ -7,14 +7,53 @@ export default function TugasUlanganHeader({
   currentIndex = 0,
   totalSoal = 50,
   durasiMenit = 90,
+  sesiId,
+  joinedAt,
   onTimeUp,
   showAsisten,
   onToggleAsisten,
   isAdmin = false,
   onOpenAdminPanel,
 }) {
-  const [timeLeft, setTimeLeft] = useState(durasiMenit * 60);
+  // Hitung waktu awal mulai pengerjaan (Sinkron Database joined_at / localStorage)
+  const getStartTime = () => {
+    // 1. Coba dari joinedAt yang tersimpan resmi di tabel ujian_peserta Supabase
+    if (joinedAt) {
+      const parsed = new Date(joinedAt).getTime();
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    // 2. Coba dari cache localStorage
+    const storageKey = `tugas7_start_time_${sesiId || 'default'}_${siswa?.id || 'guest'}`;
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    // 3. Fallback ke waktu sekarang dan simpan
+    const now = Date.now();
+    try {
+      localStorage.setItem(storageKey, String(now));
+    } catch (e) {}
+    return now;
+  };
 
+  const startTime = useMemo(() => getStartTime(), [joinedAt, sesiId, siswa?.id]);
+
+  // Fungsi hitung sisa waktu tersinkronisasi detik ini
+  const calculateRemaining = useCallback(() => {
+    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+    const totalSeconds = (parseInt(durasiMenit, 10) || 90) * 60;
+    return Math.max(0, totalSeconds - elapsedSeconds);
+  }, [startTime, durasiMenit]);
+
+  const [timeLeft, setTimeLeft] = useState(calculateRemaining);
+
+  // Sinkronisasi instan saat durasiMenit diubah admin dari server
+  useEffect(() => {
+    setTimeLeft(calculateRemaining());
+  }, [durasiMenit, calculateRemaining]);
+
+  // Interval hitung mundur per detik
   useEffect(() => {
     if (timeLeft <= 0) {
       if (onTimeUp) onTimeUp();
@@ -22,11 +61,11 @@ export default function TugasUlanganHeader({
     }
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => Math.max(0, prev - 1));
+      setTimeLeft(calculateRemaining());
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft, onTimeUp]);
+  }, [timeLeft, calculateRemaining, onTimeUp]);
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);

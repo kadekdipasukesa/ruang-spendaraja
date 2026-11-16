@@ -262,6 +262,38 @@ export default function AdminPanelUlanganTugas7({
     }
   };
 
+  // UPDATE DURASI ULANGAN KE DATABASE & SINKRONKAN KE SELURUH SISWA
+  const handleUpdateDurasi = async () => {
+    if (!currentSesi?.id) return;
+    const durasiInt = parseInt(newDurasi, 10);
+    if (!durasiInt || durasiInt <= 0) {
+      alert('Masukkan durasi yang valid dalam menit (misal: 80)!');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('ujian_sesi')
+        .update({ durasi_menit: durasiInt })
+        .eq('id', currentSesi.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCurrentSesi(data);
+      if (onRefreshSesi) onRefreshSesi(data);
+      showNotif(`Durasi Room [${data.pin_ujian}] diubah menjadi ${durasiInt} Menit & disinkronkan ke seluruh siswa!`);
+      await fetchAllRooms(data.id);
+    } catch (err) {
+      console.error('Gagal update durasi:', err);
+      alert('Gagal update durasi: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // RESET PIN ROOM INI (UPDATE TOKEN)
   const handleResetCurrentRoomPin = async () => {
     if (!currentSesi?.id) return;
@@ -699,9 +731,21 @@ export default function AdminPanelUlanganTugas7({
                       max={180}
                       value={newDurasi}
                       onChange={(e) => setNewDurasi(e.target.value)}
-                      className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-center font-bold text-amber-300 text-sm outline-none focus:border-amber-400"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleUpdateDurasi();
+                      }}
+                      className="w-16 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-center font-bold text-amber-300 text-sm outline-none focus:border-amber-400"
                     />
-                    <span className="text-xs text-slate-400 font-semibold">Menit</span>
+                    <span className="text-xs text-slate-400 font-semibold">Mnt</span>
+                    <button
+                      type="button"
+                      onClick={handleUpdateDurasi}
+                      disabled={actionLoading || parseInt(newDurasi, 10) === currentSesi?.durasi_menit}
+                      className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 disabled:opacity-30 disabled:cursor-not-allowed text-slate-950 font-black text-[11px] rounded-lg transition cursor-pointer shadow-sm active:scale-95 shrink-0"
+                      title="Klik untuk menyimpan perubahan durasi ini ke database dan sinkronkan ke seluruh siswa sekarang"
+                    >
+                      Terapkan
+                    </button>
                   </div>
                 </div>
 

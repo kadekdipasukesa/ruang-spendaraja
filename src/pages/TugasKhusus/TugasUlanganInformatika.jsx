@@ -691,7 +691,9 @@ export default function TugasUlanganInformatika() {
         cheatCount={cheatCount}
         currentIndex={currentIndex}
         totalSoal={soalUjian.length}
-        durasiMenit={sesi?.durasi_menit || 90}
+        durasiMenit={sesi?.durasi_menit || 80}
+        sesiId={sesi?.id}
+        joinedAt={peserta?.joined_at}
         onTimeUp={() => submitJawabanUjian(true)}
         showAsisten={showAsisten}
         onToggleAsisten={() => setShowAsisten((v) => !v)}
