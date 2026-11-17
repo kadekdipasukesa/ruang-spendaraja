@@ -358,12 +358,26 @@ export default function AdminPanelUlanganTugas7({
 
       // 2. Setelah 3.5 detik set ke 'ongoing'
       setTimeout(async () => {
-        const { data: ongoingData } = await supabase
+        let ongoingData = null;
+        const { data: resData, error: updateErr } = await supabase
           .from('ujian_sesi')
           .update({ status: 'ongoing', waktu_mulai: new Date().toISOString() })
           .eq('id', currentSesi.id)
           .select()
-          .single();
+          .maybeSingle();
+
+        // Fallback jika kolom waktu_mulai belum ada di schema database
+        if (updateErr && (updateErr.code === 'PGRST204' || updateErr.message?.includes('waktu_mulai'))) {
+          const fallbackRes = await supabase
+            .from('ujian_sesi')
+            .update({ status: 'ongoing' })
+            .eq('id', currentSesi.id)
+            .select()
+            .maybeSingle();
+          ongoingData = fallbackRes.data;
+        } else {
+          ongoingData = resData;
+        }
 
         if (ongoingData) {
           setCurrentSesi(ongoingData);
@@ -384,16 +398,33 @@ export default function AdminPanelUlanganTugas7({
     if (!currentSesi?.id) return;
     setActionLoading(true);
     try {
-      const { data, error } = await supabase
+      let ongoingData = null;
+      const { data: resData, error: updateErr } = await supabase
         .from('ujian_sesi')
         .update({ status: 'ongoing', waktu_mulai: new Date().toISOString() })
         .eq('id', currentSesi.id)
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      setCurrentSesi(data);
-      if (onRefreshSesi) onRefreshSesi(data);
+      // Fallback jika kolom waktu_mulai belum ada di schema database
+      if (updateErr && (updateErr.code === 'PGRST204' || updateErr.message?.includes('waktu_mulai'))) {
+        const fallbackRes = await supabase
+          .from('ujian_sesi')
+          .update({ status: 'ongoing' })
+          .eq('id', currentSesi.id)
+          .select()
+          .maybeSingle();
+        if (fallbackRes.error) throw fallbackRes.error;
+        ongoingData = fallbackRes.data;
+      } else {
+        if (updateErr) throw updateErr;
+        ongoingData = resData;
+      }
+
+      if (ongoingData) {
+        setCurrentSesi(ongoingData);
+        if (onRefreshSesi) onRefreshSesi(ongoingData);
+      }
       showNotif(`Status Room [${currentSesi.pin_ujian}] diaktifkan ke ONGOING!`);
       fetchAllRooms(currentSesi.id);
     } catch (e) {
