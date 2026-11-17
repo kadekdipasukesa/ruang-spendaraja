@@ -26,6 +26,8 @@ import TugasUlanganNavGrid from '../../components/RuangBelajar/TugasKhusus/Tugas
 import TugasUlanganAsistenPanel from '../../components/RuangBelajar/TugasKhusus/Tugas7/TugasUlanganAsistenPanel';
 import TugasUlanganPauseDialog from '../../components/RuangBelajar/TugasKhusus/Tugas7/TugasUlanganPauseDialog';
 import TugasUlanganSelesaiModal from '../../components/RuangBelajar/TugasKhusus/Tugas7/TugasUlanganSelesaiModal';
+import ModalKonfirmasiKirim from '../../components/RuangBelajar/TugasKhusus/Tugas7/ModalKonfirmasiKirim';
+import ModalPromptFullscreen from '../../components/RuangBelajar/TugasKhusus/Tugas7/ModalPromptFullscreen';
 import AdminPanelUlanganTugas7 from '../../components/RuangBelajar/TugasKhusus/Tugas7/Admin/AdminPanelUlanganTugas7';
 
 // ID Tugas 7 di tabel tugas_master
@@ -46,6 +48,7 @@ export default function TugasUlanganInformatika() {
   const [pinInput, setPinInput] = useState('');
   const [pinLoading, setPinLoading] = useState(false);
   const [pesertaCount, setPesertaCount] = useState(1);
+  const [pesertaWaitingList, setPesertaWaitingList] = useState([]);
   const [countdown, setCountdown] = useState(null);
 
   // --- 3. STATE PENGERJAAN SOAL ---
@@ -58,11 +61,13 @@ export default function TugasUlanganInformatika() {
   const [cheatCount, setCheatCount] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
   const cheatCooldownRef = useRef(false);
 
-  // --- 5. STATE UI / PANEL ASISTEN & ADMIN ---
+  // --- 5. STATE UI / MODAL & ADMIN ---
   const [showAsisten, setShowAsisten] = useState(true);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showConfirmSubmitModal, setShowConfirmSubmitModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasilSelesai, setHasilSelesai] = useState(null);
   const [showSelesaiModal, setShowSelesaiModal] = useState(false);
@@ -168,18 +173,46 @@ export default function TugasUlanganInformatika() {
         initSoalUjian(sesi.id, user?.id);
       }
 
-      // Coba masuk fullscreen otomatis saat mulai
+      // Coba masuk fullscreen otomatis saat mulai jika didukung
       try {
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen().catch(() => {
-            console.log('Fullscreen butuh interaksi pengguna');
+            // Jika Chrome memblokir karena butuh user gesture, tampilkan overlay prompt
+            setNeedsFullscreenPrompt(true);
           });
         }
       } catch (err) {
         console.warn('Gagal request fullscreen otomatis:', err);
+        setNeedsFullscreenPrompt(true);
       }
     }
   }, [sesi, soalUjian.length, initSoalUjian, user?.id]);
+
+  // Pantau status fullscreen saat sesi ongoing
+  useEffect(() => {
+    const handleFsChange = () => {
+      if (sesi?.status === 'ongoing' && !hasilSelesai && !isBlocked) {
+        setNeedsFullscreenPrompt(!document.fullscreenElement);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, [sesi?.status, hasilSelesai, isBlocked]);
+
+  // Handler klik tombol user gesture untuk masuk layar penuh (Diizinkan 100% oleh Chrome)
+  const handleEnterFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+      setNeedsFullscreenPrompt(false);
+    } catch (err) {
+      console.warn('Gagal masuk fullscreen via user gesture:', err);
+      // Jangan blokir siswa jika perangkatnya sama sekali tidak support Fullscreen API
+      setNeedsFullscreenPrompt(false);
+    }
+  };
 
   // --- REALTIME SUBSCRIPTION SESI UJIAN ---
   useEffect(() => {
@@ -206,8 +239,8 @@ export default function TugasUlanganInformatika() {
           } else if (newStatus === 'ongoing') {
             setCountdown(null);
           } else if (newStatus === 'finished') {
-            alert('Sesi ulangan telah diakhiri oleh Guru Pengawas.');
-            submitJawabanUjian(true);
+            // Otomatis kumpulkan ujian saat guru mengakhiri sesi
+            executeFinalSubmit(true);
           }
         }
       )
@@ -216,29 +249,66 @@ export default function TugasUlanganInformatika() {
     return () => supabase.removeChannel(channel);
   }, [sesi?.id]);
 
-  // --- HITUNG JUMLAH PESERTA ONLINE DI SESI ---
-  const fetchPesertaCount = useCallback(async (sesiId) => {
+  // --- FETCH & REALTIME DAFTAR PESERTA DI RUANG TUNGGU ---
+  const fetchWaitingPeserta = useCallback(async (sesiId) => {
+    if (!sesiId) return;
     try {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from('ujian_peserta')
-        .select('*', { count: 'exact', head: true })
-        .eq('sesi_id', sesiId);
+        .select(`
+          id,
+          siswa_id,
+          status_ujian,
+          joined_at,
+          master_siswa (
+            id,
+            NAMA,
+            Kelas,
+            "No Absen",
+            foto_profile
+          )
+        `)
+        .eq('sesi_id', sesiId)
+        .order('joined_at', { ascending: true });
 
-      if (!error && count !== null) {
-        setPesertaCount(count);
+      if (!error && data) {
+        setPesertaWaitingList(data);
+        setPesertaCount(data.length);
       }
     } catch (e) {
-      console.warn('Gagal fetch count peserta:', e);
+      console.warn('Gagal fetch waiting peserta:', e);
     }
   }, []);
 
   useEffect(() => {
     if (sesi?.id) {
-      fetchPesertaCount(sesi.id);
-      const interval = setInterval(() => fetchPesertaCount(sesi.id), 5000);
-      return () => clearInterval(interval);
+      fetchWaitingPeserta(sesi.id);
+      const interval = setInterval(() => fetchWaitingPeserta(sesi.id), 3000);
+
+      // Realtime listener untuk pertambahan peserta baru
+      const pChannelId = `live_peserta_t7_${sesi.id}_${Math.random().toString(36).substring(2, 7)}`;
+      const pChannel = supabase
+        .channel(pChannelId)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'ujian_peserta',
+            filter: `sesi_id=eq.${sesi.id}`,
+          },
+          () => {
+            fetchWaitingPeserta(sesi.id);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        clearInterval(interval);
+        supabase.removeChannel(pChannel);
+      };
     }
-  }, [sesi?.id, fetchPesertaCount]);
+  }, [sesi?.id, fetchWaitingPeserta]);
 
   // --- COUNTDOWN SEQUENCE (3.. 2.. 1.. GO!) ---
   const startCountdownSequence = () => {
@@ -269,23 +339,19 @@ export default function TugasUlanganInformatika() {
         // Pastikan soal terisi
         if (sesi?.id) {
           initSoalUjian(sesi.id, user?.id);
-          // Sinkronkan status database ke ongoing
-          supabase
-            .from('ujian_sesi')
-            .update({ status: 'ongoing', waktu_mulai: new Date().toISOString() })
-            .eq('id', sesi.id)
-            .catch((err) => console.warn('Gagal set status ongoing:', err));
         }
 
-        // Pastikan masuk fullscreen
+        // Coba masuk fullscreen (jika diizinkan oleh browser)
         if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch(() => {});
+          document.documentElement.requestFullscreen().catch(() => {
+            setNeedsFullscreenPrompt(true);
+          });
         }
       }
     }, 1000);
   };
 
-  // --- SISTEM DETEKSI ANTI-CHEAT (FULLSCREEN & TAB SWITCH) ---
+  // --- SISTEM DETEKSI ANTI-CHEAT (FULLSCREEN & TAB VISIBILITY) ---
   const handleCheatViolation = useCallback(async () => {
     if (sesi?.status !== 'ongoing' || hasilSelesai || isBlocked || isPaused) return;
     if (cheatCooldownRef.current) return;
@@ -314,14 +380,15 @@ export default function TugasUlanganInformatika() {
     if (nextCount >= 3) {
       setIsBlocked(true);
       setIsPaused(false);
-      alert('Pelanggaran mencapai 3 kali! Ujian terkunci otomatis.');
-      submitJawabanUjian(true);
+      // Otomatis kumpulkan ujian tanpa popup peringatan browser
+      executeFinalSubmit(true);
     } else {
       setIsPaused(true);
     }
   }, [sesi?.status, hasilSelesai, isBlocked, isPaused, cheatCount, peserta?.id, playBeep]);
 
-  // Event Listeners: Fullscreen & Visibility
+  // Event Listeners: Tab Visibility & Fullscreen Exit
+  // CATATAN: Listener 'blur' dihapus agar tidak terjadi false violation saat Chrome memunculkan dialog/jendela sistem
   useEffect(() => {
     if (sesi?.status !== 'ongoing' || hasilSelesai || isBlocked) return;
 
@@ -337,18 +404,12 @@ export default function TugasUlanganInformatika() {
       }
     };
 
-    const onWindowBlur = () => {
-      handleCheatViolation();
-    };
-
     document.addEventListener('visibilitychange', onVisibilityChange);
     document.addEventListener('fullscreenchange', onFullscreenChange);
-    window.addEventListener('blur', onWindowBlur);
 
     return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       document.removeEventListener('fullscreenchange', onFullscreenChange);
-      window.removeEventListener('blur', onWindowBlur);
     };
   }, [sesi?.status, hasilSelesai, isBlocked, handleCheatViolation]);
 
@@ -495,20 +556,25 @@ export default function TugasUlanganInformatika() {
     });
   };
 
-  // --- SUBMIT JAWABAN AKHIR (SCHEMA V2.0 SINKRON KE TUGAS_PENGUMPULAN) ---
-  const submitJawabanUjian = async (isAuto = false) => {
+  // --- SUBMIT TRIGGER (MEMBUKA JENDELA MENGAMBANG ALIH-ALIH POPUP CHROME) ---
+  const submitJawabanUjian = (isAuto = false) => {
     if (isSubmitting) return;
 
     if (!isAuto) {
-      const unanswered = soalUjian.length - Object.keys(jawabanSiswa).length;
-      let confirmMsg = 'Apakah Anda yakin ingin menyelesaikan dan mengirim jawaban ujian sekarang?';
-      if (unanswered > 0) {
-        confirmMsg = `Masih ada ${unanswered} soal yang belum dijawab! Yakin tetap ingin mengirimkan ujian?`;
-      }
-      if (!window.confirm(confirmMsg)) return;
+      // Buka modal mengambang kustom React (Aman dari trigger blur anti-cheat)
+      setShowConfirmSubmitModal(true);
+    } else {
+      executeFinalSubmit(true);
     }
+  };
 
+  // --- EKSEKUSI PENGIRIMAN AKHIR JAWABAN (SCHEMA V2.0 SINKRON KE TUGAS_PENGUMPULAN) ---
+  const executeFinalSubmit = async (isAuto = false) => {
+    if (isSubmitting) return;
+
+    setShowConfirmSubmitModal(false);
     setIsSubmitting(true);
+
     try {
       // 1. Evaluasi Skor dengan Kunci Jawaban Resmi
       const hasil = hitungNilaiSiswa(jawabanSiswa, soalUjian);
@@ -600,6 +666,12 @@ export default function TugasUlanganInformatika() {
     }
   };
 
+  // Hitung jumlah soal terjawab dan ragu-ragu secara realtime
+  const answeredCount = Object.keys(jawabanSiswa).filter(
+    (k) => jawabanSiswa[k] !== undefined && jawabanSiswa[k] !== null && jawabanSiswa[k] !== ''
+  ).length;
+  const raguCount = Object.keys(raguSiswa).filter((k) => Boolean(raguSiswa[k])).length;
+
   // --- RENDER 1: INPUT PIN JIKA BELUM TERHUBUNG ---
   if (!sesi) {
     return (
@@ -631,6 +703,7 @@ export default function TugasUlanganInformatika() {
         <TugasUlanganWaitingRoom
           sesi={sesi}
           pesertaCount={pesertaCount}
+          daftarPeserta={pesertaWaitingList}
           siswa={user}
           isAdmin={isAdmin}
           onOpenAdminPanel={() => setShowAdminPanel(true)}
@@ -691,6 +764,7 @@ export default function TugasUlanganInformatika() {
         cheatCount={cheatCount}
         currentIndex={currentIndex}
         totalSoal={soalUjian.length}
+        answeredCount={answeredCount}
         durasiMenit={sesi?.durasi_menit || 80}
         sesiId={sesi?.id}
         joinedAt={peserta?.joined_at}
@@ -703,8 +777,7 @@ export default function TugasUlanganInformatika() {
 
       {/* Main Dual-Pane Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        
-        {/* Kolom Kiri: Kartu Soal & Kisi Navigasi (7 atau 8 Kolom) */}
+        {/* Kolom Kiri: Kartu Soal & Kisi Navigasi */}
         <section className={`${showAsisten ? 'lg:col-span-8' : 'lg:col-span-12'} space-y-5`}>
           <TugasUlanganQuestionCard
             soal={currentSoal}
@@ -733,7 +806,7 @@ export default function TugasUlanganInformatika() {
           />
         </section>
 
-        {/* Kolom Kanan: Panel Asisten Materi Belajar (4 Kolom) */}
+        {/* Kolom Kanan: Panel Asisten Materi Belajar */}
         {showAsisten && (
           <section className="lg:col-span-4 sticky top-20 self-start">
             <TugasUlanganAsistenPanel
@@ -752,6 +825,25 @@ export default function TugasUlanganInformatika() {
         cheatCount={cheatCount}
         maxCheat={3}
         onResumeFullscreen={handleResumeFullscreen}
+      />
+
+      {/* Modal Konfirmasi Kirim Jawaban (Jendela Mengambang Anti-Blur) */}
+      <ModalKonfirmasiKirim
+        isOpen={showConfirmSubmitModal}
+        onClose={() => setShowConfirmSubmitModal(false)}
+        onConfirm={() => executeFinalSubmit(false)}
+        isSubmitting={isSubmitting}
+        totalSoal={soalUjian.length}
+        answeredCount={answeredCount}
+        raguCount={raguCount}
+        siswa={user}
+      />
+
+      {/* Modal Prompt Masuk Layar Penuh (User Gesture untuk Chrome) */}
+      <ModalPromptFullscreen
+        isOpen={needsFullscreenPrompt}
+        onEnterFullscreen={handleEnterFullscreen}
+        namaSiswa={user?.NAMA}
       />
 
       {/* Modal Perayaan Selesai Ujian */}
@@ -774,4 +866,3 @@ export default function TugasUlanganInformatika() {
     </div>
   );
 }
-

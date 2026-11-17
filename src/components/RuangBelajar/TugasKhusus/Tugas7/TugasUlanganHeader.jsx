@@ -6,6 +6,7 @@ export default function TugasUlanganHeader({
   cheatCount = 0,
   currentIndex = 0,
   totalSoal = 50,
+  answeredCount = 0,
   durasiMenit = 90,
   sesiId,
   joinedAt,
@@ -165,14 +166,27 @@ export default function TugasUlanganHeader({
             </button>
           )}
 
-          {/* Progress Soal */}
-          <div className="hidden sm:block text-right pl-1 border-l border-slate-700">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Soal
-            </span>
-            <span className="text-xs font-black text-white">
-              {currentIndex + 1} <span className="text-slate-500">/ {totalSoal}</span>
-            </span>
+          {/* Status Terjawab & Posisi Soal */}
+          <div className="flex items-center gap-2.5 pl-2 sm:pl-3 border-l border-slate-800">
+            {/* Status Berapa Soal yang Sudah Terjawab */}
+            <div className="text-right">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 block">
+                Terjawab
+              </span>
+              <span className="text-xs sm:text-sm font-black text-emerald-300">
+                {answeredCount} <span className="text-slate-500 font-medium text-[10px]">/ {totalSoal}</span>
+              </span>
+            </div>
+
+            {/* Posisi Soal yang Sedang Dibuka */}
+            <div className="hidden sm:block text-right pl-2 sm:pl-2.5 border-l border-slate-800/80">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">
+                Soal Dibuka
+              </span>
+              <span className="text-xs sm:text-sm font-black text-white">
+                No. {currentIndex + 1}
+              </span>
+            </div>
           </div>
         </div>
 

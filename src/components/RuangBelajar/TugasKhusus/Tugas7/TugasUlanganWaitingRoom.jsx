@@ -1,6 +1,13 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Users, Clock, ShieldCheck, Sparkles, AlertCircle, Settings, Play } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Users, Clock, ShieldCheck, Sparkles, Settings, Play, CheckCircle2 } from 'lucide-react';
+
+// Helper inisial nama
+function getInitials(name = '') {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 export default function TugasUlanganWaitingRoom({
   sesi,
@@ -15,34 +22,38 @@ export default function TugasUlanganWaitingRoom({
     <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 sm:p-6 font-sans relative overflow-hidden">
       {/* Background ambient lighting */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-xl bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative z-10 text-center"
+        className="w-full max-w-2xl bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-8 shadow-2xl backdrop-blur-xl relative z-10 text-center space-y-5"
       >
-        {/* Animated Icon */}
-        <div className="relative mb-6 mx-auto w-20 h-20 flex items-center justify-center">
-          <div className="absolute inset-0 bg-blue-500/20 rounded-3xl blur-xl animate-pulse" />
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
-            <Users size={36} className="text-white" />
+        {/* Animated Icon & Status Server */}
+        <div>
+          <div className="relative mb-3 mx-auto w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
+            <div className="absolute inset-0 bg-blue-500/20 rounded-3xl blur-xl animate-pulse" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <Users size={32} className="text-white" />
+            </div>
           </div>
+
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-1">
+            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping" />
+            Terhubung ke Server Ujian
+          </span>
+
+          {/* Nama Room / Judul Ulangan */}
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-1">
+            {sesi?.judul || 'Ulangan Harian Informatika'}
+          </h1>
+          <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-md mx-auto">
+            Harap tenang dan jangan keluar dari halaman ini. Ujian akan dimulai serentak oleh Guru Pengawas.
+          </p>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-2">
-          <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping" />
-          Terhubung ke Server Ujian
-        </span>
-
-        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-1">
-          {sesi?.judul || 'Ulangan Harian Informatika'}
-        </h1>
-        <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-md mx-auto">
-          Harap tenang dan jangan keluar dari halaman ini. Ujian akan dimulai serentak oleh Guru Pengawas.
-        </p>
-
         {/* Info Box: PIN, Durasi, Siswa */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 my-6 bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
           <div className="text-center">
             <span className="text-[10px] font-bold uppercase text-slate-500 block">Token PIN</span>
             <span className="text-xl sm:text-2xl font-mono font-black text-blue-400 tracking-wider">
@@ -52,39 +63,114 @@ export default function TugasUlanganWaitingRoom({
           <div className="text-center border-x border-slate-800">
             <span className="text-[10px] font-bold uppercase text-slate-500 block">Durasi</span>
             <span className="text-base sm:text-lg font-black text-slate-200 flex items-center justify-center gap-1 mt-1">
-              <Clock size={14} className="text-amber-400" /> {sesi?.durasi_menit || 90} Mnt
+              <Clock size={14} className="text-amber-400" /> {sesi?.durasi_menit || 80} Mnt
             </span>
           </div>
           <div className="text-center">
             <span className="text-[10px] font-bold uppercase text-slate-500 block">Peserta Online</span>
             <span className="text-xl sm:text-2xl font-mono font-black text-emerald-400">
-              {pesertaCount}
+              {daftarPeserta.length > 0 ? daftarPeserta.length : pesertaCount}
             </span>
           </div>
         </div>
 
+        {/* SECTION PESERTA YANG SUDAH BERGABUNG (DENGAN FOTO PROFIL & ANIMASI) */}
+        <div className="text-left bg-slate-950/60 border border-slate-800/90 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <Users size={14} className="text-blue-400" />
+              <span>Teman yang Sudah Bergabung ({daftarPeserta.length > 0 ? daftarPeserta.length : pesertaCount} Siswa)</span>
+            </span>
+            <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
+              Live Realtime
+            </span>
+          </div>
+
+          {/* Grid Avatar Siswa Beranimasi */}
+          <div className="max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+            {daftarPeserta.length === 0 ? (
+              <div className="text-center py-4 text-xs text-slate-500 italic">
+                Menunggu siswa lain bergabung ke room ini...
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <AnimatePresence>
+                  {daftarPeserta.map((p, idx) => {
+                    const info = p.master_siswa || {};
+                    const nama = info.NAMA || 'Siswa Spendaraja';
+                    const noAbsen = info['No Absen'] || info.No_Absen || '—';
+                    const kelas = info.Kelas || '7';
+                    const foto = info.foto_profile;
+                    const isSelf = siswa?.id === p.siswa_id;
+
+                    return (
+                      <motion.div
+                        key={p.id || idx}
+                        initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{ duration: 0.25, delay: Math.min(idx * 0.03, 0.5) }}
+                        className={`p-2 rounded-xl border flex items-center gap-2.5 transition relative overflow-hidden ${
+                          isSelf
+                            ? 'bg-blue-950/60 border-blue-500 shadow-md shadow-blue-500/20 ring-1 ring-blue-500'
+                            : 'bg-slate-900/70 border-slate-800 hover:border-slate-700'
+                        }`}
+                      >
+                        {/* Foto Profil dengan Ring Neon Berputar Halus */}
+                        <div className="relative shrink-0">
+                          {foto ? (
+                            <img
+                              src={foto}
+                              alt={nama}
+                              className="w-8 h-8 rounded-full object-cover ring-2 ring-emerald-500/80 shadow-sm"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-black text-white text-[11px] ring-2 ring-blue-400/60 shadow-sm">
+                              {getInitials(nama)}
+                            </div>
+                          )}
+                          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-slate-950 rounded-full" />
+                        </div>
+
+                        {/* Nama & Kelas */}
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-xs font-bold truncate ${isSelf ? 'text-blue-300' : 'text-slate-200'}`} title={nama}>
+                            {nama}
+                          </p>
+                          <span className="text-[10px] text-slate-400 block truncate">
+                            Absen {noAbsen} • {kelas}
+                          </span>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Aturan & Anti-Cheat Info */}
-        <div className="text-left bg-blue-950/30 border border-blue-900/50 rounded-2xl p-4 mb-6 space-y-2 text-xs text-slate-300">
+        <div className="text-left bg-blue-950/30 border border-blue-900/50 rounded-2xl p-4 space-y-1.5 text-xs text-slate-300">
           <p className="font-bold text-blue-300 flex items-center gap-1.5">
             <ShieldCheck size={16} /> Ketentuan Keamanan Ulangan:
           </p>
-          <ul className="space-y-1.5 pl-5 list-disc text-slate-400">
+          <ul className="space-y-1 pl-5 list-disc text-slate-400 text-[11px]">
             <li>Saat ujian dimulai, tampilan akan otomatis beralih ke <strong>Mode Layar Penuh (Fullscreen)</strong>.</li>
             <li>Dilarang membuka tab lain, berpindah aplikasi, atau keluar dari fullscreen.</li>
             <li>Sistem mencatat maksimal <strong>3 kali toleransi pelanggaran</strong> sebelum ujian terkunci otomatis.</li>
-            <li>Di setiap soal disediakan <strong>Panel Asisten Materi</strong> untuk membantu pemahaman konsep.</li>
           </ul>
         </div>
 
         {/* Live Status Animation */}
-        <div className="flex items-center justify-center gap-3 py-2 text-slate-400 text-xs font-semibold">
+        <div className="flex items-center justify-center gap-3 py-1 text-slate-400 text-xs font-semibold">
           <span className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-bounce" />
           <span>Menunggu aba-aba Guru Pengawas...</span>
         </div>
 
         {/* Tombol Aksi Khusus Admin */}
         {isAdmin && (
-          <div className="mt-6 pt-5 border-t border-slate-800 flex flex-col sm:flex-row gap-3">
+          <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row gap-3">
             <button
               type="button"
               onClick={onStartByAdmin}
@@ -105,4 +191,3 @@ export default function TugasUlanganWaitingRoom({
     </div>
   );
 }
-
