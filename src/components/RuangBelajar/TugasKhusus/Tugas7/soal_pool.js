@@ -7,16 +7,16 @@
  * Standar Schema v2.0 Ruang Spendaraja
  */
 
-// Import Aset Gambar Diagram Soal
-import imgSoal02 from './assets/soal_02_robot_grid.svg';
+// Import Aset Gambar Diagram Soal (PNG jernih untuk Soal 02, 15, 18, 21, 36)
+import imgSoal02 from './assets/soal_02_robot_grid.png';
 import imgSoal14 from './assets/soal_14_arsitektur_komputer.svg';
-import imgSoal15 from './assets/soal_15_komponen_hardware.svg';
+import imgSoal15 from './assets/soal_15_komponen_hardware.png';
 import imgSoal17 from './assets/soal_17_hubungan_komponen.svg';
-import imgSoal18 from './assets/soal_18_ikon_software.svg';
-import imgSoal21 from './assets/soal_21_alur_ascii_cpu.svg';
+import imgSoal18 from './assets/soal_18_ikon_software.png';
+import imgSoal21 from './assets/soal_21_alur_ascii_cpu.png';
 import imgSoal27 from './assets/soal_27_hierarki_folder.svg';
 import imgSoal29 from './assets/soal_29_ribbon_word.svg';
-import imgSoal36 from './assets/soal_36_compose_email.svg';
+import imgSoal36 from './assets/soal_36_compose_email.png';
 
 export const SOAL_POOL_PG = [
   // 1
