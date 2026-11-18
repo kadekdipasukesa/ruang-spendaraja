@@ -13,9 +13,7 @@ export default function Navbar() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [user, setUser] = useState(null);
   const [isAtTop, setIsAtTop] = useState(true);
-
-  const headerRef = useRef(null);
-  const translateY = useMotionValue(0);
+  const [isHidden, setIsHidden] = useState(false);
 
   const location = useLocation();
   const isHome = location.pathname === '/';
@@ -39,20 +37,19 @@ export default function Navbar() {
 
   // Reset navbar saat berpindah halaman
   useEffect(() => {
-    translateY.set(0);
+    setIsHidden(false);
     setIsAtTop(window.scrollY <= 15);
-  }, [location.pathname, translateY]);
+  }, [location.pathname]);
 
-  // Presisi 1:1 murni ala YouTube Mobile: Navbar bergerak murni mengikuti scroll tanpa timer/animasi sendiri
+  // Transisi auto-hide cerdas & mulus: Bebas macet di mobile HP (60 FPS GPU-accelerated)
   useMotionValueEvent(scrollY, 'change', (latest) => {
     const previous = scrollY.getPrevious() ?? 0;
     const delta = latest - previous;
-    const navHeight = headerRef.current?.offsetHeight || 56;
 
-    // Saat di posisi puncak layar (seamless, menyatu dengan konten)
-    if (latest <= 5) {
-      translateY.set(0);
+    // Saat di posisi puncak layar
+    if (latest <= 15) {
       setIsAtTop(true);
+      setIsHidden(false);
       return;
     }
 
@@ -60,12 +57,13 @@ export default function Navbar() {
       setIsAtTop(false);
     }
 
-    // Hitung posisi translateY secara presisi 1:1 terhadap delta scroll
-    const currentY = translateY.get();
-    // Saat scroll up (delta < 0), beri akselerasi responsif 1.25x agar cepat muncul kembali
-    const effectiveDelta = delta < 0 ? delta * 1.25 : delta;
-    const nextY = Math.max(-navHeight, Math.min(0, currentY - effectiveDelta));
-    translateY.set(nextY);
+    // Scroll ke bawah dengan threshold -> sembunyikan navbar
+    if (delta > 8 && latest > 80) {
+      setIsHidden(true);
+    } else if (delta < -8) {
+      // Scroll ke atas -> tampilkan kembali
+      setIsHidden(false);
+    }
   });
 
   const getContextBadge = () => {
@@ -253,11 +251,11 @@ export default function Navbar() {
 
   return (
     <>
-      <motion.nav
-        ref={headerRef}
+      <nav
         id="main-navbar"
-        style={{ y: translateY }}
-        className={`fixed top-0 left-0 right-0 w-full z-[100] transition-colors duration-200 ${
+        className={`fixed top-0 left-0 right-0 w-full z-[100] transition-all duration-300 ease-in-out transform ${
+          isHidden ? '-translate-y-full' : 'translate-y-0'
+        } ${
           isAtTop
             ? 'bg-transparent border-b border-transparent shadow-none'
             : isLightPage
@@ -276,7 +274,7 @@ export default function Navbar() {
           />
         )}
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-2.5 flex justify-between items-center w-full">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2 sm:py-2.5 flex justify-between items-center w-full min-w-0">
           {/* Brand Logo & Versi / Navigasi Beranda */}
           <NavbarBrand isLightPage={isLightPage} isHome={isHome} />
 
@@ -293,7 +291,7 @@ export default function Navbar() {
             isRuangBelajar={isRuangBelajar}
           />
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Modal Masuk / Registrasi Akun */}
       <ModalLogin

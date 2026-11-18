@@ -356,12 +356,17 @@ export default function AdminPanelUlanganTugas7({
 
       setCurrentSesi((prev) => ({ ...prev, status: 'starting' }));
 
-      // 2. Setelah 3.5 detik set ke 'ongoing'
+      // 2. Setelah 3.5 detik set ke 'ongoing' dan perbarui timestamp mulai resmi
       setTimeout(async () => {
         let ongoingData = null;
+        const nowIso = new Date().toISOString();
         const { data: resData, error: updateErr } = await supabase
           .from('ujian_sesi')
-          .update({ status: 'ongoing', waktu_mulai: new Date().toISOString() })
+          .update({
+            status: 'ongoing',
+            created_at: nowIso,
+            waktu_mulai: nowIso,
+          })
           .eq('id', currentSesi.id)
           .select()
           .maybeSingle();
@@ -370,7 +375,10 @@ export default function AdminPanelUlanganTugas7({
         if (updateErr && (updateErr.code === 'PGRST204' || updateErr.message?.includes('waktu_mulai'))) {
           const fallbackRes = await supabase
             .from('ujian_sesi')
-            .update({ status: 'ongoing' })
+            .update({
+              status: 'ongoing',
+              created_at: nowIso,
+            })
             .eq('id', currentSesi.id)
             .select()
             .maybeSingle();
@@ -399,9 +407,14 @@ export default function AdminPanelUlanganTugas7({
     setActionLoading(true);
     try {
       let ongoingData = null;
+      const nowIso = new Date().toISOString();
       const { data: resData, error: updateErr } = await supabase
         .from('ujian_sesi')
-        .update({ status: 'ongoing', waktu_mulai: new Date().toISOString() })
+        .update({
+          status: 'ongoing',
+          created_at: nowIso,
+          waktu_mulai: nowIso,
+        })
         .eq('id', currentSesi.id)
         .select()
         .maybeSingle();
@@ -410,7 +423,10 @@ export default function AdminPanelUlanganTugas7({
       if (updateErr && (updateErr.code === 'PGRST204' || updateErr.message?.includes('waktu_mulai'))) {
         const fallbackRes = await supabase
           .from('ujian_sesi')
-          .update({ status: 'ongoing' })
+          .update({
+            status: 'ongoing',
+            created_at: nowIso,
+          })
           .eq('id', currentSesi.id)
           .select()
           .maybeSingle();

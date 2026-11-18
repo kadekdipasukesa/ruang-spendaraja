@@ -44,7 +44,7 @@ export default function NavbarUserSection({
   }
 
   return (
-    <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0" id="navbar-user-section">
+    <div className="flex items-center gap-1 sm:gap-2 shrink-0 min-w-0" id="navbar-user-section">
       {/* Points Badge (Gaming XP Chip) */}
       <NavbarPointsBadge user={user} isLightPage={isLightPage} />
 
@@ -53,7 +53,7 @@ export default function NavbarUserSection({
         id="btn-navbar-profile"
         type="button"
         onClick={onOpenProfile}
-        className={`flex items-center gap-2 p-0.5 sm:pr-2.5 rounded-full transition-all group text-left cursor-pointer active:scale-95 ${
+        className={`flex items-center gap-1.5 sm:gap-2 p-0.5 sm:pr-2.5 rounded-full transition-all group text-left cursor-pointer active:scale-95 shrink-0 ${
           isLightPage
             ? 'hover:bg-slate-100/80 border border-slate-200/60'
             : 'hover:bg-white/10 border border-white/10'
@@ -61,7 +61,7 @@ export default function NavbarUserSection({
         title="Buka Profil Pengguna"
       >
         {/* Instagram Story Gradient Ring */}
-        <div className="p-[2px] rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-500 group-hover:scale-105 transition-transform shrink-0 shadow-xs">
+        <div className="p-[1.5px] sm:p-[2px] rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-500 group-hover:scale-105 transition-transform shrink-0 shadow-xs">
           <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden flex items-center justify-center border-2 ${
             isLightPage ? 'border-white bg-slate-100' : 'border-slate-900 bg-slate-800'
           }`}>
@@ -101,14 +101,14 @@ export default function NavbarUserSection({
       <button
         id="btn-navbar-logout"
         onClick={onLogout}
-        className={`p-1.5 sm:p-2 rounded-full transition-all cursor-pointer active:scale-95 shrink-0 ${
+        className={`p-1 sm:p-2 rounded-full transition-all cursor-pointer active:scale-95 shrink-0 ${
           isLightPage
             ? 'text-slate-400 hover:text-red-600 hover:bg-red-50 border border-slate-200/80 hover:border-red-200 shadow-xs'
             : 'text-red-400 hover:text-white bg-red-500/10 hover:bg-red-600 border border-red-500/20 shadow-sm'
         }`}
         title="Keluar dari Akun"
       >
-        <LogOut size={15} />
+        <LogOut size={14} className="sm:w-4 sm:h-4" />
       </button>
     </div>
   );

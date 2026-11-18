@@ -75,6 +75,23 @@ export default function TugasUlanganInformatika() {
   // Waktu mulai pengerjaan untuk telemetri
   const startTimeRef = useRef(Date.now());
 
+  // REFS PENJAGA KONSISTENSI DATA (MENCEGAH STALE CLOSURE DI REALTIME & TIMER)
+  const jawabanSiswaRef = useRef({});
+  const soalUjianRef = useRef([]);
+  const sesiRef = useRef(null);
+  const userRef = useRef(null);
+  const pesertaRef = useRef(null);
+  const isSubmittingRef = useRef(false);
+  const hasilSelesaiRef = useRef(null);
+
+  useEffect(() => { jawabanSiswaRef.current = jawabanSiswa; }, [jawabanSiswa]);
+  useEffect(() => { soalUjianRef.current = soalUjian; }, [soalUjian]);
+  useEffect(() => { sesiRef.current = sesi; }, [sesi]);
+  useEffect(() => { userRef.current = user; }, [user]);
+  useEffect(() => { pesertaRef.current = peserta; }, [peserta]);
+  useEffect(() => { isSubmittingRef.current = isSubmitting; }, [isSubmitting]);
+  useEffect(() => { hasilSelesaiRef.current = hasilSelesai; }, [hasilSelesai]);
+
   // --- CEK LOGIN & ADMIN ROLE & AUTO FETCH SESI AKTIF ---
   useEffect(() => {
     const rawUser = localStorage.getItem('user_siswa');
@@ -239,8 +256,10 @@ export default function TugasUlanganInformatika() {
           } else if (newStatus === 'ongoing') {
             setCountdown(null);
           } else if (newStatus === 'finished') {
-            // Otomatis kumpulkan ujian saat guru mengakhiri sesi
-            executeFinalSubmit(true);
+            // Otomatis kumpulkan ujian saat guru mengakhiri sesi (hanya jika belum disubmit sebelumnya)
+            if (!hasilSelesaiRef.current && pesertaRef.current?.status_ujian !== 'submitted') {
+              executeFinalSubmit(true);
+            }
           }
         }
       )
@@ -475,15 +494,31 @@ export default function TugasUlanganInformatika() {
         pesertaAktif = newPeserta;
       }
 
-      // Ambil riwayat jawaban autosave jika ada
+      // Ambil riwayat jawaban autosave dari localStorage dan DB jika ada
+      let restoredAnswers = {};
+      try {
+        const localCached = localStorage.getItem(`tugas7_jawaban_${sesiData.id}_${user.id}`);
+        if (localCached) {
+          const parsed = JSON.parse(localCached);
+          if (parsed && typeof parsed === 'object') {
+            restoredAnswers = { ...parsed };
+          }
+        }
+      } catch (e) {}
+
       const { data: jawabanData } = await supabase
         .from('ujian_jawaban')
         .select('jawaban_map')
         .eq('peserta_id', pesertaAktif.id)
         .maybeSingle();
 
-      if (jawabanData?.jawaban_map) {
-        setJawabanSiswa(jawabanData.jawaban_map);
+      if (jawabanData?.jawaban_map && typeof jawabanData.jawaban_map === 'object') {
+        restoredAnswers = { ...restoredAnswers, ...jawabanData.jawaban_map };
+      }
+
+      if (Object.keys(restoredAnswers).length > 0) {
+        setJawabanSiswa(restoredAnswers);
+        jawabanSiswaRef.current = restoredAnswers;
       }
 
       setSesi(sesiData);
@@ -508,37 +543,55 @@ export default function TugasUlanganInformatika() {
     }
   };
 
-  // --- PILIH JAWABAN (DENGAN AUTOSAVE REALTIME) ---
-  const handlePilihJawaban = async (soalId, opsiTeks) => {
+  // --- PILIH JAWABAN (DENGAN AUTOSAVE REALTIME & FUNGSI ATOMIK ANTI-STALE) ---
+  const handlePilihJawaban = useCallback((soalId, opsiTeks) => {
     if (isBlocked || isPaused) return;
 
-    const newJawaban = { ...jawabanSiswa, [soalId]: opsiTeks };
-    setJawabanSiswa(newJawaban);
+    setJawabanSiswa((prev) => {
+      const updated = { ...prev, [soalId]: opsiTeks };
+      jawabanSiswaRef.current = updated;
+
+      // Simpan ke localStorage cadangan instan
+      const currentSesi = sesiRef.current;
+      const currentUser = userRef.current;
+      if (currentSesi?.id && currentUser?.id) {
+        try {
+          localStorage.setItem(
+            `tugas7_jawaban_${currentSesi.id}_${currentUser.id}`,
+            JSON.stringify(updated)
+          );
+        } catch (e) {}
+      }
+
+      // Autosave ke Supabase tabel ujian_jawaban
+      const currentPeserta = pesertaRef.current;
+      if (currentPeserta?.id) {
+        supabase
+          .from('ujian_jawaban')
+          .upsert(
+            {
+              peserta_id: currentPeserta.id,
+              jawaban_map: updated,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'peserta_id' }
+          )
+          .then(({ error }) => {
+            if (error) console.warn('Autosave gagal:', error);
+          });
+      }
+
+      return updated;
+    });
 
     // Jika tadinya ditandai ragu, hapus tanda ragunya
-    if (raguSiswa[soalId]) {
-      const newRagu = { ...raguSiswa };
-      delete newRagu[soalId];
-      setRaguSiswa(newRagu);
-    }
-
-    // Autosave ke Supabase tabel ujian_jawaban
-    if (peserta?.id) {
-      supabase
-        .from('ujian_jawaban')
-        .upsert(
-          {
-            peserta_id: peserta.id,
-            jawaban_map: newJawaban,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'peserta_id' }
-        )
-        .then(({ error }) => {
-          if (error) console.warn('Autosave gagal:', error);
-        });
-    }
-  };
+    setRaguSiswa((prev) => {
+      if (!prev[soalId]) return prev;
+      const updated = { ...prev };
+      delete updated[soalId];
+      return updated;
+    });
+  }, [isBlocked, isPaused]);
 
   // --- TOGGLE TANDAI RAGU-RAGU ---
   const handleToggleRagu = () => {
@@ -570,17 +623,98 @@ export default function TugasUlanganInformatika() {
 
   // --- EKSEKUSI PENGIRIMAN AKHIR JAWABAN (SCHEMA V2.0 SINKRON KE TUGAS_PENGUMPULAN) ---
   const executeFinalSubmit = async (isAuto = false) => {
-    if (isSubmitting) return;
+    if (isSubmittingRef.current) return;
+    if (hasilSelesaiRef.current || pesertaRef.current?.status_ujian === 'submitted') {
+      console.log('Peserta sudah menyelesaikan ujian sebelumnya. Skip re-submit.');
+      return;
+    }
 
     setShowConfirmSubmitModal(false);
     setIsSubmitting(true);
+    isSubmittingRef.current = true;
 
     try {
-      // 1. Evaluasi Skor dengan Kunci Jawaban Resmi
-      const hasil = hitungNilaiSiswa(jawabanSiswa, soalUjian);
+      const currentSesi = sesiRef.current;
+      const currentUser = userRef.current;
+      const currentPeserta = pesertaRef.current;
+
+      // 1. Ambil jawaban terbaru dari ref penjaga data
+      let answersToGrade = { ...jawabanSiswaRef.current };
+
+      // Fallback ke localStorage jika memory kosong
+      if (Object.keys(answersToGrade).length === 0 && currentSesi?.id && currentUser?.id) {
+        try {
+          const cached = localStorage.getItem(`tugas7_jawaban_${currentSesi.id}_${currentUser.id}`);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && typeof parsed === 'object') {
+              answersToGrade = parsed;
+            }
+          }
+        } catch (e) {}
+      }
+
+      // Fallback ke database ujian_jawaban Supabase jika masih kosong
+      if (Object.keys(answersToGrade).length === 0 && currentPeserta?.id) {
+        try {
+          const { data: dbJawaban } = await supabase
+            .from('ujian_jawaban')
+            .select('jawaban_map')
+            .eq('peserta_id', currentPeserta.id)
+            .maybeSingle();
+          if (dbJawaban?.jawaban_map && typeof dbJawaban.jawaban_map === 'object') {
+            answersToGrade = dbJawaban.jawaban_map;
+          }
+        } catch (e) {
+          console.warn('Gagal ambil cadangan jawaban dari DB:', e);
+        }
+      }
+
+      // 2. Pastikan susunan butir soal tersedia
+      let activeSoalList = soalUjianRef.current;
+      if (!activeSoalList || activeSoalList.length === 0) {
+        if (currentSesi?.id && currentUser?.id) {
+          try {
+            const savedOrder = localStorage.getItem(`tugas7_soal_order_${currentSesi.id}_${currentUser.id}`);
+            if (savedOrder) {
+              const parsed = JSON.parse(savedOrder);
+              if (Array.isArray(parsed) && parsed.length === SOAL_POOL.length) {
+                activeSoalList = parsed;
+              }
+            }
+          } catch (e) {}
+        }
+        if (!activeSoalList || activeSoalList.length === 0) {
+          activeSoalList = SOAL_POOL;
+        }
+      }
+
+      // 3. Evaluasi Skor dengan Kunci Jawaban Resmi
+      const hasil = hitungNilaiSiswa(answersToGrade, activeSoalList);
       const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
 
-      // 2. Susun Payload Standar Schema v2.0
+      // 4. Proteksi Nilai Tertinggi (Math.max) sesuai aturan proyek di AGENTS.md
+      let finalSkor = hasil.skor;
+      let finalPersentase = hasil.persentase;
+      try {
+        const { data: existingPengumpulan } = await supabase
+          .from('tugas_pengumpulan')
+          .select('skor, persentase_skor')
+          .eq('tugas_id', TUGAS_7_ID)
+          .eq('siswa_id', currentUser.id)
+          .maybeSingle();
+
+        if (existingPengumpulan && typeof existingPengumpulan.skor === 'number') {
+          if (existingPengumpulan.skor > finalSkor) {
+            finalSkor = existingPengumpulan.skor;
+            finalPersentase = existingPengumpulan.persentase_skor ?? finalPersentase;
+          }
+        }
+      } catch (e) {
+        console.warn('Gagal cek skor lama:', e);
+      }
+
+      // 5. Susun Payload Standar Schema v2.0
       const payloadV2 = buildStandardDetailJawaban({
         kodeTugas: TUGAS_7_KODE,
         judulTugas: 'Tugas 7: Ulangan Informatika (Persiapan Tes Sumatif Ganjil)',
@@ -590,47 +724,47 @@ export default function TugasUlanganInformatika() {
         timeSpentSeconds: timeSpent,
         attemptCount: 1,
         skorMaksimal: 100,
-        skorDiperoleh: hasil.skor,
-        skorTertinggiDisimpan: hasil.skor,
+        skorDiperoleh: finalSkor,
+        skorTertinggiDisimpan: finalSkor,
         breakdownSkor: [
           {
             id: 'pilihan_ganda',
             label: 'Soal Pilihan Ganda (50 Butir)',
-            skor: hasil.skor,
+            skor: finalSkor,
             skor_maks: 100,
-            status: hasil.skor >= 75 ? 'lulus' : 'belum',
+            status: finalSkor >= 75 ? 'lulus' : 'belum',
           },
         ],
         autoGrading: {
-          passed: hasil.skor >= 75,
+          passed: finalSkor >= 75,
           kriteria_kktp: 75,
           total_soal: hasil.totalSoal,
           jumlah_benar: hasil.benar,
           jumlah_salah: hasil.salah,
           jumlah_kosong: hasil.kosong,
-          persentase: hasil.persentase,
+          persentase: finalPersentase,
         },
         customState: {
-          sesi_id: sesi?.id || null,
-          pin_ujian: sesi?.pin_ujian || null,
-          shuffled_soal_order: soalUjian.map((s) => s.id),
-          jawaban_siswa: jawabanSiswa,
+          sesi_id: currentSesi?.id || null,
+          pin_ujian: currentSesi?.pin_ujian || null,
+          shuffled_soal_order: activeSoalList.map((s) => s.id),
+          jawaban_siswa: answersToGrade,
           ragu_siswa: raguSiswa,
           cheat_count: cheatCount,
         },
         isCompleted: true,
       });
 
-      // 3. Simpan ke tabel tugas_pengumpulan (Memicu trigger point_logs & total_points)
+      // 6. Simpan ke tabel tugas_pengumpulan (Memicu trigger point_logs & total_points)
       const { error: submitError } = await supabase
         .from('tugas_pengumpulan')
         .upsert(
           {
             tugas_id: TUGAS_7_ID,
-            siswa_id: user.id,
+            siswa_id: currentUser.id,
             status: 'dinilai',
-            skor: hasil.skor,
-            persentase_skor: hasil.persentase,
+            skor: finalSkor,
+            persentase_skor: finalPersentase,
             detail_jawaban: payloadV2,
             submitted_at: new Date().toISOString(),
             graded_at: new Date().toISOString(),
@@ -640,15 +774,15 @@ export default function TugasUlanganInformatika() {
 
       if (submitError) throw submitError;
 
-      // 4. Update status peserta di ujian_peserta
-      if (peserta?.id) {
+      // 7. Update status peserta di ujian_peserta
+      if (currentPeserta?.id) {
         await supabase
           .from('ujian_peserta')
           .update({
             status_ujian: isBlocked ? 'blocked' : 'submitted',
-            nilai_akhir: hasil.skor,
+            nilai_akhir: finalSkor,
           })
-          .eq('id', peserta.id);
+          .eq('id', currentPeserta.id);
       }
 
       // Keluar dari fullscreen jika selesai
@@ -657,12 +791,14 @@ export default function TugasUlanganInformatika() {
       }
 
       setHasilSelesai(hasil);
+      hasilSelesaiRef.current = hasil;
       setShowSelesaiModal(true);
     } catch (err) {
       console.error('Gagal mengirim jawaban:', err);
       alert('Terjadi kendala koneksi saat mengirim jawaban. Silakan coba lagi: ' + err.message);
     } finally {
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -766,8 +902,8 @@ export default function TugasUlanganInformatika() {
         totalSoal={soalUjian.length}
         answeredCount={answeredCount}
         durasiMenit={sesi?.durasi_menit || 80}
+        sesiStartTime={sesi?.waktu_mulai || sesi?.created_at}
         sesiId={sesi?.id}
-        joinedAt={peserta?.joined_at}
         onTimeUp={() => submitJawabanUjian(true)}
         showAsisten={showAsisten}
         onToggleAsisten={() => setShowAsisten((v) => !v)}
