@@ -180,10 +180,10 @@ const FeedbackForm = () => {
         >
           <button
             onClick={() => setVisibleCount(prev => prev + 5)} // Tambah 5 komentar setiap klik
-            className="group relative px-8 py-3 rounded-2xl bg-slate-900/50 border border-white/5 hover:border-amber-500/30 transition-all duration-300"
+            className="group relative px-4 sm:px-8 py-2.5 sm:py-3 rounded-2xl bg-slate-900/50 border border-white/5 hover:border-amber-500/30 transition-all duration-300 max-w-full"
           >
             <div className="absolute inset-0 bg-amber-500/5 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <span className="relative text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 group-hover:text-amber-500 transition-colors">
+            <span className="relative text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-[0.2em] text-slate-500 group-hover:text-amber-500 transition-colors">
               Tampilkan Lebih Banyak ({allMainComments.length - visibleCount} lagi)
             </span>
           </button>

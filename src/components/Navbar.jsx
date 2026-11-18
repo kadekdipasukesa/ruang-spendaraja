@@ -253,7 +253,7 @@ export default function Navbar() {
     <>
       <nav
         id="main-navbar"
-        className={`fixed top-0 left-0 right-0 w-full z-[100] transition-all duration-300 ease-in-out transform ${
+        className={`fixed top-0 left-0 right-0 w-full max-w-[100vw] overflow-x-hidden z-[100] transition-all duration-300 ease-in-out transform box-border ${
           isHidden ? '-translate-y-full' : 'translate-y-0'
         } ${
           isAtTop
