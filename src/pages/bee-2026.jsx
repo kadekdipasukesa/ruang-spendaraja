@@ -23,7 +23,7 @@ export default function BEE2026() {
 
                     <h1 className="text-6xl md:text-8xl font-black text-slate-900 tracking-tighter mb-6 leading-[0.9]">
                         BULELENG <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">EDUCATION EXPO</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">FESTIVAL LITERASI</span>
                     </h1>
 
                     <p className="text-slate-500 font-medium max-w-2xl mx-auto text-lg italic">
