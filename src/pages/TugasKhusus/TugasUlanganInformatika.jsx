@@ -623,11 +623,8 @@ export default function TugasUlanganInformatika() {
 
   // --- EKSEKUSI PENGIRIMAN AKHIR JAWABAN (SCHEMA V2.0 SINKRON KE TUGAS_PENGUMPULAN) ---
   const executeFinalSubmit = async (isAuto = false) => {
+    // Cegah multi-klik submit yang berjalan bersamaan
     if (isSubmittingRef.current) return;
-    if (hasilSelesaiRef.current || pesertaRef.current?.status_ujian === 'submitted') {
-      console.log('Peserta sudah menyelesaikan ujian sebelumnya. Skip re-submit.');
-      return;
-    }
 
     setShowConfirmSubmitModal(false);
     setIsSubmitting(true);
@@ -774,15 +771,27 @@ export default function TugasUlanganInformatika() {
 
       if (submitError) throw submitError;
 
-      // 7. Update status peserta di ujian_peserta
+      // 7. Update status peserta di ujian_peserta & sinkronkan jawaban terbaru ke ujian_jawaban
       if (currentPeserta?.id) {
-        await supabase
-          .from('ujian_peserta')
-          .update({
-            status_ujian: isBlocked ? 'blocked' : 'submitted',
-            nilai_akhir: finalSkor,
-          })
-          .eq('id', currentPeserta.id);
+        await Promise.allSettled([
+          supabase
+            .from('ujian_peserta')
+            .update({
+              status_ujian: isBlocked ? 'blocked' : 'submitted',
+              nilai_akhir: finalSkor,
+            })
+            .eq('id', currentPeserta.id),
+          supabase
+            .from('ujian_jawaban')
+            .upsert(
+              {
+                peserta_id: currentPeserta.id,
+                jawaban_map: answersToGrade,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'peserta_id' }
+            ),
+        ]);
       }
 
       // Keluar dari fullscreen jika selesai
@@ -988,6 +997,11 @@ export default function TugasUlanganInformatika() {
           isOpen={showSelesaiModal}
           hasil={hasilSelesai}
           siswa={user}
+          onClose={() => {
+            setShowSelesaiModal(false);
+            setHasilSelesai(null);
+            hasilSelesaiRef.current = null;
+          }}
         />
       )}
 

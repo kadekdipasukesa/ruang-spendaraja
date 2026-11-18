@@ -15,7 +15,7 @@ const Footer = () => {
           <h2 className="text-xl font-black italic uppercase text-white tracking-tighter">
             Ruang-<span className="text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">Spendaraja</span>
           </h2>
-          <p className="text-slate-600 text-[8px] font-black uppercase tracking-wider sm:tracking-[0.3em] mt-1">
+          <p className="text-slate-600 text-[8px] font-black uppercase tracking-wider sm:tracking-[0.5em] mt-1">
             Digital Learning Platform
           </p>
         </div>

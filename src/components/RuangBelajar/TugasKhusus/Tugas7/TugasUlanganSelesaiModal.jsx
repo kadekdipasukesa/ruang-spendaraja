@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, CheckCircle2, XCircle, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { Trophy, CheckCircle2, XCircle, AlertCircle, ArrowRight, Sparkles, X, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function TugasUlanganSelesaiModal({
@@ -14,6 +14,7 @@ export default function TugasUlanganSelesaiModal({
     persentase: 0
   },
   siswa,
+  onClose,
 }) {
   const navigate = useNavigate();
   if (!isOpen) return null;
@@ -28,6 +29,18 @@ export default function TugasUlanganSelesaiModal({
           animate={{ scale: 1, opacity: 1, y: 0 }}
           className="w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 text-center shadow-2xl relative overflow-hidden text-white"
         >
+          {/* Tombol Tutup X jika diperbolehkan revisi / periksa */}
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800/80 transition cursor-pointer"
+              title="Tutup dan periksa jawaban"
+            >
+              <X size={18} />
+            </button>
+          )}
+
           {/* Ambient Glow */}
           <div className={`absolute top-0 inset-x-0 h-32 blur-3xl opacity-20 pointer-events-none ${isLulus ? 'bg-emerald-500' : 'bg-amber-500'}`} />
 
@@ -102,6 +115,17 @@ export default function TugasUlanganSelesaiModal({
             <span>KEMBALI KE RUANG BELAJAR</span>
             <ArrowRight size={16} />
           </button>
+
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full mt-3 bg-slate-800/90 hover:bg-slate-700 active:scale-98 text-slate-300 hover:text-white font-bold py-3 px-4 rounded-2xl transition border border-slate-700 flex items-center justify-center gap-2 cursor-pointer text-xs"
+            >
+              <Edit3 size={14} className="text-amber-400" />
+              <span>Periksa & Perbaiki Jawaban</span>
+            </button>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>

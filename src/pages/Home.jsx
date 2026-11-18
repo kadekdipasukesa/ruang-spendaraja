@@ -170,8 +170,8 @@ const HomeRoot = () => {
   }, [student]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white w-full max-w-full overflow-x-hidden">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 w-full overflow-x-hidden">
+    <div className="min-h-screen bg-slate-950 text-white">
+      <main className="container mx-auto px-5 pt-24">
         
         <Hero
           student={student}

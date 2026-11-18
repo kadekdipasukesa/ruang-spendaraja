@@ -28,10 +28,19 @@ export default function Navbar() {
     '/simulasi-interaktif',
     '/portfolio-leaderboard',
     '/dashboard-guru',
+    '/guru',
     '/input-nilai',
     '/face-absen',
+    '/pengumuman-sas',
   ];
   const isLightPage = lightPaths.some((p) => location.pathname.toLowerCase().startsWith(p));
+
+  // Halaman dengan tema biru gelap / navy slate-900 (#0f172a) seperti Catatan Disiplin & Jurnal Lab
+  const navyPaths = [
+    '/pelanggaran',
+    '/jurnal-lab',
+  ];
+  const isNavyPage = navyPaths.some((p) => location.pathname.toLowerCase().startsWith(p));
 
   const { scrollY } = useScroll();
 
@@ -253,13 +262,15 @@ export default function Navbar() {
     <>
       <nav
         id="main-navbar"
-        className={`fixed top-0 left-0 right-0 w-full max-w-[100vw] overflow-x-hidden z-[100] transition-all duration-300 ease-in-out transform box-border ${
+        className={`fixed top-0 left-0 right-0 w-full z-[100] transition-all duration-300 ease-in-out transform ${
           isHidden ? '-translate-y-full' : 'translate-y-0'
         } ${
           isAtTop
             ? 'bg-transparent border-b border-transparent shadow-none'
             : isLightPage
             ? 'bg-slate-50/95 sm:bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.05)] text-slate-800'
+            : isNavyPage
+            ? 'bg-[#0f172a]/95 backdrop-blur-xl border-b border-slate-800/80 shadow-[0_8px_30px_rgba(0,0,0,0.35)] text-slate-100'
             : 'bg-slate-950/95 backdrop-blur-xl border-b border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] text-white'
         }`}
       >
@@ -269,6 +280,8 @@ export default function Navbar() {
             className={`absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r ${
               isLightPage
                 ? 'from-transparent via-blue-500/20 to-transparent'
+                : isNavyPage
+                ? 'from-transparent via-blue-500/30 to-transparent'
                 : 'from-transparent via-amber-500/20 to-transparent'
             }`}
           />

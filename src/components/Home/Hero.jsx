@@ -19,7 +19,7 @@ export default function Hero({ student, activeTab, setActiveTab }) {
             transition={{ duration: 0.5, ease: "easeOut" }}
 
             // Background Hitam Pekat dengan Glassmorphism
-            className="relative overflow-hidden bg-slate-900/60 border border-white/10 p-5 sm:p-8 md:p-12 rounded-3xl sm:rounded-[2.5rem] mb-12 backdrop-blur-xl group text-left mt-6 sm:mt-10 transition-all duration-500 shadow-[0_0_40px_-15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_50px_-10px_rgba(59,130,246,0.5)] hover:border-blue-500/30">
+            className="relative overflow-hidden bg-slate-900/60 border border-white/10 p-6 sm:p-8 md:p-12 rounded-[2rem] sm:rounded-[2.5rem] mb-12 backdrop-blur-xl group text-left mt-6 sm:mt-10 transition-all duration-500 shadow-[0_0_40px_-15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_50px_-10px_rgba(59,130,246,0.5)] hover:border-blue-500/30">
 
             {/* GLOW AKSENTUASI DI POJOK (Sama seperti card, menyala dari awal) */}
             <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-gradient-to-br from-blue-600/20 to-transparent opacity-60 blur-[100px] -z-10 transition-opacity duration-700 group-hover:opacity-100" />
@@ -28,9 +28,9 @@ export default function Hero({ student, activeTab, setActiveTab }) {
                 <div className="w-full lg:max-w-3xl min-w-0">
 
                     {/* BADGE PLATFORM - Warna Amber disesuaikan pendarannya */}
-                    <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-slate-950/80 border border-amber-500/30 text-amber-500 text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.2em] mb-4 sm:mb-6 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
-                        <Sparkles size={14} className="text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]" />
-                        Platform Digital Ruang Spendaraja
+                    <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-slate-950/80 border border-amber-500/30 text-amber-500 text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.2em] mb-4 sm:mb-6 shadow-[0_0_15px_rgba(245,158,11,0.1)] max-w-full">
+                        <Sparkles size={14} className="text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)] shrink-0" />
+                        <span className="truncate">Platform Digital Ruang Spendaraja</span>
                     </div>
 
                     <div className="space-y-3 sm:space-y-4">
@@ -38,7 +38,7 @@ export default function Hero({ student, activeTab, setActiveTab }) {
                             {student ? "Senang Melihatmu Kembali," : "Selamat Datang di Portal"}
                         </h1>
 
-                        <h2 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter leading-tight break-words">
+                        <h2 className="text-3xl sm:text-4xl md:text-7xl font-black tracking-tighter leading-tight break-words">
                             {student ? (
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-blue-400 capitalize drop-shadow-[0_0_20px_rgba(59,130,246,0.3)]">
                                     {fullName.toLowerCase()}
@@ -48,7 +48,7 @@ export default function Hero({ student, activeTab, setActiveTab }) {
                                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 italic">
                                         Ruang Spendaraja
                                     </span>
-                                    <span className="text-[12px] sm:text-[14px] md:text-[18px] text-white/40 uppercase tracking-[0.15em] sm:tracking-[0.3em] mt-2 ml-1 font-black">
+                                    <span className="text-xs sm:text-[14px] md:text-[18px] text-white/20 uppercase tracking-[0.15em] sm:tracking-[0.5em] mt-2 ml-1 font-black">
                                         Digital Ecosystem v3.0
                                     </span>
                                 </div>
