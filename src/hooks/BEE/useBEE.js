@@ -40,7 +40,7 @@ export const useBEE = () => {
         creator_name: "KADEK KIRANA SUPARMITHA MAHESTRI",
         category: "Game",
         description: "Game Flappy Bird edukasi informatika di mana pemain harus menghindari rintangan. Jika menabrak tembok, pemain akan mendapatkan pertanyaan quiz informatika untuk melanjutkan permainan.",
-        image_url: fluppyImg,
+        image_url: "https://photos5.appleinsider.com/gallery/61043-125907-generatedwithbing-xl.jpg",
         link: "/flappy.html" // File berada di folder public
       },
 
@@ -50,7 +50,7 @@ export const useBEE = () => {
         creator_name: "MADE DIYONANDA FEBRIYANA SUKKE",
         category: "Game",
         description: "Permainan interaktif untuk melatih kecepatan mengetik, akurasi, dan konsentrasi dalam mengetik kata-kata dengan cepat dan tepat.",
-        image_url: typingImg,
+        image_url: "https://assets.parroto.app/assets/game/game1.webp",
         link: "/typing-challenge" // Diarahkan ke route internal
       },
 
@@ -70,8 +70,18 @@ export const useBEE = () => {
         creator_name: "GEDE AGYA PARILAKSANA",
         category: "Game",
         description: "Game petualangan bawah laut klasik GameHouse. Mangsa ikan kecil untuk berevolusi, kumpulkan mutiara karang Lovina, hindari predator raksasa, dan raih kombo Feeding Frenzy!",
-        image_url: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=400",
+        image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgu2e4v1Picl7iSPqCUdvFV-_ygB53bJ6INS920L1G-g&s=10",
         link: "/models/feeding-frenzy.html" // File berada di folder public/models dan dist/models
+      },
+
+      {
+        id: 106,
+        title: "Zuma Deluxe: Kuil Spendaraja",
+        creator_name: "PUTU ANGGITA KIRANA PUTRI",
+        category: "Game",
+        description: "Game arcade teka-teki legendaris GameHouse. Kendalikan Katak Penjaga mistis, bidik kelereng warna-warni, ciptakan kombo beruntun berantai, dan cegah bola jatuh ke mulut tengkorak!",
+        image_url: "https://images.sftcdn.net/images/t_app-cover-s,f_auto/p/41c50b9c-96d2-11e6-938d-00163ed833e7/2720894789/zuma-screenshot.jpg",
+        link: "/models/zuma-deluxe.html" // File berada di folder public/models dan dist/models
       },
 
       {
