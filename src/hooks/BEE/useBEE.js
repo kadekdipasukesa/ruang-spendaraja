@@ -65,6 +65,16 @@ export const useBEE = () => {
       },
 
       {
+        id: 105,
+        title: "Feeding Frenzy: Samudra Spendaraja",
+        creator_name: "GEDE AGYA PARILAKSANA",
+        category: "Game",
+        description: "Game petualangan bawah laut klasik GameHouse. Mangsa ikan kecil untuk berevolusi, kumpulkan mutiara karang Lovina, hindari predator raksasa, dan raih kombo Feeding Frenzy!",
+        image_url: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=400",
+        link: "/models/feeding-frenzy.html" // File berada di folder public/models dan dist/models
+      },
+
+      {
         id: 101,
         title: "Absensi Face Recognition",
         creator_name: "Project kelas 7.1",
