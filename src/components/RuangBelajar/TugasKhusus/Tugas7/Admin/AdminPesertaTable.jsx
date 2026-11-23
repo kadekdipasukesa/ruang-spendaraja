@@ -232,7 +232,12 @@ export default function AdminPesertaTable({
                       </span>
                     </td>
                     <td className="p-3.5 text-right font-mono font-black text-slate-200">
-                      {p.nilai_akhir !== null ? `${p.nilai_akhir} pt` : '—'}
+                      <div>{p.nilai_akhir !== null ? `${p.nilai_akhir} pt` : '—'}</div>
+                      {p.attempt_count > 1 && (
+                        <div className={`text-[10px] font-sans font-bold ${p.attempt_count > 5 ? 'text-amber-400' : 'text-slate-400'}`}>
+                          Percobaan #{p.attempt_count}
+                        </div>
+                      )}
                     </td>
                     <td className="p-3.5 text-center">
                       {isBlocked ? (

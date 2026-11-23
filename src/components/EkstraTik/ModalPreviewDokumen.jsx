@@ -108,31 +108,39 @@ export default function ModalPreviewDokumen({ isOpen, onClose, fileData }) {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Tombol Buka Tab Baru */}
-            <a
-              href={cleanUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-slate-200 hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition border border-white/10"
-              title="Buka File di Tab Baru"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Buka Langsung</span>
-            </a>
+            {/* Tombol Aksi Dokumen (Download & Buka Langsung disembunyikan jika canDownload === false) */}
+            {fileData?.canDownload === false ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-amber-300 bg-amber-950/60 rounded-xl border border-amber-500/30 shadow-xs">
+                <Shield className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden xs:inline">Pratinjau Terproteksi</span>
+              </span>
+            ) : (
+              <>
+                {/* Tombol Buka Tab Baru */}
+                <a
+                  href={cleanUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-slate-200 hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition border border-white/10"
+                  title="Buka File di Tab Baru"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Buka Langsung</span>
+                </a>
 
-            {/* Tombol Unduh Dokumen (Hanya jika diizinkan/milik sendiri) */}
-            {fileData?.canDownload !== false && (
-              <a
-                href={cleanUrl}
-                download={fileName}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:text-white bg-emerald-950/60 hover:bg-emerald-800 rounded-xl transition border border-emerald-500/30"
-                title="Unduh File ke Perangkat"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Unduh</span>
-              </a>
+                {/* Tombol Unduh Dokumen */}
+                <a
+                  href={cleanUrl}
+                  download={fileName}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:text-white bg-emerald-950/60 hover:bg-emerald-800 rounded-xl transition border border-emerald-500/30"
+                  title="Unduh File ke Perangkat"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Unduh</span>
+                </a>
+              </>
             )}
 
             {/* Tombol Tutup */}
@@ -219,7 +227,12 @@ export default function ModalPreviewDokumen({ isOpen, onClose, fileData }) {
               <img
                 src={cleanUrl}
                 alt={fileName}
-                className="max-w-full max-h-full object-contain rounded-xl shadow-lg border border-slate-200"
+                onContextMenu={(e) => {
+                  if (fileData?.canDownload === false) e.preventDefault();
+                }}
+                className={`max-w-full max-h-full object-contain rounded-xl shadow-lg border border-slate-200 ${
+                  fileData?.canDownload === false ? 'select-none pointer-events-none' : ''
+                }`}
               />
             </div>
           ) : isVideo ? (

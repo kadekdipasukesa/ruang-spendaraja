@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { AlertTriangle, Clock, BookOpen, Shield, ShieldAlert, Award, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Clock, BookOpen, Shield, ShieldAlert, Award, ExternalLink, RotateCcw } from 'lucide-react';
 
 export default function TugasUlanganHeader({
   siswa,
   cheatCount = 0,
+  attemptCount = 1,
   currentIndex = 0,
   totalSoal = 50,
   answeredCount = 0,
@@ -119,6 +120,29 @@ export default function TugasUlanganHeader({
             )}
             <span className="hidden sm:inline text-[11px] font-medium text-slate-400">Pelanggaran:</span>
             <span className="font-black">{cheatCount}/3</span>
+          </div>
+
+          {/* Indikator Jumlah Percobaan Ujian */}
+          <div
+            className={`px-2.5 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition-all ${
+              attemptCount > 5
+                ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow-sm shadow-amber-500/20'
+                : 'bg-slate-800/80 border-slate-700 text-sky-300'
+            }`}
+            title={
+              attemptCount > 5
+                ? `Percobaan ke-${attemptCount} (Lebih dari 5 percobaan: Skor maksimal 75 pt)`
+                : `Percobaan ke-${attemptCount} (Maksimal skor 100 pt)`
+            }
+          >
+            <RotateCcw size={13} className={attemptCount > 5 ? 'text-amber-400' : 'text-sky-400'} />
+            <span className="hidden sm:inline text-[11px] font-medium text-slate-400">Percobaan:</span>
+            <span className="font-black">#{attemptCount}</span>
+            {attemptCount > 5 && (
+              <span className="text-[10px] font-extrabold text-amber-300 bg-amber-500/30 px-1.5 py-0.5 rounded border border-amber-500/40 hidden md:inline ml-0.5">
+                Maks 75
+              </span>
+            )}
           </div>
         </div>
 

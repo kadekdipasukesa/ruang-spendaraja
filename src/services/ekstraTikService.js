@@ -30,6 +30,7 @@ function normalizeAnggota(row) {
     no_absen: s['No Absen'] ?? row.no_absen ?? null,
     gender: s.Gender || row.gender || '',
     nisn: s.NISN || row.nisn || '',
+    foto_profile: s.foto_profile || row.foto_profile || null,
     raw_siswa: s
   };
 }
@@ -53,6 +54,7 @@ function normalizePresensi(row) {
     no_absen: s['No Absen'] ?? null,
     gender: s.Gender || '',
     nisn: s.NISN || row.nisn || '',
+    foto_profile: s.foto_profile || null,
     raw_siswa: s
   };
 }
@@ -64,7 +66,7 @@ function normalizePresensi(row) {
 export async function getAnggotaEkstra() {
   const { data, error } = await supabase
     .from('ekstra_anggota')
-    .select('*, master_siswa:siswa_id(id, NAMA, Kelas, "No Absen", Gender, NISN)')
+    .select('*, master_siswa:siswa_id(id, NAMA, Kelas, "No Absen", Gender, NISN, foto_profile)')
     .order('no_daftar', { ascending: true, nullsFirst: false });
 
   if (error) {
@@ -80,7 +82,7 @@ export async function getAnggotaEkstra() {
 export async function getPresensiEkstra(filterDate = null) {
   let query = supabase
     .from('ekstra_presensi')
-    .select('*, master_siswa:siswa_id(id, NAMA, Kelas, "No Absen", Gender, NISN)')
+    .select('*, master_siswa:siswa_id(id, NAMA, Kelas, "No Absen", Gender, NISN, foto_profile)')
     .order('tanggal', { ascending: false });
 
   if (filterDate) {
@@ -309,7 +311,7 @@ export async function getMasterTugasEkstra() {
 export async function getTugasPengumpulanEkstra(idTugas = null, siswa_id = null, nisn = null, nama = null) {
   let query = supabase
     .from('ekstra_tugas_pengumpulan')
-    .select('*, ekstra_tugas_master(judul_tugas), master_siswa:siswa_id(id, NAMA, Kelas, "No Absen", Gender, NISN)')
+    .select('*, ekstra_tugas_master(judul_tugas), master_siswa:siswa_id(id, NAMA, Kelas, "No Absen", Gender, NISN, foto_profile)')
     .order('submitted_at', { ascending: false });
 
   if (idTugas) {
@@ -351,7 +353,7 @@ export async function getTugasPengumpulanEkstra(idTugas = null, siswa_id = null,
       try {
         const { data: students } = await supabase
           .from('master_siswa')
-          .select('id, NAMA, Kelas, "No Absen", Gender, NISN')
+          .select('id, NAMA, Kelas, "No Absen", Gender, NISN, foto_profile')
           .in('id', studentIds);
         (students || []).forEach((s) => {
           studentMap[s.id] = s;
@@ -368,7 +370,8 @@ export async function getTugasPengumpulanEkstra(idTugas = null, siswa_id = null,
         nama: s.NAMA || row.nama || '',
         kelas: s.Kelas || row.kelas || '',
         nisn: s.NISN || row.nisn || '',
-        no_absen: s['No Absen'] ?? null
+        no_absen: s['No Absen'] ?? null,
+        foto_profile: s.foto_profile || null
       };
     });
   }
@@ -380,9 +383,44 @@ export async function getTugasPengumpulanEkstra(idTugas = null, siswa_id = null,
       nama: s.NAMA || row.nama || '',
       kelas: s.Kelas || row.kelas || '',
       nisn: s.NISN || row.nisn || '',
-      no_absen: s['No Absen'] ?? null
+      no_absen: s['No Absen'] ?? null,
+      foto_profile: s.foto_profile || null
     };
   });
+}
+
+/**
+ * Menghapus 1 baris presensi berdasarkan ID presensi (Khusus Admin/Guru)
+ */
+export async function hapusPresensiEkstraById(id) {
+  if (!id) throw new Error('ID presensi tidak valid');
+  const { data, error } = await supabase
+    .from('ekstra_presensi')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Gagal menghapus presensi:', error);
+    throw error;
+  }
+  return true;
+}
+
+/**
+ * Menghapus seluruh catatan presensi pada tanggal tertentu (Khusus Admin/Guru)
+ */
+export async function hapusPresensiEkstraByTanggal(tanggal) {
+  if (!tanggal) throw new Error('Tanggal presensi tidak valid');
+  const { data, error } = await supabase
+    .from('ekstra_presensi')
+    .delete()
+    .eq('tanggal', tanggal);
+
+  if (error) {
+    console.error('Gagal menghapus presensi tanggal:', error);
+    throw error;
+  }
+  return true;
 }
 
 /**

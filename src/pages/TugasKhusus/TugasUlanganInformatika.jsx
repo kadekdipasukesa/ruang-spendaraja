@@ -57,8 +57,9 @@ export default function TugasUlanganInformatika() {
   const [jawabanSiswa, setJawabanSiswa] = useState({});
   const [raguSiswa, setRaguSiswa] = useState({});
 
-  // --- 4. STATE KEAMANAN / ANTI-CHEAT ---
+  // --- 4. STATE KEAMANAN / ANTI-CHEAT & PERCOBAAN ---
   const [cheatCount, setCheatCount] = useState(0);
+  const [attemptCount, setAttemptCount] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
@@ -83,6 +84,7 @@ export default function TugasUlanganInformatika() {
   const pesertaRef = useRef(null);
   const isSubmittingRef = useRef(false);
   const hasilSelesaiRef = useRef(null);
+  const attemptCountRef = useRef(1);
 
   useEffect(() => { jawabanSiswaRef.current = jawabanSiswa; }, [jawabanSiswa]);
   useEffect(() => { soalUjianRef.current = soalUjian; }, [soalUjian]);
@@ -91,6 +93,7 @@ export default function TugasUlanganInformatika() {
   useEffect(() => { pesertaRef.current = peserta; }, [peserta]);
   useEffect(() => { isSubmittingRef.current = isSubmitting; }, [isSubmitting]);
   useEffect(() => { hasilSelesaiRef.current = hasilSelesai; }, [hasilSelesai]);
+  useEffect(() => { attemptCountRef.current = attemptCount; }, [attemptCount]);
 
   // --- CEK LOGIN & ADMIN ROLE & AUTO FETCH SESI AKTIF ---
   useEffect(() => {
@@ -477,22 +480,51 @@ export default function TugasUlanganInformatika() {
 
       if (!pesertaAktif) {
         // Daftarkan sebagai peserta baru
-        const { data: newPeserta, error: insError } = await supabase
+        const newPesertaPayload = {
+          sesi_id: sesiData.id,
+          siswa_id: user.id,
+          status_ujian: 'ready',
+          cheat_count: 0,
+          attempt_count: 1,
+        };
+
+        let { data: newPeserta, error: insError } = await supabase
           .from('ujian_peserta')
-          .insert([
-            {
-              sesi_id: sesiData.id,
-              siswa_id: user.id,
-              status_ujian: 'ready',
-              cheat_count: 0,
-            },
-          ])
+          .insert([newPesertaPayload])
           .select()
           .single();
+
+        // Fallback defensif jika kolom attempt_count belum dibuat di Supabase
+        if (insError && (insError.message?.includes('attempt_count') || insError.code === 'PGRST204')) {
+          delete newPesertaPayload.attempt_count;
+          const retryRes = await supabase
+            .from('ujian_peserta')
+            .insert([newPesertaPayload])
+            .select()
+            .single();
+          newPeserta = retryRes.data;
+          insError = retryRes.error;
+        }
 
         if (insError) throw insError;
         pesertaAktif = newPeserta;
       }
+
+      // Ambil jumlah percobaan (attempt_count) tersimpan dari DB atau localStorage
+      let initialAttempt = 1;
+      if (pesertaAktif && typeof pesertaAktif.attempt_count === 'number' && pesertaAktif.attempt_count > 0) {
+        initialAttempt = pesertaAktif.attempt_count;
+      } else {
+        try {
+          const cachedAttempt = localStorage.getItem(`tugas7_attempt_${sesiData.id}_${user.id}`);
+          if (cachedAttempt) {
+            const parsed = parseInt(cachedAttempt, 10);
+            if (!isNaN(parsed) && parsed > 0) initialAttempt = parsed;
+          }
+        } catch (e) {}
+      }
+      setAttemptCount(initialAttempt);
+      attemptCountRef.current = initialAttempt;
 
       // Ambil riwayat jawaban autosave dari localStorage dan DB jika ada
       let restoredAnswers = {};
@@ -690,6 +722,19 @@ export default function TugasUlanganInformatika() {
       const hasil = hitungNilaiSiswa(answersToGrade, activeSoalList);
       const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
 
+      // Aturan Batas Nilai Berdasarkan Percobaan (Aturan #4):
+      // Jika lebih dari 5 percobaan (> 5), otomatis skor maksimal 75 pt. Kurang dari itu (<= 5) maksimal 100 pt.
+      const currentAttempt = attemptCountRef.current || attemptCount || 1;
+      const isCapped = currentAttempt > 5;
+      const rawSkor = hasil.skor;
+      const cappedSkor = isCapped ? Math.min(75, rawSkor) : rawSkor;
+
+      hasil.rawScore = rawSkor;
+      hasil.skor = cappedSkor;
+      hasil.persentase = Math.round((cappedSkor / 100) * 100);
+      hasil.attemptCount = currentAttempt;
+      hasil.isCapped = isCapped;
+
       // 4. Proteksi Nilai Tertinggi (Math.max) sesuai aturan proyek di AGENTS.md
       let finalSkor = hasil.skor;
       let finalPersentase = hasil.persentase;
@@ -719,7 +764,7 @@ export default function TugasUlanganInformatika() {
         activeStage: 1,
         totalStages: 1,
         timeSpentSeconds: timeSpent,
-        attemptCount: 1,
+        attemptCount: currentAttempt,
         skorMaksimal: 100,
         skorDiperoleh: finalSkor,
         skorTertinggiDisimpan: finalSkor,
@@ -748,6 +793,9 @@ export default function TugasUlanganInformatika() {
           jawaban_siswa: answersToGrade,
           ragu_siswa: raguSiswa,
           cheat_count: cheatCount,
+          attempt_count: currentAttempt,
+          raw_score: rawSkor,
+          is_capped: isCapped,
         },
         isCompleted: true,
       });
@@ -773,14 +821,25 @@ export default function TugasUlanganInformatika() {
 
       // 7. Update status peserta di ujian_peserta & sinkronkan jawaban terbaru ke ujian_jawaban
       if (currentPeserta?.id) {
+        const updatePesertaPayload = {
+          status_ujian: isBlocked ? 'blocked' : 'submitted',
+          nilai_akhir: finalSkor,
+          attempt_count: currentAttempt,
+        };
+
+        const updatePesertaPromise = supabase
+          .from('ujian_peserta')
+          .update(updatePesertaPayload)
+          .eq('id', currentPeserta.id)
+          .then(async ({ error }) => {
+            if (error && (error.message?.includes('attempt_count') || error.code === 'PGRST204')) {
+              delete updatePesertaPayload.attempt_count;
+              await supabase.from('ujian_peserta').update(updatePesertaPayload).eq('id', currentPeserta.id);
+            }
+          });
+
         await Promise.allSettled([
-          supabase
-            .from('ujian_peserta')
-            .update({
-              status_ujian: isBlocked ? 'blocked' : 'submitted',
-              nilai_akhir: finalSkor,
-            })
-            .eq('id', currentPeserta.id),
+          updatePesertaPromise,
           supabase
             .from('ujian_jawaban')
             .upsert(
@@ -809,6 +868,62 @@ export default function TugasUlanganInformatika() {
       setIsSubmitting(false);
       isSubmittingRef.current = false;
     }
+  };
+
+  // --- HANDLER PERIKSA & PERBAIKI JAWABAN (TAMBAH PERCOBAAN + 1 & MASUK FULLSCREEN) ---
+  const handlePerbaikiJawaban = async () => {
+    const currentSesi = sesiRef.current;
+    const currentUser = userRef.current;
+    const currentPeserta = pesertaRef.current;
+
+    const nextAttempt = (attemptCountRef.current || 1) + 1;
+    setAttemptCount(nextAttempt);
+    attemptCountRef.current = nextAttempt;
+
+    if (currentSesi?.id && currentUser?.id) {
+      try {
+        localStorage.setItem(`tugas7_attempt_${currentSesi.id}_${currentUser.id}`, String(nextAttempt));
+      } catch (e) {}
+    }
+
+    // Sync ke tabel ujian_peserta
+    if (currentPeserta?.id) {
+      try {
+        const updatePayload = {
+          attempt_count: nextAttempt,
+          status_ujian: 'ongoing',
+        };
+        const { error } = await supabase
+          .from('ujian_peserta')
+          .update(updatePayload)
+          .eq('id', currentPeserta.id);
+
+        if (error && (error.message?.includes('attempt_count') || error.code === 'PGRST204')) {
+          await supabase
+            .from('ujian_peserta')
+            .update({ status_ujian: 'ongoing' })
+            .eq('id', currentPeserta.id);
+        }
+      } catch (e) {
+        console.warn('Gagal update attempt_count di ujian_peserta:', e);
+      }
+    }
+
+    // Masuk fullscreen kembali otomatis
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+      setNeedsFullscreenPrompt(false);
+    } catch (err) {
+      console.warn('Gagal masuk fullscreen saat perbaiki jawaban:', err);
+      setNeedsFullscreenPrompt(true);
+    }
+
+    // Tutup modal dan reset tampilan hasil agar kembali ke layar pengerjaan soal
+    setShowSelesaiModal(false);
+    setHasilSelesai(null);
+    hasilSelesaiRef.current = null;
   };
 
   // Hitung jumlah soal terjawab dan ragu-ragu secara realtime
@@ -907,6 +1022,7 @@ export default function TugasUlanganInformatika() {
       <TugasUlanganHeader
         siswa={user}
         cheatCount={cheatCount}
+        attemptCount={attemptCount}
         currentIndex={currentIndex}
         totalSoal={soalUjian.length}
         answeredCount={answeredCount}
@@ -997,11 +1113,9 @@ export default function TugasUlanganInformatika() {
           isOpen={showSelesaiModal}
           hasil={hasilSelesai}
           siswa={user}
-          onClose={() => {
-            setShowSelesaiModal(false);
-            setHasilSelesai(null);
-            hasilSelesaiRef.current = null;
-          }}
+          attemptCount={attemptCount}
+          onClose={handlePerbaikiJawaban}
+          onPerbaikiJawaban={handlePerbaikiJawaban}
         />
       )}
 

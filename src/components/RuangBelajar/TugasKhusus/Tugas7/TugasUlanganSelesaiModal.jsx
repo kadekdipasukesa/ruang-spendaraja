@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, CheckCircle2, XCircle, AlertCircle, ArrowRight, Sparkles, X, Edit3 } from 'lucide-react';
+import { Trophy, CheckCircle2, XCircle, AlertCircle, ArrowRight, Sparkles, X, Edit3, RotateCcw, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function TugasUlanganSelesaiModal({
@@ -14,12 +14,16 @@ export default function TugasUlanganSelesaiModal({
     persentase: 0
   },
   siswa,
+  attemptCount = 1,
   onClose,
+  onPerbaikiJawaban,
 }) {
   const navigate = useNavigate();
   if (!isOpen) return null;
 
+  const effectiveAttempt = hasil?.attemptCount || attemptCount || 1;
   const isLulus = hasil.skor >= 75;
+  const handleActionPerbaiki = onPerbaikiJawaban || onClose;
 
   return (
     <AnimatePresence>
@@ -30,10 +34,10 @@ export default function TugasUlanganSelesaiModal({
           className="w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 text-center shadow-2xl relative overflow-hidden text-white"
         >
           {/* Tombol Tutup X jika diperbolehkan revisi / periksa */}
-          {onClose && (
+          {handleActionPerbaiki && (
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleActionPerbaiki}
               className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800/80 transition cursor-pointer"
               title="Tutup dan periksa jawaban"
             >
@@ -45,7 +49,7 @@ export default function TugasUlanganSelesaiModal({
           <div className={`absolute top-0 inset-x-0 h-32 blur-3xl opacity-20 pointer-events-none ${isLulus ? 'bg-emerald-500' : 'bg-amber-500'}`} />
 
           {/* Icon Trophy */}
-          <div className="relative mb-5 mx-auto w-20 h-20 flex items-center justify-center">
+          <div className="relative mb-4 mx-auto w-20 h-20 flex items-center justify-center">
             <div className={`w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg ${
               isLulus 
                 ? 'bg-gradient-to-tr from-emerald-600 to-teal-500 shadow-emerald-500/30' 
@@ -55,11 +59,23 @@ export default function TugasUlanganSelesaiModal({
             </div>
           </div>
 
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2 ${
-            isLulus ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
-          }`}>
-            <Sparkles size={12} /> {isLulus ? 'Tuntas & Lulus KKTP' : 'Perlu Pendalaman'}
-          </span>
+          {/* Chips Status Kelulusan & Jumlah Percobaan */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
+              isLulus ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
+            }`}>
+              <Sparkles size={12} /> {isLulus ? 'Tuntas & Lulus KKTP' : 'Perlu Pendalaman'}
+            </span>
+
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+              effectiveAttempt > 5
+                ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                : 'bg-slate-800/90 border-slate-700 text-sky-300'
+            }`}>
+              <RotateCcw size={12} className={effectiveAttempt > 5 ? 'text-amber-400' : 'text-sky-400'} />
+              <span>Percobaan Ke-{effectiveAttempt}</span>
+            </span>
+          </div>
 
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
             Ujian Telah Selesai!
@@ -68,8 +84,28 @@ export default function TugasUlanganSelesaiModal({
             Jawaban Anda telah berhasil dikirim dan dinilai oleh sistem.
           </p>
 
+          {/* Peringatan Batas Maksimal 75 pt jika percobaan > 5 */}
+          {effectiveAttempt > 5 && (
+            <div className="mt-4 mb-2 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs text-left flex items-start gap-2.5">
+              <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="font-bold text-amber-300">
+                  Ketentuan Nilai Percobaan &gt; 5 Kali
+                </p>
+                <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                  Telah dilakukan <strong>{effectiveAttempt} kali percobaan</strong>. Skor maksimal setelah lebih dari 5 kali percobaan dibatasi menjadi <strong>75 poin</strong>.
+                  {typeof hasil?.rawScore === 'number' && hasil.rawScore > 75 && (
+                    <span className="block mt-1 font-semibold text-amber-300">
+                      Nilai murni: {hasil.rawScore} pt &rarr; Disesuaikan: {hasil.skor} pt.
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Nilai Besar Card */}
-          <div className="my-6 p-5 rounded-2xl bg-slate-950/70 border border-slate-800">
+          <div className="my-5 p-5 rounded-2xl bg-slate-950/70 border border-slate-800">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
               Perolehan Skor Akhir
             </span>
@@ -116,13 +152,13 @@ export default function TugasUlanganSelesaiModal({
             <ArrowRight size={16} />
           </button>
 
-          {onClose && (
+          {handleActionPerbaiki && (
             <button
               type="button"
-              onClick={onClose}
-              className="w-full mt-3 bg-slate-800/90 hover:bg-slate-700 active:scale-98 text-slate-300 hover:text-white font-bold py-3 px-4 rounded-2xl transition border border-slate-700 flex items-center justify-center gap-2 cursor-pointer text-xs"
+              onClick={handleActionPerbaiki}
+              className="w-full mt-3 bg-slate-800/90 hover:bg-slate-700 active:scale-98 text-slate-300 hover:text-white font-bold py-3.5 px-4 rounded-2xl transition border border-slate-700 flex items-center justify-center gap-2 cursor-pointer text-xs sm:text-sm shadow-md"
             >
-              <Edit3 size={14} className="text-amber-400" />
+              <Edit3 size={15} className="text-amber-400" />
               <span>Periksa & Perbaiki Jawaban</span>
             </button>
           )}

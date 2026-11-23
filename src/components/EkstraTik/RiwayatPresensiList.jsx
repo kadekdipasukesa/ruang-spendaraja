@@ -11,20 +11,41 @@ import {
   Download,
   MessageSquare,
   Sparkles,
-  UserX
+  UserX,
+  Trash2,
+  Loader2,
+  AlertOctagon,
+  X
 } from 'lucide-react';
-import { generatePresensiCsv, downloadCsvFile } from '../../services/ekstraTikService';
+import { 
+  generatePresensiCsv, 
+  downloadCsvFile,
+  hapusPresensiEkstraById,
+  hapusPresensiEkstraByTanggal
+} from '../../services/ekstraTikService';
 
 export default function RiwayatPresensiList({
+  user = null,
   riwayatList = [],
   anggotaList = [],
   allPresensiList = [],
   fallbackNama = '',
-  fallbackKelas = ''
+  fallbackKelas = '',
+  onRefreshData = null
 }) {
   const [selectedDateFilter, setSelectedDateFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Status Modal Hapus Presensi (Khusus Admin/Guru)
+  const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'date' | 'item', id?, tanggal?, nama?, count? }
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  const isAdmin = 
+    user?.role === 'admin' || 
+    user?.role === 'guru' || 
+    user?.role_2 === 'admin';
 
   // Ekstrak daftar tanggal unik dari allPresensiList
   const uniqueDates = useMemo(() => {
@@ -109,6 +130,29 @@ export default function RiwayatPresensiList({
     const csv = generatePresensiCsv(anggotaList, allPresensiList);
     const dateStr = new Date().toISOString().split('T')[0];
     downloadCsvFile(csv, `Rekap_Presensi_Ekstra_TIK_${dateStr}.csv`);
+  };
+
+  // Eksekusi penghapusan presensi (per tanggal atau per item)
+  const handleExecuteDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      if (deleteTarget.type === 'date') {
+        await hapusPresensiEkstraByTanggal(deleteTarget.tanggal);
+      } else if (deleteTarget.type === 'item') {
+        await hapusPresensiEkstraById(deleteTarget.id);
+      }
+      setDeleteTarget(null);
+      if (onRefreshData) {
+        await onRefreshData();
+      }
+    } catch (err) {
+      console.error('Gagal menghapus presensi:', err);
+      setDeleteError(err?.message || 'Gagal menghapus data presensi');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   // Format tombol pilihan tanggal: Menampilkan Hari dan Tanggal (misal: "Jumat, 12 Sep")
@@ -299,7 +343,7 @@ export default function RiwayatPresensiList({
           groupedRiwayat.map((group) => (
             <div key={group.tanggal} className="space-y-2.5">
               {/* WhatsApp-Style Date Badge (Pill Melayang di Tengah) */}
-              <div className="flex items-center justify-center sticky top-0 z-10 py-1">
+              <div className="flex items-center justify-center sticky top-0 z-10 py-1 gap-2">
                 <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/95 backdrop-blur-md shadow-xs border border-slate-200 text-slate-700 text-[11px] font-bold">
                   <Calendar className="w-3.5 h-3.5 text-emerald-600" />
                   <span>{formatTanggalPillWa(group.tanggal)}</span>
@@ -307,6 +351,25 @@ export default function RiwayatPresensiList({
                     {group.items.length} Siswa
                   </span>
                 </div>
+
+                {/* Tombol Hapus Seluruh Presensi Tanggal Ini (Khusus Admin/Guru jika tanggal salah) */}
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDeleteTarget({
+                        type: 'date',
+                        tanggal: group.tanggal,
+                        count: group.items.length
+                      })
+                    }
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/95 hover:bg-rose-50 text-rose-600 hover:text-rose-700 border border-rose-200/80 hover:border-rose-300 text-[10px] font-bold shadow-xs transition cursor-pointer"
+                    title={`Hapus seluruh data presensi pada tanggal ${group.tanggal}`}
+                  >
+                    <Trash2 className="w-3 h-3 text-rose-500" />
+                    <span className="hidden sm:inline">Hapus Tanggal Ini</span>
+                  </button>
+                )}
               </div>
 
               {/* Daftar Log Kehadiran Siswa (1 Kolom Memanjang Rapi) */}
@@ -324,7 +387,7 @@ export default function RiwayatPresensiList({
                   return (
                     <div
                       key={item.id || idx}
-                      className="bg-white rounded-xl px-3 py-2 border border-slate-200/90 shadow-2xs hover:shadow-xs transition flex items-center justify-between gap-2.5"
+                      className="bg-white rounded-xl px-3 py-2 border border-slate-200/90 shadow-2xs hover:shadow-xs transition flex items-center justify-between gap-2.5 group"
                     >
                       {/* Sisi Kiri: Info Siswa */}
                       <div className="min-w-0 flex-1">
@@ -351,8 +414,8 @@ export default function RiwayatPresensiList({
                         ) : null}
                       </div>
 
-                      {/* Sisi Kanan: Status & Waktu */}
-                      <div className="shrink-0 flex items-center gap-2">
+                      {/* Sisi Kanan: Status, Waktu & Tombol Hapus Item Admin */}
+                      <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">
                         {waktuStr && (
                           <span className="text-[10px] text-slate-400 font-mono hidden xs:inline">
                             {waktuStr}
@@ -379,6 +442,25 @@ export default function RiwayatPresensiList({
                           )}
                           <span>{item.status_kehadiran}</span>
                         </span>
+
+                        {/* Tombol Hapus Single Item (Khusus Admin/Guru) */}
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDeleteTarget({
+                                type: 'item',
+                                id: item.id,
+                                nama: namaDisplay,
+                                tanggal: group.tanggal
+                              })
+                            }
+                            className="p-1 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                            title={`Hapus presensi ${namaDisplay}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -388,6 +470,89 @@ export default function RiwayatPresensiList({
           ))
         )}
       </div>
+
+      {/* Modal Konfirmasi Hapus Presensi (Khusus Admin / Guru) */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <AlertOctagon className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-bold text-slate-900">
+                  {deleteTarget.type === 'date'
+                    ? 'Hapus Presensi Sesi Tanggal'
+                    : 'Hapus Catatan Presensi Siswa'}
+                </h4>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  {deleteTarget.type === 'date' ? (
+                    <>
+                      Apakah Anda yakin ingin menghapus <strong>seluruh {deleteTarget.count} data presensi</strong> pada tanggal{' '}
+                      <span className="font-bold text-slate-800">{formatTanggalPillWa(deleteTarget.tanggal)}</span>?
+                      <br />
+                      <span className="text-rose-600 font-medium block mt-1">
+                        Tindakan ini tidak dapat dibatalkan.
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      Apakah Anda yakin ingin menghapus data presensi milik{' '}
+                      <strong>{deleteTarget.nama}</strong> pada tanggal{' '}
+                      <span className="font-bold text-slate-800">{formatTanggalPillWa(deleteTarget.tanggal)}</span>?
+                    </>
+                  )}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!deleting) setDeleteTarget(null);
+                }}
+                disabled={deleting}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {deleteError && (
+              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteDelete}
+                disabled={deleting}
+                className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition cursor-pointer flex items-center gap-1.5 shadow-xs"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Menghapus...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Ya, Hapus Presensi</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -534,12 +534,14 @@ export default function FormPresensiEkstra({
           </div>
 
           <RiwayatPresensiList
+            user={user}
             riwayatList={riwayatSiswa}
             anggotaList={anggotaList}
             allPresensiList={allPresensiList}
             fallbackNama={activeNama}
             fallbackKelas={activeKelas}
             hasSelectedStudent={Boolean(registeredMember || activeNama)}
+            onRefreshData={onRefreshData}
           />
         </div>
       </div>
