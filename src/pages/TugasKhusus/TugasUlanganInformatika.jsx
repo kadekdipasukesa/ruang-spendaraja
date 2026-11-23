@@ -17,6 +17,9 @@ import { buildStandardDetailJawaban } from '../../utils/tugasSchemaHelper';
 // Import Audio Quiz Helper
 import { useAudioQuiz } from '../../hooks/useAudioQuiz';
 
+// Import Anti-Cheat Hook Komprehensif
+import { useAntiCheat } from '../../hooks/useAntiCheat';
+
 // Import Sub-Komponen UI Tugas 7
 import TugasUlanganHeader from '../../components/RuangBelajar/TugasKhusus/Tugas7/TugasUlanganHeader';
 import TugasUlanganPinInput from '../../components/RuangBelajar/TugasKhusus/Tugas7/TugasUlanganPinInput';
@@ -60,6 +63,7 @@ export default function TugasUlanganInformatika() {
   // --- 4. STATE KEAMANAN / ANTI-CHEAT & PERCOBAAN ---
   const [cheatCount, setCheatCount] = useState(0);
   const [attemptCount, setAttemptCount] = useState(1);
+  const [violationReason, setViolationReason] = useState('umum');
   const [isPaused, setIsPaused] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
@@ -373,8 +377,8 @@ export default function TugasUlanganInformatika() {
     }, 1000);
   };
 
-  // --- SISTEM DETEKSI ANTI-CHEAT (FULLSCREEN & TAB VISIBILITY) ---
-  const handleCheatViolation = useCallback(async () => {
+  // --- SISTEM DETEKSI ANTI-CHEAT (FULLSCREEN, TAB VISIBILITY, WINDOW BLUR & SPLIT-SCREEN) ---
+  const handleCheatViolation = useCallback(async (reason = 'umum') => {
     if (sesi?.status !== 'ongoing' || hasilSelesai || isBlocked || isPaused) return;
     if (cheatCooldownRef.current) return;
 
@@ -383,6 +387,7 @@ export default function TugasUlanganInformatika() {
       cheatCooldownRef.current = false;
     }, 1500); // Debounce 1.5 detik
 
+    setViolationReason(reason);
     playBeep(220, 0.3); // Suara peringatan nada rendah
 
     const nextCount = cheatCount + 1;
@@ -409,31 +414,18 @@ export default function TugasUlanganInformatika() {
     }
   }, [sesi?.status, hasilSelesai, isBlocked, isPaused, cheatCount, peserta?.id, playBeep]);
 
-  // Event Listeners: Tab Visibility & Fullscreen Exit
-  // CATATAN: Listener 'blur' dihapus agar tidak terjadi false violation saat Chrome memunculkan dialog/jendela sistem
-  useEffect(() => {
-    if (sesi?.status !== 'ongoing' || hasilSelesai || isBlocked) return;
-
-    const onVisibilityChange = () => {
-      if (document.hidden) {
-        handleCheatViolation();
-      }
-    };
-
-    const onFullscreenChange = () => {
-      if (!document.fullscreenElement && !isBlocked && !hasilSelesai) {
-        handleCheatViolation();
-      }
-    };
-
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    document.addEventListener('fullscreenchange', onFullscreenChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      document.removeEventListener('fullscreenchange', onFullscreenChange);
-    };
-  }, [sesi?.status, hasilSelesai, isBlocked, handleCheatViolation]);
+  // Hook Anti-Cheat Komprehensif:
+  // 1. Menutup celah jendela lain di Windows (Smart blur dengan grace period 1 detik / 1000ms)
+  // 2. Menutup celah layar belah di Android (Split screen ratio guard < 65%)
+  // 3. Tab visibility change & Fullscreen change
+  useAntiCheat({
+    enabled: sesi?.status === 'ongoing' && !hasilSelesai && !isBlocked && !isPaused,
+    isPaused,
+    isBlocked,
+    blurGracePeriodMs: 1000, // 1 detik toleransi sesuai keputusan pengawas
+    cooldownMs: 1500,
+    onViolation: handleCheatViolation,
+  });
 
   // --- RESUME FULLSCREEN DARI PAUSE DIALOG ---
   const handleResumeFullscreen = () => {
@@ -1085,6 +1077,7 @@ export default function TugasUlanganInformatika() {
         isOpen={isPaused}
         cheatCount={cheatCount}
         maxCheat={3}
+        reason={violationReason}
         onResumeFullscreen={handleResumeFullscreen}
       />
 

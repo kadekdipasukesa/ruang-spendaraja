@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Unlock, Clock, Timer, CheckCircle2 } from 'lucide-react';
+import { Users, Search, Unlock, Clock, Timer, CheckCircle2, RotateCcw } from 'lucide-react';
 
 export default function AdminPesertaTable({
   currentSesi,
@@ -159,6 +159,7 @@ export default function AdminPesertaTable({
               <th className="p-3.5">Nama Siswa</th>
               <th className="p-3.5 text-center">Kelas</th>
               <th className="p-3.5 text-center">Status Ujian</th>
+              <th className="p-3.5 text-center">Percobaan</th>
               <th className="p-3.5 text-center">Pelanggaran</th>
               <th className="p-3.5 text-right">Skor Akhir</th>
               <th className="p-3.5 text-center">Aksi Pengawas</th>
@@ -167,7 +168,7 @@ export default function AdminPesertaTable({
           <tbody className="divide-y divide-slate-800/60 font-medium bg-slate-900/60">
             {filteredPeserta.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-slate-500">
+                <td colSpan={8} className="p-8 text-center text-slate-500">
                   {peserta.length === 0
                     ? `Belum ada siswa yang masuk ke room PIN ${currentSesi?.pin_ujian || '—'}.`
                     : 'Tidak ada siswa yang cocok dengan filter pencarian.'}
@@ -182,6 +183,7 @@ export default function AdminPesertaTable({
 
                 const isBlocked = p.status_ujian === 'blocked' || p.cheat_count >= 3;
                 const hasCheat = p.cheat_count > 0;
+                const currentAttempt = p.attempt_count || 1;
 
                 return (
                   <tr
@@ -220,6 +222,28 @@ export default function AdminPesertaTable({
                     </td>
                     <td className="p-3.5 text-center">
                       <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border inline-flex items-center gap-1 ${
+                          currentAttempt > 5
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                            : currentAttempt > 1
+                            ? 'bg-sky-500/10 text-sky-400 border-sky-500/20'
+                            : 'bg-slate-800/80 text-slate-300 border-slate-700'
+                        }`}
+                        title={
+                          currentAttempt > 5
+                            ? `Percobaan ke-${currentAttempt} (Lebih dari 5x: Skor maksimal 75 pt)`
+                            : `Percobaan ke-${currentAttempt} (Maksimal skor 100 pt)`
+                        }
+                      >
+                        <RotateCcw size={10} className={currentAttempt > 5 ? 'text-amber-400' : 'text-sky-400'} />
+                        <span>Ke-{currentAttempt}</span>
+                        {currentAttempt > 5 && (
+                          <span className="text-[9px] text-amber-400 font-bold ml-0.5">(Maks 75)</span>
+                        )}
+                      </span>
+                    </td>
+                    <td className="p-3.5 text-center">
+                      <span
                         className={`font-black text-sm px-2.5 py-1 rounded-lg ${
                           p.cheat_count >= 3
                             ? 'bg-red-500/20 text-red-400 border border-red-500/30'
@@ -232,12 +256,7 @@ export default function AdminPesertaTable({
                       </span>
                     </td>
                     <td className="p-3.5 text-right font-mono font-black text-slate-200">
-                      <div>{p.nilai_akhir !== null ? `${p.nilai_akhir} pt` : '—'}</div>
-                      {p.attempt_count > 1 && (
-                        <div className={`text-[10px] font-sans font-bold ${p.attempt_count > 5 ? 'text-amber-400' : 'text-slate-400'}`}>
-                          Percobaan #{p.attempt_count}
-                        </div>
-                      )}
+                      {p.nilai_akhir !== null ? `${p.nilai_akhir} pt` : '—'}
                     </td>
                     <td className="p-3.5 text-center">
                       {isBlocked ? (

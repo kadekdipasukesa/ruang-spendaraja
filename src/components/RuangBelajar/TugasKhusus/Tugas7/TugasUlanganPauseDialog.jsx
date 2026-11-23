@@ -6,9 +6,47 @@ export default function TugasUlanganPauseDialog({
   isOpen = false,
   cheatCount = 1,
   maxCheat = 3,
+  reason = 'umum',
   onResumeFullscreen,
 }) {
   if (!isOpen) return null;
+
+  const getReasonDetail = () => {
+    switch (reason) {
+      case 'split_screen':
+        return {
+          title: 'Layar Belah (Split Screen) Terdeteksi!',
+          badge: 'Pelanggaran: Layar Belah',
+          desc: 'Sistem mendeteksi mode Layar Belah (Split Screen) aktif di HP Anda. Harap tutup aplikasi lain dan gunakan satu layar penuh untuk melanjutkan ujian.',
+        };
+      case 'window_blur':
+        return {
+          title: 'Fokus Jendela Ujian Terputus!',
+          badge: 'Pelanggaran: Buka Jendela Lain',
+          desc: 'Sistem mendeteksi kursor atau aktivitas berpindah ke aplikasi/jendela lain di Windows (lebih dari 1 detik). Harap tetap berada di dalam jendela ujian.',
+        };
+      case 'tab_hidden':
+        return {
+          title: 'Pindah Tab Browser Terdeteksi!',
+          badge: 'Pelanggaran: Pindah Tab',
+          desc: 'Sistem mendeteksi Anda beralih ke tab browser lain. Dilarang membuka tab lain selama ujian berlangsung.',
+        };
+      case 'fullscreen_exit':
+        return {
+          title: 'Keluar Dari Layar Penuh!',
+          badge: 'Pelanggaran: Keluar Fullscreen',
+          desc: 'Sistem mendeteksi Anda keluar dari mode layar penuh (Fullscreen). Harap kembali ke mode layar penuh untuk melanjutkan.',
+        };
+      default:
+        return {
+          title: 'Ujian Dijeda Sementara!',
+          badge: `Pelanggaran Ke-${cheatCount} dari ${maxCheat}`,
+          desc: 'Sistem mendeteksi Anda keluar dari mode layar penuh (Fullscreen) atau beralih ke jendela/tab lain. Timer ujian tetap berjalan.',
+        };
+    }
+  };
+
+  const reasonInfo = getReasonDetail();
 
   return (
     <AnimatePresence>
@@ -28,17 +66,26 @@ export default function TugasUlanganPauseDialog({
             <ShieldAlert size={40} />
           </div>
 
-          <span className="inline-block px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-black uppercase tracking-wider mb-2">
-            Pelanggaran Ke-{cheatCount} dari {maxCheat}
-          </span>
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
+            <span className="inline-block px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-black uppercase tracking-wider">
+              Pelanggaran Ke-{cheatCount} dari {maxCheat}
+            </span>
+            {reason !== 'umum' && (
+              <span className="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
+                {reasonInfo.badge}
+              </span>
+            )}
+          </div>
 
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Ujian Dijeda Sementara!
+            {reasonInfo.title}
           </h2>
 
           <p className="text-slate-300 text-xs sm:text-sm my-4 leading-relaxed max-w-md mx-auto">
-            Sistem mendeteksi Anda <strong>keluar dari mode layar penuh (Fullscreen)</strong> atau <strong>beralih ke jendela/tab lain</strong>. 
-            Timer ujian tetap berjalan. Jika pelanggaran mencapai <strong>{maxCheat} kali</strong>, akun Anda akan <strong>terkunci otomatis</strong>.
+            {reasonInfo.desc}
+            <span className="block mt-2 text-slate-400 text-[11px]">
+              Timer ujian tetap berjalan. Jika pelanggaran mencapai <strong>{maxCheat} kali</strong>, akun Anda akan <strong>terkunci otomatis</strong>.
+            </span>
           </p>
 
           <div className="bg-red-950/40 border border-red-800/60 rounded-2xl p-3.5 mb-6 text-xs text-red-200 text-left space-y-1">
