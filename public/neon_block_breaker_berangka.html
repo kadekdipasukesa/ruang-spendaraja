@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Block Breaker - Game Blok Berangka</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050811;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(14, 165, 233, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 80% 75%, rgba(139, 92, 246, 0.08) 0%, transparent 45%);
+            color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100dvh;
+            width: 100vw;
+        }
+
+        .font-display {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Kontainer Utama Game: Bingkai Portrait Multiplatform (HP & Laptop) */
+        #game-shell {
+            width: 100%;
+            max-width: 460px;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle at 50% 25%, #11192e 0%, #070b14 100%);
+            position: relative;
+        }
+
+        /* Bingkai elegan khusus layar desktop/laptop */
+        @media (min-width: 520px) {
+            #game-shell {
+                height: calc(100dvh - 28px);
+                max-height: 880px;
+                border-radius: 24px;
+                border: 1px solid rgba(56, 189, 248, 0.25);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(14, 165, 233, 0.12);
+                overflow: hidden;
+            }
+        }
+
+        #canvas-wrapper {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .neon-btn {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .neon-btn:active {
+            transform: scale(0.94);
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 18px rgba(56, 189, 248, 0.45); }
+            50% { box-shadow: 0 0 32px rgba(56, 189, 248, 0.85); }
+        }
+
+        .btn-glow {
+            animation: pulseGlow 2.2s infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-shell">
+        <!-- HEADER HUD ATAS -->
+        <header class="w-full px-4 pt-3 pb-2 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/75 backdrop-blur-md z-10 shrink-0">
+            <!-- Skor Tertinggi -->
+            <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl">
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+                <div>
+                    <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold leading-none">Terbaik</div>
+                    <div id="hud-best" class="font-display text-sm sm:text-base font-bold text-amber-300 leading-tight">1</div>
+                </div>
+            </div>
+
+            <!-- Skor Gelombang / Level Saat Ini -->
+            <div class="text-center">
+                <div class="text-[10px] uppercase tracking-widest text-sky-400 font-bold">Level</div>
+                <div id="hud-score" class="font-display text-2xl sm:text-3xl font-black text-white tracking-wider drop-shadow-[0_0_10px_rgba(56,189,248,0.5)]">1</div>
+            </div>
+
+            <!-- Tombol Audio & Restart -->
+            <div class="flex items-center gap-1.5">
+                <button id="btn-sound" title="Suara Efek" class="neon-btn p-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sky-400 hover:bg-slate-800">
+                    <svg id="icon-sound-on" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                    </svg>
+                    <svg id="icon-sound-off" class="w-5 h-5 hidden text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                    </svg>
+                </button>
+                <button id="btn-restart-top" title="Ulangi Permainan" class="neon-btn p-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- AREA CANVAS UTAMA -->
+        <div id="canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+
+            <!-- OVERLAY MENU MULAI -->
+            <div id="start-overlay" class="absolute inset-0 bg-slate-950/88 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-20">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-[0_0_30px_rgba(14,165,233,0.6)] mb-4">
+                    <span class="font-display text-2xl font-black text-white">99</span>
+                </div>
+                <h1 class="font-display text-2xl sm:text-3xl font-black tracking-wide bg-gradient-to-r from-sky-300 via-white to-indigo-300 bg-clip-text text-transparent mb-2">
+                    NEON BLOCK BREAKER
+                </h1>
+                <p class="text-slate-300 text-xs sm:text-sm max-w-xs mb-5 leading-relaxed">
+                    Bidik hingga sudut <strong class="text-sky-300">170°</strong>, hancurkan blok berangka sebelum mencapai garis bawah!
+                </p>
+
+                <!-- Legenda Item Singkat -->
+                <div class="grid grid-cols-3 gap-2 w-full max-w-xs mb-7 text-center">
+                    <div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl flex flex-col items-center gap-1.5">
+                        <div class="w-7 h-7 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-emerald-300 font-bold text-xs">+1</div>
+                        <div class="text-[11px] text-slate-300 leading-tight"><strong class="text-emerald-400 block">Bola Ekstra</strong>Tambah peluru</div>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl flex flex-col items-center gap-1.5">
+                        <div class="w-7 h-7 rounded-full bg-fuchsia-500/20 border-2 border-fuchsia-400 flex items-center justify-center text-fuchsia-300 font-bold text-xs">⚡</div>
+                        <div class="text-[11px] text-slate-300 leading-tight"><strong class="text-fuchsia-400 block">Sinar Laser</strong>Sapu 1 jalur</div>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl flex flex-col items-center gap-1.5">
+                        <div class="w-7 h-7 rounded-full bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center text-amber-300 font-bold text-xs">💣</div>
+                        <div class="text-[11px] text-slate-300 leading-tight"><strong class="text-amber-400 block">Bom 3x3</strong>Ledakan area</div>
+                    </div>
+                </div>
+
+                <button id="btn-start" class="neon-btn btn-glow px-8 py-3.5 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-display font-bold text-base tracking-wider shadow-lg">
+                    MULAI MAIN
+                </button>
+            </div>
+
+            <!-- OVERLAY GAME OVER -->
+            <div id="gameover-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-20">
+                <div class="px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 text-xs font-bold uppercase tracking-widest mb-3">
+                    Permainan Selesai
+                </div>
+                <h2 class="font-display text-3xl sm:text-4xl font-black text-white mb-2">GAME OVER</h2>
+                <p id="gameover-msg" class="text-slate-400 text-sm mb-6">Blok menyentuh garis batas pertahanan!</p>
+
+                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 w-full max-w-xs mb-6 grid grid-cols-2 gap-4">
+                    <div class="border-r border-slate-800">
+                        <div class="text-xs text-slate-400 uppercase font-semibold">Level</div>
+                        <div id="final-score" class="font-display text-3xl font-black text-sky-400 mt-1">1</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400 uppercase font-semibold">Rekor Terbaik</div>
+                        <div id="final-best" class="font-display text-3xl font-black text-amber-400 mt-1">1</div>
+                    </div>
+                </div>
+
+                <button id="btn-retry" class="neon-btn btn-glow px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-display font-bold text-base tracking-wider shadow-lg">
+                    MAIN LAGI
+                </button>
+            </div>
+        </div>
+
+        <!-- PANEL KONTROL BAWAH -->
+        <footer class="w-full px-4 py-2.5 bg-slate-950/85 border-t border-slate-800/80 flex items-center justify-between z-10 shrink-0">
+            <!-- Info Jumlah Bola -->
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]"></span>
+                <span class="text-xs text-slate-400 font-semibold">Bola:</span>
+                <span id="hud-balls" class="font-display text-sm font-bold text-white">1</span>
+            </div>
+
+            <!-- Tombol Fast Forward & Tarik Bola -->
+            <div class="flex items-center gap-2">
+                <button id="btn-speed" class="hidden neon-btn px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1">
+                    <span>2x Cepat</span>
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L10 11.202V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4A1 1 0 0010 6v2.798l-5.445-3.63z"/>
+                    </svg>
+                </button>
+                <button id="btn-recall" class="hidden neon-btn px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                    </svg>
+                    <span>Tarik Bola</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        /**
+         * ============================================================================
+         * SISTEM AUDIO SINTETIS (WEB AUDIO API) - TANPA FILE EKSTERNAL & AMAN ERROR
+         * ============================================================================
+         */
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+                this.comboCount = 0;
+            }
+
+            init() {
+                try {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioCtx) return;
+                    if (!this.ctx) {
+                        this.ctx = new AudioCtx();
+                    }
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume().catch(() => {});
+                    }
+                } catch (e) {
+                    // Abaikan jika browser belum mengizinkan audio
+                }
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                return this.muted;
+            }
+
+            resetCombo() {
+                this.comboCount = 0;
+            }
+
+            // Suara pantulan bola ke blok dengan nada meningkat (kombo)
+            playHitBlock() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    const baseFreq = 320 + Math.min(this.comboCount * 22, 620);
+                    this.comboCount++;
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(baseFreq, now);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.35, now + 0.06);
+
+                    gain.gain.setValueAtTime(0.11, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.075);
+                } catch (e) {}
+            }
+
+            // Suara pantulan dinding lembut
+            playWallBounce() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(210, now);
+                    osc.frequency.exponentialRampToValueAtTime(140, now + 0.04);
+
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } catch (e) {}
+            }
+
+            // Suara blok pecah
+            playBreakBlock() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(260, now);
+                    osc.frequency.exponentialRampToValueAtTime(75, now + 0.16);
+
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.18);
+                } catch (e) {}
+            }
+
+            // Suara mengambil item +1 Bola
+            playCollectBall() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.setValueAtTime(780, now + 0.05);
+                    osc.frequency.setValueAtTime(1040, now + 0.1);
+
+                    gain.gain.setValueAtTime(0.13, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.19);
+                } catch (e) {}
+            }
+
+            // Suara tembakan Laser
+            playLaser() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(1250, now);
+                    osc.frequency.exponentialRampToValueAtTime(260, now + 0.13);
+
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } catch (e) {}
+            }
+
+            // Suara ledakan Bom Area 3x3
+            playBomb() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+
+                    // Dentuman sub-bass
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, now);
+                    osc.frequency.exponentialRampToValueAtTime(28, now + 0.36);
+
+                    gain.gain.setValueAtTime(0.26, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.39);
+
+                    // Derau ledakan
+                    const bufferSize = Math.floor(this.ctx.sampleRate * 0.25);
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.07));
+                    }
+
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(850, now);
+                    filter.frequency.exponentialRampToValueAtTime(140, now + 0.25);
+
+                    const noiseGain = this.ctx.createGain();
+                    noiseGain.gain.setValueAtTime(0.2, now);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+                    noise.connect(filter);
+                    filter.connect(noiseGain);
+                    noiseGain.connect(this.ctx.destination);
+                    noise.start(now);
+                } catch (e) {}
+            }
+
+            // Suara menembakkan bola
+            playShoot() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(420, now);
+                    osc.frequency.exponentialRampToValueAtTime(190, now + 0.045);
+
+                    gain.gain.setValueAtTime(0.06, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.055);
+                } catch (e) {}
+            }
+
+            // Suara Game Over
+            playGameOver() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const notes = [330, 293.66, 261.63, 196];
+                    notes.forEach((freq, idx) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.14);
+
+                        gain.gain.setValueAtTime(0.14, now + idx * 0.14);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.14 + 0.22);
+
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now + idx * 0.14);
+                        osc.stop(now + idx * 0.14 + 0.24);
+                    });
+                } catch (e) {}
+            }
+        }
+
+        /**
+         * ============================================================================
+         * HELPER PENYIMPANAN SKOR AMAN (MENCEGAH ERROR IFRAME / SANDBOX)
+         * ============================================================================
+         */
+        function loadBestScore() {
+            try {
+                const saved = localStorage.getItem('neon_block_breaker_best');
+                return saved ? Math.max(1, parseInt(saved, 10) || 1) : 1;
+            } catch (e) {
+                return 1;
+            }
+        }
+
+        function saveBestScore(val) {
+            try {
+                localStorage.setItem('neon_block_breaker_best', String(val));
+            } catch (e) {
+                // Abaikan jika penyimpanan lokal dibatasi
+            }
+        }
+
+        /**
+         * ============================================================================
+         * INISIALISASI VARIABEL & KONFIGURASI GAME
+         * ============================================================================
+         */
+        const sound = new SoundEngine();
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const wrapper = document.getElementById('canvas-wrapper');
+
+        // Elemen UI
+        const hudScore = document.getElementById('hud-score');
+        const hudBest = document.getElementById('hud-best');
+        const hudBalls = document.getElementById('hud-balls');
+        const startOverlay = document.getElementById('start-overlay');
+        const gameoverOverlay = document.getElementById('gameover-overlay');
+        const finalScoreEl = document.getElementById('final-score');
+        const finalBestEl = document.getElementById('final-best');
+        const btnSpeed = document.getElementById('btn-speed');
+        const btnRecall = document.getElementById('btn-recall');
+        const btnSound = document.getElementById('btn-sound');
+        const iconSoundOn = document.getElementById('icon-sound-on');
+        const iconSoundOff = document.getElementById('icon-sound-off');
+
+        // Pengaturan Grid Arena (Memanfaatkan ruang vertikal maksimal hingga dasar)
+        const COLS = 7;
+        const ROWS = 10;
+        const PADDING = 8;
+
+        // State Permainan
+        let width = 360;
+        let height = 600;
+        let cellW = 48;
+        let cellH = 48;
+        let topMargin = 10;
+        let bottomLineY = 580;
+        let hazardLineY = 480;
+
+        let gameState = 'MENU'; // 'MENU', 'AIMING', 'SHOOTING', 'NEXT_TURN', 'GAMEOVER'
+        let level = 1;
+        let bestScore = loadBestScore();
+        hudBest.textContent = bestScore;
+
+        let totalBalls = 1;
+        let pendingExtraBalls = 0;
+        let launchPos = { x: 180, y: 570 };
+        let nextLaunchX = null;
+
+        // Array entitas
+        let blocks = [];
+        let items = [];
+        let balls = [];
+        let particles = [];
+        let shockwaves = [];
+        let floatingTexts = [];
+        let laserBeams = [];
+
+        // State Bidikan & Tembakan
+        let isDragging = false;
+        let dragStart = { x: 0, y: 0 };
+        let aimAngle = -Math.PI / 2;
+        let canShoot = false;
+
+        let ballsToSpawn = 0;
+        let spawnTimer = 0;
+        const SPAWN_INTERVAL = 0.052;
+        let shootAngle = -Math.PI / 2;
+        let speedMultiplier = 1;
+        let recalling = false;
+        let turnElapsedTime = 0;
+
+        // Efek getar layar
+        let shakeTime = 0;
+        let shakeIntensity = 0;
+
+        /**
+         * ============================================================================
+         * PENYESUAIAN UKURAN CANVAS RESPONSIF (PORTRAIT MULTIPLATFORM)
+         * ============================================================================
+         */
+        function resizeCanvas() {
+            const rect = wrapper.getBoundingClientRect();
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+            width = Math.max(260, rect.width || 360);
+            height = Math.max(360, rect.height || 600);
+
+            canvas.width = Math.floor(width * dpr);
+            canvas.height = Math.floor(height * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            // Posisikan lantai peluncur di paling bawah arena (sekitar 96% tinggi canvas)
+            topMargin = 10;
+            bottomLineY = height - 16;
+            const usableW = width - PADDING * 2;
+            const usableH = bottomLineY - topMargin - 14;
+
+            cellW = usableW / COLS;
+            cellH = usableH / ROWS;
+            hazardLineY = topMargin + (ROWS - 1) * cellH;
+
+            // Sesuaikan posisi peluncur bola tepat di atas garis bawah
+            if (launchPos.x <= 20 || launchPos.x >= width - 20) {
+                launchPos.x = width / 2;
+            }
+            launchPos.y = bottomLineY - 10;
+
+            // Perbarui koordinat blok & item yang ada
+            blocks.forEach(b => {
+                b.w = cellW - 6;
+                b.h = cellH - 6;
+                b.x = PADDING + b.col * cellW + 3;
+                b.targetY = topMargin + b.row * cellH + 3;
+                b.y = b.targetY;
+            });
+
+            items.forEach(it => {
+                it.x = PADDING + it.col * cellW + cellW / 2;
+                it.targetY = topMargin + it.row * cellH + cellH / 2;
+                it.y = it.targetY;
+            });
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        /**
+         * ============================================================================
+         * PALET WARNA DINAMIS BLOK BERDASARKAN ANGKA HP
+         * ============================================================================
+         */
+        function getBlockStyle(hp) {
+            if (hp <= 3) {
+                return { fill: '#0284c7', border: '#38bdf8', glow: 'rgba(56, 189, 248, 0.35)' };
+            } else if (hp <= 8) {
+                return { fill: '#0d9488', border: '#2dd4bf', glow: 'rgba(45, 212, 191, 0.35)' };
+            } else if (hp <= 16) {
+                return { fill: '#16a34a', border: '#4ade80', glow: 'rgba(74, 222, 128, 0.35)' };
+            } else if (hp <= 28) {
+                return { fill: '#ca8a04', border: '#facc15', glow: 'rgba(250, 204, 21, 0.35)' };
+            } else if (hp <= 45) {
+                return { fill: '#ea580c', border: '#fb923c', glow: 'rgba(251, 146, 60, 0.35)' };
+            } else if (hp <= 75) {
+                return { fill: '#e11d48', border: '#fb7185', glow: 'rgba(251, 113, 133, 0.4)' };
+            } else {
+                return { fill: '#7c3aed', border: '#c084fc', glow: 'rgba(192, 132, 252, 0.45)' };
+            }
+        }
+
+        /**
+         * ============================================================================
+         * GENERASI BARIS BLOK & ITEM BARU (SEIMBANG & SERU)
+         * ============================================================================
+         */
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        function spawnNewRow() {
+            const availableCols = [0, 1, 2, 3, 4, 5, 6];
+            shuffleArray(availableCols);
+
+            // 1. Wajib muncul 1 item +1 Bola di setiap baris (peluang 35% muncul 2 item +1 Bola di level > 4)
+            const extraBallCount = (level > 4 && Math.random() < 0.35) ? 2 : 1;
+            for (let bIdx = 0; bIdx < extraBallCount && availableCols.length > 0; bIdx++) {
+                const ballItemCol = availableCols.pop();
+                items.push({
+                    col: ballItemCol,
+                    row: 0,
+                    x: PADDING + ballItemCol * cellW + cellW / 2,
+                    y: topMargin - cellH / 2,
+                    targetY: topMargin + cellH / 2,
+                    type: 'BALL',
+                    hitThisTurn: false
+                });
+            }
+
+            // 2. Peluang 42% muncul Power-up Spesial (Bom Area 3x3 atau Sinar Laser)
+            if (Math.random() < 0.42 && availableCols.length > 0) {
+                const powerCol = availableCols.pop();
+                const roll = Math.random();
+                let powerType = 'BOMB';
+                if (roll < 0.45) {
+                    powerType = 'BOMB';
+                } else if (roll < 0.725) {
+                    powerType = 'LASER_H';
+                } else {
+                    powerType = 'LASER_V';
+                }
+
+                items.push({
+                    col: powerCol,
+                    row: 0,
+                    x: PADDING + powerCol * cellW + cellW / 2,
+                    y: topMargin - cellH / 2,
+                    targetY: topMargin + cellH / 2,
+                    type: powerType,
+                    hitThisTurn: false
+                });
+            }
+
+            // 3. Isi sisa kolom dengan blok berangka (kurva kesulitan seimbang)
+            const minBlocks = Math.min(2 + Math.floor(level / 8), 3);
+            const maxBlocks = Math.min(3 + Math.floor(level / 5), availableCols.length);
+            const blockCount = Math.max(minBlocks, Math.floor(Math.random() * (maxBlocks - minBlocks + 1)) + minBlocks);
+
+            // Skala HP blok seimbang dengan pertumbuhan jumlah bola
+            const baseHp = Math.max(1, Math.round(level * 0.85));
+
+            for (let i = 0; i < blockCount && availableCols.length > 0; i++) {
+                const col = availableCols.pop();
+                const isElite = (level > 4 && Math.random() < 0.22);
+                const hp = isElite ? Math.ceil(baseHp * 1.6) : baseHp;
+
+                blocks.push({
+                    col: col,
+                    row: 0,
+                    x: PADDING + col * cellW + 3,
+                    y: topMargin - cellH + 3,
+                    targetY: topMargin + 3,
+                    w: cellW - 6,
+                    h: cellH - 6,
+                    hp: hp,
+                    maxHp: hp,
+                    hitFlash: 0
+                });
+            }
+        }
+
+        /**
+         * ============================================================================
+         * ALUR PERMAINAN (MULAI, GILIRAN BARU, GAME OVER)
+         * ============================================================================
+         */
+        function startNewGame() {
+            sound.init();
+            resizeCanvas();
+
+            level = 1;
+            totalBalls = 1;
+            pendingExtraBalls = 0;
+            blocks = [];
+            items = [];
+            balls = [];
+            particles = [];
+            shockwaves = [];
+            floatingTexts = [];
+            laserBeams = [];
+            speedMultiplier = 1;
+            recalling = false;
+            isDragging = false;
+            canShoot = false;
+
+            launchPos.x = width / 2;
+            launchPos.y = bottomLineY - 10;
+            nextLaunchX = null;
+
+            updateHUD();
+            startOverlay.classList.add('hidden');
+            gameoverOverlay.classList.add('hidden');
+            btnSpeed.classList.add('hidden');
+            btnRecall.classList.add('hidden');
+
+            advanceRowAndCheck();
+        }
+
+        function advanceRowAndCheck() {
+            // Hapus item Laser yang sudah terpicu pada giliran sebelumnya
+            items = items.filter(it => !it.hitThisTurn);
+
+            // Turunkan semua blok & item 1 baris
+            blocks.forEach(b => {
+                b.row += 1;
+                b.targetY = topMargin + b.row * cellH + 3;
+            });
+
+            items.forEach(it => {
+                it.row += 1;
+                it.targetY = topMargin + it.row * cellH + cellH / 2;
+            });
+
+            // Munculkan baris baru di baris 0
+            spawnNewRow();
+
+            // Hapus item yang terdesak sampai baris terakhir (ROWS - 1)
+            items = items.filter(it => it.row < ROWS - 1);
+
+            // Cek apakah ada blok yang mencapai baris bahaya (ROWS - 1)
+            const reachedBottom = blocks.some(b => b.row >= ROWS - 1);
+            if (reachedBottom) {
+                triggerGameOver();
+            } else {
+                gameState = 'AIMING';
+            }
+        }
+
+        function triggerGameOver() {
+            gameState = 'GAMEOVER';
+            isDragging = false;
+            canShoot = false;
+            sound.playGameOver();
+            triggerShake(10, 0.35);
+
+            btnSpeed.classList.add('hidden');
+            btnRecall.classList.add('hidden');
+
+            finalScoreEl.textContent = level;
+            finalBestEl.textContent = bestScore;
+            gameoverOverlay.classList.remove('hidden');
+        }
+
+        function updateHUD() {
+            hudScore.textContent = level;
+            if (level > bestScore) {
+                bestScore = level;
+                saveBestScore(bestScore);
+            }
+            hudBest.textContent = bestScore;
+            hudBalls.textContent = totalBalls;
+        }
+
+        /**
+         * ============================================================================
+         * KONTROL INPUT MOUSE & SENTUH (BIDIKAN SUDUT LEBAR 170 DERAJAT)
+         * ============================================================================
+         */
+        function getPointerPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function handlePointerDown(e) {
+            if (gameState !== 'AIMING') return;
+            sound.init();
+            const pos = getPointerPos(e);
+            isDragging = true;
+            dragStart = pos;
+            updateAim(pos);
+        }
+
+        function handlePointerMove(e) {
+            if (!isDragging || gameState !== 'AIMING') return;
+            if (e.cancelable) e.preventDefault();
+            const pos = getPointerPos(e);
+            updateAim(pos);
+        }
+
+        function handlePointerUp() {
+            if (!isDragging || gameState !== 'AIMING') return;
+            isDragging = false;
+            if (canShoot) {
+                fireBalls();
+            }
+            canShoot = false;
+        }
+
+        function updateAim(pos) {
+            let dx = pos.x - launchPos.x;
+            let dy = pos.y - launchPos.y;
+
+            // Mendukung tarik ketapel ke bawah maupun bidik langsung ke atas
+            if (dy > 12) {
+                dx = dragStart.x - pos.x;
+                dy = dragStart.y - pos.y;
+            }
+
+            let angle = Math.atan2(dy, dx);
+
+            // Sudut tembak sangat lebar ~170 derajat (dari -175° kiri hingga -5° kanan)
+            const minAngle = -Math.PI + 0.087; // -175 derajat
+            const maxAngle = -0.087;           // -5 derajat
+
+            if (angle > 0) {
+                if (Math.abs(dx) > 15) {
+                    angle = dx < 0 ? minAngle : maxAngle;
+                } else {
+                    canShoot = false;
+                    return;
+                }
+            }
+
+            angle = Math.max(minAngle, Math.min(maxAngle, angle));
+            aimAngle = angle;
+            canShoot = true;
+        }
+
+        canvas.addEventListener('mousedown', handlePointerDown);
+        window.addEventListener('mousemove', handlePointerMove);
+        window.addEventListener('mouseup', handlePointerUp);
+
+        canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
+        window.addEventListener('touchmove', handlePointerMove, { passive: false });
+        window.addEventListener('touchend', handlePointerUp);
+
+        /**
+         * ============================================================================
+         * PENEMBAKAN BOLA & FISIKA PANTULAN
+         * ============================================================================
+         */
+        function fireBalls() {
+            gameState = 'SHOOTING';
+            shootAngle = aimAngle;
+            ballsToSpawn = totalBalls;
+            spawnTimer = 0;
+            nextLaunchX = null;
+            pendingExtraBalls = 0;
+            speedMultiplier = 1;
+            recalling = false;
+            turnElapsedTime = 0;
+            sound.resetCombo();
+
+            btnSpeed.classList.remove('hidden');
+            btnSpeed.classList.remove('bg-amber-500', 'text-slate-950');
+            btnSpeed.classList.add('bg-amber-500/20', 'text-amber-300');
+            btnRecall.classList.remove('hidden');
+        }
+
+        function spawnSingleBall() {
+            const baseSpeed = Math.max(width, height) * 1.38;
+            const radius = Math.max(6.5, Math.min(cellW * 0.16, 9));
+
+            balls.push({
+                x: launchPos.x,
+                y: launchPos.y,
+                vx: Math.cos(shootAngle) * baseSpeed,
+                vy: Math.sin(shootAngle) * baseSpeed,
+                radius: radius,
+                active: true,
+                trail: []
+            });
+            sound.playShoot();
+        }
+
+        // Memicu efek sinar Laser
+        function triggerLaser(item) {
+            sound.playLaser();
+            if (item.type === 'LASER_H') {
+                laserBeams.push({
+                    x1: PADDING,
+                    y1: item.y,
+                    x2: width - PADDING,
+                    y2: item.y,
+                    life: 0.16,
+                    color: '#e879f9'
+                });
+                blocks.forEach(b => {
+                    if (b.row === item.row && b.hp > 0) {
+                        damageBlock(b, 1, false);
+                    }
+                });
+            } else {
+                laserBeams.push({
+                    x1: item.x,
+                    y1: topMargin,
+                    x2: item.x,
+                    y2: bottomLineY,
+                    life: 0.16,
+                    color: '#38bdf8'
+                });
+                blocks.forEach(b => {
+                    if (b.col === item.col && b.hp > 0) {
+                        damageBlock(b, 1, false);
+                    }
+                });
+            }
+        }
+
+        // Memicu ledakan Bom Area 3x3
+        function triggerBomb(item) {
+            sound.playBomb();
+            triggerShake(9, 0.28);
+
+            const blastRadius = Math.max(cellW, cellH) * 1.65;
+            shockwaves.push({
+                x: item.x,
+                y: item.y,
+                radius: 8,
+                maxRadius: blastRadius,
+                life: 0.32,
+                maxLife: 0.32,
+                color: '#fbbf24'
+            });
+
+            createExplosion(item.x, item.y, '#f59e0b', 24);
+            createExplosion(item.x, item.y, '#ef4444', 16);
+
+            const bombDamage = Math.max(5, Math.ceil(level * 1.5));
+            addFloatingText(item.x, item.y - 12, `BOM -${bombDamage}!`, '#fbbf24');
+
+            blocks.forEach(b => {
+                if (b.hp > 0 && Math.abs(b.col - item.col) <= 1 && Math.abs(b.row - item.row) <= 1) {
+                    damageBlock(b, bombDamage, false);
+                }
+            });
+        }
+
+        function damageBlock(block, dmg = 1, playSound = true) {
+            block.hp -= dmg;
+            block.hitFlash = 1.0;
+
+            if (block.hp <= 0) {
+                const style = getBlockStyle(block.maxHp);
+                createExplosion(block.x + block.w / 2, block.y + block.h / 2, style.border, 16);
+                if (playSound) sound.playBreakBlock();
+                triggerShake(3.5, 0.12);
+            } else {
+                if (playSound) sound.playHitBlock();
+            }
+        }
+
+        /**
+         * ============================================================================
+         * EFEK PARTIKEL, TEKS MELAYANG & GETAR LAYAR
+         * ============================================================================
+         */
+        function createExplosion(x, y, color, count = 12) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 70 + Math.random() * 220;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 0.35 + Math.random() * 0.25,
+                    maxLife: 0.6,
+                    color: color,
+                    size: 2.5 + Math.random() * 3.5
+                });
+            }
+        }
+
+        function addFloatingText(x, y, text, color) {
+            floatingTexts.push({
+                x: x,
+                y: y,
+                text: text,
+                life: 0.85,
+                color: color
+            });
+        }
+
+        function triggerShake(intensity, duration) {
+            shakeIntensity = intensity;
+            shakeTime = duration;
+        }
+
+        /**
+         * ============================================================================
+         * PEMBARUAN LOGIKA PER FRAME (UPDATE LOOP)
+         * ============================================================================
+         */
+        function update(dt) {
+            // Animasi turun mulus untuk blok dan item
+            blocks.forEach(b => {
+                b.y += (b.targetY - b.y) * Math.min(1, dt * 16);
+                if (b.hitFlash > 0) b.hitFlash = Math.max(0, b.hitFlash - dt * 6);
+            });
+
+            items.forEach(it => {
+                it.y += (it.targetY - it.y) * Math.min(1, dt * 16);
+            });
+
+            // Pembaruan partikel
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.vx *= 0.94;
+                p.vy *= 0.94;
+                p.life -= dt;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            // Pembaruan gelombang kejut bom
+            for (let i = shockwaves.length - 1; i >= 0; i--) {
+                const sw = shockwaves[i];
+                sw.life -= dt;
+                const progress = 1 - Math.max(0, sw.life / sw.maxLife);
+                sw.radius = 8 + (sw.maxRadius - 8) * (1 - Math.pow(1 - progress, 3));
+                if (sw.life <= 0) shockwaves.splice(i, 1);
+            }
+
+            // Pembaruan teks melayang
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y -= 35 * dt;
+                ft.life -= dt;
+                if (ft.life <= 0) floatingTexts.splice(i, 1);
+            }
+
+            // Pembaruan sinar laser
+            for (let i = laserBeams.length - 1; i >= 0; i--) {
+                laserBeams[i].life -= dt;
+                if (laserBeams[i].life <= 0) laserBeams.splice(i, 1);
+            }
+
+            // Pembaruan getar layar
+            if (shakeTime > 0) {
+                shakeTime = Math.max(0, shakeTime - dt);
+            }
+
+            // Logika Penembakan & Pergerakan Bola
+            if (gameState === 'SHOOTING') {
+                turnElapsedTime += dt;
+                if (turnElapsedTime > 7 && speedMultiplier === 1) {
+                    speedMultiplier = 2;
+                    btnSpeed.classList.remove('bg-amber-500/20', 'text-amber-300');
+                    btnSpeed.classList.add('bg-amber-500', 'text-slate-950');
+                }
+
+                // Tembakkan bola berurutan
+                if (ballsToSpawn > 0 && !recalling) {
+                    spawnTimer -= dt * speedMultiplier;
+                    while (spawnTimer <= 0 && ballsToSpawn > 0) {
+                        spawnSingleBall();
+                        ballsToSpawn--;
+                        spawnTimer += SPAWN_INTERVAL;
+                    }
+                } else if (recalling) {
+                    ballsToSpawn = 0;
+                }
+
+                // Sub-stepping fisika agar bola cepat tidak menembus blok tipis
+                const effectiveDt = dt * speedMultiplier;
+                const subSteps = Math.max(3, Math.ceil(effectiveDt * 240));
+                const subDt = effectiveDt / subSteps;
+
+                for (let step = 0; step < subSteps; step++) {
+                    for (let i = balls.length - 1; i >= 0; i--) {
+                        const ball = balls[i];
+                        if (!ball.active) continue;
+
+                        if (recalling) {
+                            const targetX = nextLaunchX !== null ? nextLaunchX : launchPos.x;
+                            const targetY = launchPos.y;
+                            const dx = targetX - ball.x;
+                            const dy = targetY - ball.y;
+                            const dist = Math.hypot(dx, dy);
+                            const recallSpeed = Math.max(width, height) * 2.6;
+
+                            if (dist < 18) {
+                                ball.active = false;
+                                if (nextLaunchX === null) nextLaunchX = launchPos.x;
+                                continue;
+                            }
+                            ball.x += (dx / dist) * recallSpeed * subDt;
+                            ball.y += (dy / dist) * recallSpeed * subDt;
+                            continue;
+                        }
+
+                        ball.x += ball.vx * subDt;
+                        ball.y += ball.vy * subDt;
+
+                        // Pantulan dinding kiri & kanan
+                        if (ball.x - ball.radius < PADDING) {
+                            ball.x = PADDING + ball.radius;
+                            ball.vx = Math.abs(ball.vx);
+                            sound.playWallBounce();
+                        } else if (ball.x + ball.radius > width - PADDING) {
+                            ball.x = width - PADDING - ball.radius;
+                            ball.vx = -Math.abs(ball.vx);
+                            sound.playWallBounce();
+                        }
+
+                        // Pantulan langit-langit atas
+                        if (ball.y - ball.radius < topMargin) {
+                            ball.y = topMargin + ball.radius;
+                            ball.vy = Math.abs(ball.vy);
+                            sound.playWallBounce();
+                        }
+
+                        // Anti-macet pantulan horizontal murni
+                        if (Math.abs(ball.vy) < 28) {
+                            ball.vy += (ball.vy >= 0 ? 18 : -18);
+                        }
+
+                        // Cek bola kembali menyentuh lantai bawah
+                        if (ball.y + ball.radius >= bottomLineY && ball.vy > 0) {
+                            ball.active = false;
+                            if (nextLaunchX === null) {
+                                nextLaunchX = Math.max(PADDING + 18, Math.min(width - PADDING - 18, ball.x));
+                            }
+                            continue;
+                        }
+
+                        // Cek tumbukan dengan Blok Berangka (Circle vs AABB)
+                        for (let j = blocks.length - 1; j >= 0; j--) {
+                            const b = blocks[j];
+                            if (b.hp <= 0) continue;
+
+                            const closestX = Math.max(b.x, Math.min(ball.x, b.x + b.w));
+                            const closestY = Math.max(b.y, Math.min(ball.y, b.y + b.h));
+
+                            const distX = ball.x - closestX;
+                            const distY = ball.y - closestY;
+                            const distSq = distX * distX + distY * distY;
+
+                            if (distSq < ball.radius * ball.radius) {
+                                const dist = Math.sqrt(distSq);
+                                if (dist === 0) {
+                                    ball.vy = -ball.vy;
+                                } else {
+                                    const nx = distX / dist;
+                                    const ny = distY / dist;
+                                    const overlap = ball.radius - dist;
+                                    ball.x += nx * overlap;
+                                    ball.y += ny * overlap;
+
+                                    const dot = ball.vx * nx + ball.vy * ny;
+                                    ball.vx -= 2 * dot * nx;
+                                    ball.vy -= 2 * dot * ny;
+                                }
+
+                                damageBlock(b, 1, true);
+                                if (b.hp <= 0) {
+                                    blocks.splice(j, 1);
+                                }
+                                break;
+                            }
+                        }
+
+                        // Cek interaksi dengan Item (+1 Bola, Laser & Bom)
+                        for (let k = items.length - 1; k >= 0; k--) {
+                            const it = items[k];
+                            const dist = Math.hypot(ball.x - it.x, ball.y - it.y);
+                            const hitRadius = ball.radius + Math.min(cellW, cellH) * 0.28;
+
+                            if (dist < hitRadius) {
+                                if (it.type === 'BALL') {
+                                    pendingExtraBalls++;
+                                    sound.playCollectBall();
+                                    createExplosion(it.x, it.y, '#34d399', 10);
+                                    addFloatingText(it.x, it.y - 10, '+1 Bola', '#34d399');
+                                    items.splice(k, 1);
+                                } else if (it.type === 'BOMB') {
+                                    triggerBomb(it);
+                                    blocks = blocks.filter(b => b.hp > 0);
+                                    items.splice(k, 1);
+                                } else if (it.type === 'LASER_H' || it.type === 'LASER_V') {
+                                    it.hitThisTurn = true;
+                                    triggerLaser(it);
+                                    blocks = blocks.filter(b => b.hp > 0);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Simpan jejak ekor bola
+                balls.forEach(ball => {
+                    if (ball.active) {
+                        ball.trail.push({ x: ball.x, y: ball.y });
+                        if (ball.trail.length > 6) ball.trail.shift();
+                    }
+                });
+
+                // Hapus bola yang sudah selesai
+                balls = balls.filter(b => b.active);
+
+                // Jika semua bola sudah kembali ke bawah, lanjut giliran berikutnya
+                if (ballsToSpawn === 0 && balls.length === 0) {
+                    finishTurn();
+                }
+            }
+        }
+
+        function finishTurn() {
+            btnSpeed.classList.add('hidden');
+            btnRecall.classList.add('hidden');
+
+            if (nextLaunchX !== null) {
+                launchPos.x = nextLaunchX;
+            }
+            totalBalls += pendingExtraBalls;
+            level += 1;
+            updateHUD();
+            advanceRowAndCheck();
+        }
+
+        /**
+         * ============================================================================
+         * RENDER VISUAL CANVAS (DRAW LOOP)
+         * ============================================================================
+         */
+        function draw() {
+            ctx.save();
+
+            // Terapkan efek getar layar
+            if (shakeTime > 0) {
+                const dx = (Math.random() - 0.5) * shakeIntensity * 2;
+                const dy = (Math.random() - 0.5) * shakeIntensity * 2;
+                ctx.translate(dx, dy);
+            }
+
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. Garis Grid Halus di Latar Belakang
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.04)';
+            ctx.lineWidth = 1;
+            for (let c = 1; c < COLS; c++) {
+                const gx = PADDING + c * cellW;
+                ctx.beginPath();
+                ctx.moveTo(gx, topMargin);
+                ctx.lineTo(gx, bottomLineY);
+                ctx.stroke();
+            }
+
+            // 2. Garis Batas Bahaya di Bawah (Merah Neon Putus-Putus)
+            ctx.save();
+            ctx.strokeStyle = 'rgba(244, 63, 94, 0.55)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 6]);
+            ctx.beginPath();
+            ctx.moveTo(PADDING, hazardLineY);
+            ctx.lineTo(width - PADDING, hazardLineY);
+            ctx.stroke();
+            ctx.restore();
+
+            // Garis lantai peluncur di paling bawah
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(PADDING, bottomLineY);
+            ctx.lineTo(width - PADDING, bottomLineY);
+            ctx.stroke();
+
+            // 2b. Gambar Gelombang Kejut Bom (Shockwaves)
+            shockwaves.forEach(sw => {
+                ctx.save();
+                const alpha = Math.max(0, sw.life / sw.maxLife);
+                ctx.strokeStyle = `rgba(251, 191, 36, ${alpha * 0.85})`;
+                ctx.fillStyle = `rgba(245, 158, 11, ${alpha * 0.18})`;
+                ctx.shadowColor = '#f59e0b';
+                ctx.shadowBlur = 20;
+                ctx.lineWidth = 4 * alpha;
+                ctx.beginPath();
+                ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            });
+
+            // 3. Gambar Sinar Laser Aktif
+            laserBeams.forEach(beam => {
+                ctx.save();
+                ctx.strokeStyle = beam.color;
+                ctx.shadowColor = beam.color;
+                ctx.shadowBlur = 18;
+                ctx.lineWidth = 10 * (beam.life / 0.16);
+                ctx.beginPath();
+                ctx.moveTo(beam.x1, beam.y1);
+                ctx.lineTo(beam.x2, beam.y2);
+                ctx.stroke();
+
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3 * (beam.life / 0.16);
+                ctx.stroke();
+                ctx.restore();
+            });
+
+            // 4. Gambar Item (+1 Bola, Bom Area & Laser)
+            const timePulse = Math.sin(performance.now() * 0.006);
+            items.forEach(it => {
+                ctx.save();
+                ctx.translate(it.x, it.y);
+                const r = Math.min(cellW, cellH) * 0.27;
+
+                if (it.type === 'BALL') {
+                    // Lingkaran berdenyut hijau neon (+1 Bola)
+                    ctx.strokeStyle = 'rgba(52, 211, 153, 0.75)';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r + 3 + timePulse * 2, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#10b981';
+                    ctx.shadowColor = '#34d399';
+                    ctx.shadowBlur = 12;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r * 0.62, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('+1', 0, 0.5);
+                } else if (it.type === 'BOMB') {
+                    // Item Bom Area 3x3 (Oranye/Kuning Menyala)
+                    ctx.strokeStyle = 'rgba(251, 191, 36, 0.85)';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r + 3 + timePulse * 2, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#d97706';
+                    ctx.shadowColor = '#fbbf24';
+                    ctx.shadowBlur = 14;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r * 0.72, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.font = `${Math.round(r * 1.1)}px sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('💣', 0, 1);
+                } else {
+                    // Item Laser (Horizontal / Vertikal)
+                    const color = it.type === 'LASER_H' ? '#e879f9' : '#38bdf8';
+                    ctx.strokeStyle = color;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 12;
+                    ctx.lineWidth = 2.5;
+
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r + timePulse * 1.5, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    if (it.type === 'LASER_H') {
+                        ctx.moveTo(-r * 0.65, 0);
+                        ctx.lineTo(r * 0.65, 0);
+                        ctx.moveTo(-r * 0.35, -r * 0.3);
+                        ctx.lineTo(-r * 0.65, 0);
+                        ctx.lineTo(-r * 0.35, r * 0.3);
+                        ctx.moveTo(r * 0.35, -r * 0.3);
+                        ctx.lineTo(r * 0.65, 0);
+                        ctx.lineTo(r * 0.35, r * 0.3);
+                    } else {
+                        ctx.moveTo(0, -r * 0.65);
+                        ctx.lineTo(0, r * 0.65);
+                        ctx.moveTo(-r * 0.3, -r * 0.35);
+                        ctx.lineTo(0, -r * 0.65);
+                        ctx.lineTo(r * 0.3, -r * 0.35);
+                        ctx.moveTo(-r * 0.3, r * 0.35);
+                        ctx.lineTo(0, r * 0.65);
+                        ctx.lineTo(r * 0.3, r * 0.35);
+                    }
+                    ctx.stroke();
+                }
+                ctx.restore();
+            });
+
+            // 5. Gambar Blok Berangka
+            blocks.forEach(b => {
+                const style = getBlockStyle(b.hp);
+                const radius = 8;
+
+                ctx.save();
+                ctx.shadowColor = style.glow;
+                ctx.shadowBlur = 10;
+
+                ctx.fillStyle = b.hitFlash > 0 ? '#ffffff' : style.fill;
+                roundRect(ctx, b.x, b.y, b.w, b.h, radius);
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = style.border;
+                ctx.lineWidth = 2;
+                roundRect(ctx, b.x, b.y, b.w, b.h, radius);
+                ctx.stroke();
+
+                // Highlight kilap atas
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
+                roundRect(ctx, b.x + 2, b.y + 2, b.w - 4, b.h * 0.32, 6);
+                ctx.fill();
+
+                // Angka HP Blok
+                ctx.fillStyle = b.hitFlash > 0 ? '#0f172a' : '#ffffff';
+                const fontSize = Math.min(b.w * 0.42, b.h * 0.45, 22);
+                ctx.font = `800 ${Math.round(fontSize)}px "Orbitron", sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(b.hp, b.x + b.w / 2, b.y + b.h / 2 + 1);
+
+                ctx.restore();
+            });
+
+            // 6. Gambar Garis Bidikan saat AIMING (Sudut Lebar 170° + Pantulan Dinding)
+            if (gameState === 'AIMING' && isDragging && canShoot) {
+                drawAimGuide();
+            }
+
+            // 7. Gambar Peluncur Bola di Lantai Bawah
+            const launcherBallR = Math.max(6.5, Math.min(cellW * 0.16, 9));
+            if (gameState === 'AIMING' || ballsToSpawn > 0) {
+                ctx.save();
+                ctx.fillStyle = '#38bdf8';
+                ctx.shadowColor = '#38bdf8';
+                ctx.shadowBlur = 14;
+                ctx.beginPath();
+                ctx.arc(launchPos.x, launchPos.y, launcherBallR, 0, Math.PI * 2);
+                ctx.fill();
+
+                const displayCount = gameState === 'AIMING' ? totalBalls : ballsToSpawn;
+                if (displayCount > 0) {
+                    ctx.fillStyle = '#e0f2fe';
+                    ctx.font = 'bold 11px "Orbitron", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`x${displayCount}`, launchPos.x, launchPos.y - launcherBallR - 7);
+                }
+                ctx.restore();
+            }
+
+            // Titik pendaratan bola pertama untuk giliran berikutnya
+            if (gameState === 'SHOOTING' && nextLaunchX !== null) {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.75)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(nextLaunchX, launchPos.y, launcherBallR, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 8. Gambar Bola Aktif & Jejak Ekor
+            balls.forEach(ball => {
+                ctx.save();
+                for (let t = 0; t < ball.trail.length; t++) {
+                    const pt = ball.trail[t];
+                    const alpha = ((t + 1) / ball.trail.length) * 0.3;
+                    const r = ball.radius * ((t + 1) / ball.trail.length) * 0.85;
+                    ctx.fillStyle = `rgba(56, 189, 248, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowColor = '#38bdf8';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // 9. Gambar Partikel Pecahan
+            particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // 10. Gambar Teks Melayang
+            floatingTexts.forEach(ft => {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, ft.life);
+                ctx.fillStyle = ft.color;
+                ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            });
+
+            ctx.restore();
+        }
+
+        // Menggambar garis bidikan titik-titik dengan pantulan dinding akurat hingga 170°
+        function drawAimGuide() {
+            ctx.save();
+            const step = 13;
+            const maxDist = height * 1.25;
+            const ballR = Math.max(6.5, Math.min(cellW * 0.16, 9));
+            let x = launchPos.x;
+            let y = launchPos.y;
+            let dx = Math.cos(aimAngle) * step;
+            let dy = Math.sin(aimAngle) * step;
+            let bounces = 0;
+
+            for (let d = step; d < maxDist; d += step) {
+                x += dx;
+                y += dy;
+
+                if (x < PADDING + ballR) {
+                    x = PADDING + ballR + (PADDING + ballR - x);
+                    dx = -dx;
+                    bounces++;
+                } else if (x > width - PADDING - ballR) {
+                    x = width - PADDING - ballR - (x - (width - PADDING - ballR));
+                    dx = -dx;
+                    bounces++;
+                }
+
+                if (bounces > 2 || y < topMargin + ballR) break;
+
+                let hitBlock = false;
+                for (let b of blocks) {
+                    if (x + ballR * 0.6 >= b.x && x - ballR * 0.6 <= b.x + b.w &&
+                        y + ballR * 0.6 >= b.y && y - ballR * 0.6 <= b.y + b.h) {
+                        hitBlock = true;
+                        break;
+                    }
+                }
+
+                const alpha = 1 - (d / maxDist);
+                ctx.fillStyle = hitBlock ? '#fbbf24' : `rgba(56, 189, 248, ${alpha * 0.92})`;
+                ctx.beginPath();
+                ctx.arc(x, y, hitBlock ? 5.2 : 3.2, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (hitBlock) break;
+            }
+            ctx.restore();
+        }
+
+        // Helper menggambar kotak sudut membulat
+        function roundRect(context, x, y, w, h, r) {
+            const radius = Math.min(r, w / 2, h / 2);
+            context.beginPath();
+            context.moveTo(x + radius, y);
+            context.lineTo(x + w - radius, y);
+            context.quadraticCurveTo(x + w, y, x + w, y + radius);
+            context.lineTo(x + w, y + h - radius);
+            context.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+            context.lineTo(x + radius, y + h);
+            context.quadraticCurveTo(x, y + h, x, y + h - radius);
+            context.lineTo(x, y + radius);
+            context.quadraticCurveTo(x, y, x + radius, y);
+            context.closePath();
+        }
+
+        /**
+         * ============================================================================
+         * EVENT LISTENER TOMBOL UI & ANIMATION LOOP
+         * ============================================================================
+         */
+        document.getElementById('btn-start').addEventListener('click', startNewGame);
+        document.getElementById('btn-retry').addEventListener('click', startNewGame);
+        document.getElementById('btn-restart-top').addEventListener('click', startNewGame);
+
+        btnSound.addEventListener('click', () => {
+            sound.init();
+            const isMuted = sound.toggleMute();
+            if (isMuted) {
+                iconSoundOn.classList.add('hidden');
+                iconSoundOff.classList.remove('hidden');
+            } else {
+                iconSoundOn.classList.remove('hidden');
+                iconSoundOff.classList.add('hidden');
+            }
+        });
+
+        btnSpeed.addEventListener('click', () => {
+            if (gameState !== 'SHOOTING') return;
+            speedMultiplier = speedMultiplier === 1 ? 2 : 1;
+            if (speedMultiplier === 2) {
+                btnSpeed.classList.remove('bg-amber-500/20', 'text-amber-300');
+                btnSpeed.classList.add('bg-amber-500', 'text-slate-950');
+            } else {
+                btnSpeed.classList.remove('bg-amber-500', 'text-slate-950');
+                btnSpeed.classList.add('bg-amber-500/20', 'text-amber-300');
+            }
+        });
+
+        btnRecall.addEventListener('click', () => {
+            if (gameState !== 'SHOOTING') return;
+            recalling = true;
+            speedMultiplier = 2;
+        });
+
+        let lastTimestamp = 0;
+        function gameLoop(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.05);
+            lastTimestamp = timestamp;
+
+            update(dt);
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = function () {
+            resizeCanvas();
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>

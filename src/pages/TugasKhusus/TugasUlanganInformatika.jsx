@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -66,8 +66,23 @@ export default function TugasUlanganInformatika() {
   const [violationReason, setViolationReason] = useState('umum');
   const [isPaused, setIsPaused] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [isTimeUp, setIsTimeUp] = useState(false);
   const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
   const cheatCooldownRef = useRef(false);
+
+  // --- KONFIGURASI ATURAN ROOM DINAMIS DARI DATABASE ---
+  const roomConfig = useMemo(() => {
+    const cfg = sesi?.config_ujian || {};
+    return {
+      max_pengulangan: typeof cfg.max_pengulangan === 'number' ? cfg.max_pengulangan : 5,
+      skor_max_lewat: typeof cfg.skor_max_lewat === 'number' ? cfg.skor_max_lewat : 75,
+      max_pelanggaran: typeof cfg.max_pelanggaran === 'number' ? cfg.max_pelanggaran : 3,
+      bobot_nilai: typeof cfg.bobot_nilai === 'number' ? cfg.bobot_nilai : 100,
+      kkm: typeof cfg.kkm === 'number' ? cfg.kkm : 75,
+      ijinkan_perbaikan: cfg.ijinkan_perbaikan !== false,
+      kunci_saat_waktu_habis: cfg.kunci_saat_waktu_habis !== false,
+    };
+  }, [sesi?.config_ujian]);
 
   // --- 5. STATE UI / MODAL & ADMIN ---
   const [showAsisten, setShowAsisten] = useState(true);
@@ -154,7 +169,19 @@ export default function TugasUlanganInformatika() {
         try {
           const parsed = JSON.parse(savedOrder);
           if (Array.isArray(parsed) && parsed.length === SOAL_POOL.length) {
-            setSoalUjian(parsed);
+            // Re-hydrate aset gambar dan gambar_fallback dari SOAL_POOL master terbaru
+            // Menjamin tidak pernah terjadi gambar pecah / 404 akibat hash usang di localStorage
+            const SOAL_MAP = SOAL_POOL.reduce((acc, s) => {
+              acc[s.id] = s;
+              return acc;
+            }, {});
+            const rehydrated = parsed.map((p) => ({
+              ...p,
+              gambar: SOAL_MAP[p.id]?.gambar || p.gambar,
+              gambar_fallback: SOAL_MAP[p.id]?.gambar_fallback || p.gambar_fallback,
+            }));
+
+            setSoalUjian(rehydrated);
             startTimeRef.current = Date.now();
             return;
           }
@@ -390,6 +417,7 @@ export default function TugasUlanganInformatika() {
     setViolationReason(reason);
     playBeep(220, 0.3); // Suara peringatan nada rendah
 
+    const maxPelanggaran = roomConfig.max_pelanggaran || 3;
     const nextCount = cheatCount + 1;
     setCheatCount(nextCount);
 
@@ -399,12 +427,12 @@ export default function TugasUlanganInformatika() {
         .from('ujian_peserta')
         .update({
           cheat_count: nextCount,
-          status_ujian: nextCount >= 3 ? 'blocked' : 'ongoing',
+          status_ujian: nextCount >= maxPelanggaran ? 'blocked' : 'ongoing',
         })
         .eq('id', peserta.id);
     }
 
-    if (nextCount >= 3) {
+    if (nextCount >= maxPelanggaran) {
       setIsBlocked(true);
       setIsPaused(false);
       // Otomatis kumpulkan ujian tanpa popup peringatan browser
@@ -412,7 +440,7 @@ export default function TugasUlanganInformatika() {
     } else {
       setIsPaused(true);
     }
-  }, [sesi?.status, hasilSelesai, isBlocked, isPaused, cheatCount, peserta?.id, playBeep]);
+  }, [sesi?.status, hasilSelesai, isBlocked, isPaused, cheatCount, peserta?.id, playBeep, roomConfig.max_pelanggaran]);
 
   // Hook Anti-Cheat Komprehensif:
   // 1. Menutup celah jendela lain di Windows (Smart blur dengan grace period 1 detik / 1000ms)
@@ -634,21 +662,29 @@ export default function TugasUlanganInformatika() {
   };
 
   // --- SUBMIT TRIGGER (MEMBUKA JENDELA MENGAMBANG ALIH-ALIH POPUP CHROME) ---
-  const submitJawabanUjian = (isAuto = false) => {
+  const submitJawabanUjian = (isAuto = false, timeExpired = false) => {
     if (isSubmitting) return;
+
+    if (timeExpired) {
+      setIsTimeUp(true);
+    }
 
     if (!isAuto) {
       // Buka modal mengambang kustom React (Aman dari trigger blur anti-cheat)
       setShowConfirmSubmitModal(true);
     } else {
-      executeFinalSubmit(true);
+      executeFinalSubmit(true, timeExpired);
     }
   };
 
   // --- EKSEKUSI PENGIRIMAN AKHIR JAWABAN (SCHEMA V2.0 SINKRON KE TUGAS_PENGUMPULAN) ---
-  const executeFinalSubmit = async (isAuto = false) => {
+  const executeFinalSubmit = async (isAuto = false, timeExpired = false) => {
     // Cegah multi-klik submit yang berjalan bersamaan
     if (isSubmittingRef.current) return;
+
+    if (timeExpired) {
+      setIsTimeUp(true);
+    }
 
     setShowConfirmSubmitModal(false);
     setIsSubmitting(true);
@@ -714,18 +750,20 @@ export default function TugasUlanganInformatika() {
       const hasil = hitungNilaiSiswa(answersToGrade, activeSoalList);
       const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
 
-      // Aturan Batas Nilai Berdasarkan Percobaan (Aturan #4):
-      // Jika lebih dari 5 percobaan (> 5), otomatis skor maksimal 75 pt. Kurang dari itu (<= 5) maksimal 100 pt.
+      // Aturan Batas Nilai Berdasarkan Percobaan (Aturan #4 & Room Control):
       const currentAttempt = attemptCountRef.current || attemptCount || 1;
-      const isCapped = currentAttempt > 5;
+      const isCapped = currentAttempt > roomConfig.max_pengulangan;
       const rawSkor = hasil.skor;
-      const cappedSkor = isCapped ? Math.min(75, rawSkor) : rawSkor;
+      // Normalisasi skor terhadap bobot_nilai jika berbeda dari 100
+      const scaledRawSkor = Math.round((rawSkor / 100) * roomConfig.bobot_nilai);
+      const cappedSkor = isCapped ? Math.min(roomConfig.skor_max_lewat, scaledRawSkor) : scaledRawSkor;
 
-      hasil.rawScore = rawSkor;
+      hasil.rawScore = scaledRawSkor;
       hasil.skor = cappedSkor;
-      hasil.persentase = Math.round((cappedSkor / 100) * 100);
+      hasil.persentase = Math.round((cappedSkor / roomConfig.bobot_nilai) * 100);
       hasil.attemptCount = currentAttempt;
       hasil.isCapped = isCapped;
+      hasil.isTimeUp = Boolean(timeExpired || isTimeUp);
 
       // 4. Proteksi Nilai Tertinggi (Math.max) sesuai aturan proyek di AGENTS.md
       let finalSkor = hasil.skor;
@@ -757,7 +795,7 @@ export default function TugasUlanganInformatika() {
         totalStages: 1,
         timeSpentSeconds: timeSpent,
         attemptCount: currentAttempt,
-        skorMaksimal: 100,
+        skorMaksimal: roomConfig.bobot_nilai,
         skorDiperoleh: finalSkor,
         skorTertinggiDisimpan: finalSkor,
         breakdownSkor: [
@@ -765,13 +803,13 @@ export default function TugasUlanganInformatika() {
             id: 'pilihan_ganda',
             label: 'Soal Pilihan Ganda (50 Butir)',
             skor: finalSkor,
-            skor_maks: 100,
-            status: finalSkor >= 75 ? 'lulus' : 'belum',
+            skor_maks: roomConfig.bobot_nilai,
+            status: finalSkor >= roomConfig.kkm ? 'lulus' : 'belum',
           },
         ],
         autoGrading: {
-          passed: finalSkor >= 75,
-          kriteria_kktp: 75,
+          passed: finalSkor >= roomConfig.kkm,
+          kriteria_kktp: roomConfig.kkm,
           total_soal: hasil.totalSoal,
           jumlah_benar: hasil.benar,
           jumlah_salah: hasil.salah,
@@ -788,6 +826,7 @@ export default function TugasUlanganInformatika() {
           attempt_count: currentAttempt,
           raw_score: rawSkor,
           is_capped: isCapped,
+          is_time_up: Boolean(timeExpired || isTimeUp),
         },
         isCompleted: true,
       });
@@ -961,11 +1000,12 @@ export default function TugasUlanganInformatika() {
           onOpenAdminPanel={() => setShowAdminPanel(true)}
           onStartByAdmin={async () => {
             try {
-              // 1. Ubah ke starting untuk memicu countdown di seluruh client
-              await supabase.from('ujian_sesi').update({ status: 'starting' }).eq('id', sesi.id);
+              const nowIso = new Date().toISOString();
+              // 1. Ubah ke starting dan set waktu_mulai untuk memicu countdown di seluruh client
+              await supabase.from('ujian_sesi').update({ status: 'starting', waktu_mulai: nowIso }).eq('id', sesi.id);
               // 2. Jadwalkan update ke ongoing dalam 3.5 detik
               setTimeout(async () => {
-                await supabase.from('ujian_sesi').update({ status: 'ongoing' }).eq('id', sesi.id);
+                await supabase.from('ujian_sesi').update({ status: 'ongoing', waktu_mulai: nowIso }).eq('id', sesi.id);
               }, 3500);
             } catch (e) {
               console.error('Gagal start ulangan oleh admin:', e);
@@ -1014,14 +1054,17 @@ export default function TugasUlanganInformatika() {
       <TugasUlanganHeader
         siswa={user}
         cheatCount={cheatCount}
+        maxCheat={roomConfig.max_pelanggaran}
         attemptCount={attemptCount}
+        maxAttempt={roomConfig.max_pengulangan}
+        skorMaxLewat={roomConfig.skor_max_lewat}
         currentIndex={currentIndex}
         totalSoal={soalUjian.length}
         answeredCount={answeredCount}
         durasiMenit={sesi?.durasi_menit || 80}
         sesiStartTime={sesi?.waktu_mulai || sesi?.created_at}
         sesiId={sesi?.id}
-        onTimeUp={() => submitJawabanUjian(true)}
+        onTimeUp={() => submitJawabanUjian(true, true)}
         showAsisten={showAsisten}
         onToggleAsisten={() => setShowAsisten((v) => !v)}
         isAdmin={isAdmin}
@@ -1041,6 +1084,7 @@ export default function TugasUlanganInformatika() {
             isRagu={Boolean(raguSiswa[currentSoal?.id])}
             onToggleRagu={handleToggleRagu}
             isBlocked={isBlocked}
+            isTimeUp={isTimeUp}
             cheatCount={cheatCount}
             onReloadSoal={() => initSoalUjian(sesi?.id, user?.id)}
           />
@@ -1076,7 +1120,7 @@ export default function TugasUlanganInformatika() {
       <TugasUlanganPauseDialog
         isOpen={isPaused}
         cheatCount={cheatCount}
-        maxCheat={3}
+        maxCheat={roomConfig.max_pelanggaran}
         reason={violationReason}
         onResumeFullscreen={handleResumeFullscreen}
       />
@@ -1107,6 +1151,10 @@ export default function TugasUlanganInformatika() {
           hasil={hasilSelesai}
           siswa={user}
           attemptCount={attemptCount}
+          maxAttempt={roomConfig.max_pengulangan}
+          skorMaxLewat={roomConfig.skor_max_lewat}
+          isTimeUp={isTimeUp}
+          allowRevision={roomConfig.ijinkan_perbaikan && (!isTimeUp || !roomConfig.kunci_saat_waktu_habis)}
           onClose={handlePerbaikiJawaban}
           onPerbaikiJawaban={handlePerbaikiJawaban}
         />

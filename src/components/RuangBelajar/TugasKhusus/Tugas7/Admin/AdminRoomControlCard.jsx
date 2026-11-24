@@ -13,6 +13,10 @@ import {
   Edit2,
   Save,
   X,
+  Sliders,
+  Shield,
+  RotateCcw,
+  Award,
 } from 'lucide-react';
 
 export default function AdminRoomControlCard({
@@ -28,6 +32,7 @@ export default function AdminRoomControlCard({
   onOpenDeleteModal,
   onApplyToFront,
   onUpdateJudulRoom,
+  onUpdateConfigRoom,
   actionLoading,
   copiedPin,
   onCopyPin,
@@ -47,6 +52,40 @@ export default function AdminRoomControlCard({
       await onUpdateJudulRoom(judulInput.trim());
     }
     setIsEditingJudul(false);
+  };
+
+  // State konfigurasi aturan room
+  const [maxPengulangan, setMaxPengulangan] = useState(5);
+  const [skorMaxLewat, setSkorMaxLewat] = useState(75);
+  const [maxPelanggaran, setMaxPelanggaran] = useState(3);
+  const [bobotNilai, setBobotNilai] = useState(100);
+  const [kkm, setKkm] = useState(75);
+  const [ijinkanPerbaikan, setIjinkanPerbaikan] = useState(true);
+  const [kunciSaatWaktuHabis, setKunciSaatWaktuHabis] = useState(true);
+  const [showConfigSection, setShowConfigSection] = useState(false);
+
+  useEffect(() => {
+    const cfg = currentSesi?.config_ujian || {};
+    setMaxPengulangan(typeof cfg.max_pengulangan === 'number' ? cfg.max_pengulangan : 5);
+    setSkorMaxLewat(typeof cfg.skor_max_lewat === 'number' ? cfg.skor_max_lewat : 75);
+    setMaxPelanggaran(typeof cfg.max_pelanggaran === 'number' ? cfg.max_pelanggaran : 3);
+    setBobotNilai(typeof cfg.bobot_nilai === 'number' ? cfg.bobot_nilai : 100);
+    setKkm(typeof cfg.kkm === 'number' ? cfg.kkm : 75);
+    setIjinkanPerbaikan(cfg.ijinkan_perbaikan !== false);
+    setKunciSaatWaktuHabis(cfg.kunci_saat_waktu_habis !== false);
+  }, [currentSesi?.id, currentSesi?.config_ujian]);
+
+  const handleSaveConfig = async () => {
+    if (!onUpdateConfigRoom) return;
+    await onUpdateConfigRoom({
+      max_pengulangan: parseInt(maxPengulangan, 10) || 5,
+      skor_max_lewat: parseInt(skorMaxLewat, 10) || 75,
+      max_pelanggaran: parseInt(maxPelanggaran, 10) || 3,
+      bobot_nilai: parseInt(bobotNilai, 10) || 100,
+      kkm: parseInt(kkm, 10) || 75,
+      ijinkan_perbaikan: Boolean(ijinkanPerbaikan),
+      kunci_saat_waktu_habis: Boolean(kunciSaatWaktuHabis),
+    });
   };
 
   // State sisa waktu realtime room
@@ -333,6 +372,179 @@ export default function AdminRoomControlCard({
             <Trash2 size={13} />
             <span>Hapus Room &amp; Seluruh Datanya</span>
           </button>
+        )}
+      </div>
+
+      {/* 4. Panel Pengaturan Kontrol & Aturan Room Ini */}
+      <div className="col-span-1 md:col-span-3 bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-xl space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <Sliders size={18} />
+            </div>
+            <div>
+              <h4 className="font-black text-sm text-white flex items-center gap-2">
+                <span>Pengaturan Aturan Ujian &amp; Kontrol Room [{currentSesi?.pin_ujian || '—'}]</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">
+                  Per-Room
+                </span>
+              </h4>
+              <p className="text-[11px] text-slate-400">
+                Atur toleransi pengulangan, batas anti-cheat, bobot nilai, dan izin perbaikan untuk room ini.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowConfigSection(!showConfigSection)}
+            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition cursor-pointer flex items-center gap-1.5 border border-slate-700"
+          >
+            <Sliders size={13} className="text-blue-400" />
+            <span>{showConfigSection ? 'Tutup Pengaturan Aturan' : 'Buka Pengaturan Aturan'}</span>
+          </button>
+        </div>
+
+        {/* Form Pengaturan Kontrol */}
+        {showConfigSection && (
+          <div className="space-y-4 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              
+              {/* 1. Maks Pengulangan Normal */}
+              <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-sky-400 font-bold text-xs">
+                  <RotateCcw size={13} />
+                  <span>Maks. Pengulangan Normal:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={maxPengulangan}
+                    onChange={(e) => setMaxPengulangan(e.target.value)}
+                    className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-center font-mono font-bold text-sky-300 text-sm outline-none focus:border-sky-400"
+                  />
+                  <span className="text-xs text-slate-400">Kali (Default: 5x)</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block leading-tight">
+                  Siswa berhak meraih nilai maks {bobotNilai} pt jika $\le$ batas ini.
+                </span>
+              </div>
+
+              {/* 2. Skor Maksimum Jika Melebihi Batas */}
+              <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
+                  <Award size={13} />
+                  <span>Skor Maks. Setelah Batas:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={10}
+                    max={100}
+                    value={skorMaxLewat}
+                    onChange={(e) => setSkorMaxLewat(e.target.value)}
+                    className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-center font-mono font-bold text-amber-300 text-sm outline-none focus:border-amber-400"
+                  />
+                  <span className="text-xs text-slate-400">Poin (Default: 75)</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block leading-tight">
+                  Jika pengulangan &gt; {maxPengulangan}x, skor otomatis dibatasi nilai ini.
+                </span>
+              </div>
+
+              {/* 3. Toleransi Pelanggaran Anti-Cheat */}
+              <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-red-400 font-bold text-xs">
+                  <Shield size={13} />
+                  <span>Batas Pelanggaran Anti-Cheat:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={maxPelanggaran}
+                    onChange={(e) => setMaxPelanggaran(e.target.value)}
+                    className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-center font-mono font-bold text-red-400 text-sm outline-none focus:border-red-400"
+                  />
+                  <span className="text-xs text-slate-400">Kali (Default: 3x)</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block leading-tight">
+                  Akun siswa terblokir otomatis jika pelanggaran $\ge$ batas ini.
+                </span>
+              </div>
+
+              {/* 4. Bobot Nilai & KKM */}
+              <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-xs">
+                  <Award size={13} />
+                  <span>Bobot Skor &amp; KKTP:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={50}
+                    max={100}
+                    value={bobotNilai}
+                    onChange={(e) => setBobotNilai(e.target.value)}
+                    className="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-center font-mono font-bold text-emerald-400 text-xs outline-none"
+                    title="Bobot Maksimal"
+                  />
+                  <span className="text-slate-500 text-xs">/ KKM</span>
+                  <input
+                    type="number"
+                    min={50}
+                    max={100}
+                    value={kkm}
+                    onChange={(e) => setKkm(e.target.value)}
+                    className="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-center font-mono font-bold text-teal-300 text-xs outline-none"
+                    title="Nilai Kelulusan KKTP"
+                  />
+                </div>
+                <span className="text-[10px] text-slate-500 block leading-tight">
+                  Maksimal: {bobotNilai} pt • Syarat Tuntas: {kkm} pt.
+                </span>
+              </div>
+
+            </div>
+
+            {/* Baris Toggle Opsi Tambahan */}
+            <div className="flex flex-wrap items-center justify-between gap-4 p-3.5 bg-slate-950 rounded-2xl border border-slate-800 text-xs">
+              <div className="flex flex-wrap items-center gap-6">
+                <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-300 select-none">
+                  <input
+                    type="checkbox"
+                    checked={ijinkanPerbaikan}
+                    onChange={(e) => setIjinkanPerbaikan(e.target.checked)}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Izinkan Siswa Memperbaiki Jawaban (Tombol "Periksa &amp; Perbaiki")</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-300 select-none">
+                  <input
+                    type="checkbox"
+                    checked={kunciSaatWaktuHabis}
+                    onChange={(e) => setKunciSaatWaktuHabis(e.target.checked)}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Kunci Permanen Ujian Saat Waktu Habis</span>
+                </label>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveConfig}
+                disabled={actionLoading}
+                className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-40 text-white font-black text-xs rounded-xl transition flex items-center gap-2 shadow-lg shadow-blue-600/30 cursor-pointer active:scale-95"
+              >
+                <Save size={14} />
+                <span>Simpan Aturan Room</span>
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

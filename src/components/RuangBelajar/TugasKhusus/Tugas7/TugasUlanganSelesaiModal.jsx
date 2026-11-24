@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, CheckCircle2, XCircle, AlertCircle, ArrowRight, Sparkles, X, Edit3, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Trophy, CheckCircle2, XCircle, AlertCircle, ArrowRight, Sparkles, X, Edit3, RotateCcw, AlertTriangle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function TugasUlanganSelesaiModal({
@@ -15,6 +15,8 @@ export default function TugasUlanganSelesaiModal({
   },
   siswa,
   attemptCount = 1,
+  isTimeUp = false,
+  allowRevision = true,
   onClose,
   onPerbaikiJawaban,
 }) {
@@ -24,6 +26,7 @@ export default function TugasUlanganSelesaiModal({
   const effectiveAttempt = hasil?.attemptCount || attemptCount || 1;
   const isLulus = hasil.skor >= 75;
   const handleActionPerbaiki = onPerbaikiJawaban || onClose;
+  const canPerbaiki = !isTimeUp && allowRevision && Boolean(handleActionPerbaiki);
 
   return (
     <AnimatePresence>
@@ -34,7 +37,7 @@ export default function TugasUlanganSelesaiModal({
           className="w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 text-center shadow-2xl relative overflow-hidden text-white"
         >
           {/* Tombol Tutup X jika diperbolehkan revisi / periksa */}
-          {handleActionPerbaiki && (
+          {canPerbaiki && (
             <button
               type="button"
               onClick={handleActionPerbaiki}
@@ -78,14 +81,29 @@ export default function TugasUlanganSelesaiModal({
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Ujian Telah Selesai!
+            {isTimeUp ? 'Waktu Ujian Telah Habis!' : 'Ujian Telah Selesai!'}
           </h2>
           <p className="text-slate-400 text-xs sm:text-sm mt-1">
-            Jawaban Anda telah berhasil dikirim dan dinilai oleh sistem.
+            {isTimeUp
+              ? 'Waktu pengerjaan telah habis. Jawaban Anda telah otomatis dikumpulkan dan dinilai oleh sistem.'
+              : 'Jawaban Anda telah berhasil dikirim dan dinilai oleh sistem.'}
           </p>
 
+          {/* Banner Peringatan Waktu Habis */}
+          {isTimeUp && (
+            <div className="mt-4 mb-2 p-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-200 text-xs text-left flex items-start gap-2.5">
+              <Clock size={16} className="text-red-400 shrink-0 mt-0.5 animate-pulse" />
+              <div className="space-y-0.5">
+                <p className="font-bold text-red-300">Ujian Telah Terkunci</p>
+                <p className="text-[11px] text-red-200/90 leading-relaxed">
+                  Sesi ulangan telah berakhir. Jawaban yang telah dikirim bersifat final dan tidak dapat diperbaiki lagi.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Peringatan Batas Maksimal 75 pt jika percobaan > 5 */}
-          {effectiveAttempt > 5 && (
+          {effectiveAttempt > 5 && !isTimeUp && (
             <div className="mt-4 mb-2 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs text-left flex items-start gap-2.5">
               <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
@@ -152,14 +170,14 @@ export default function TugasUlanganSelesaiModal({
             <ArrowRight size={16} />
           </button>
 
-          {handleActionPerbaiki && (
+          {canPerbaiki && (
             <button
               type="button"
               onClick={handleActionPerbaiki}
               className="w-full mt-3 bg-slate-800/90 hover:bg-slate-700 active:scale-98 text-slate-300 hover:text-white font-bold py-3.5 px-4 rounded-2xl transition border border-slate-700 flex items-center justify-center gap-2 cursor-pointer text-xs sm:text-sm shadow-md"
             >
               <Edit3 size={15} className="text-amber-400" />
-              <span>Periksa & Perbaiki Jawaban</span>
+              <span>Periksa &amp; Perbaiki Jawaban</span>
             </button>
           )}
         </motion.div>

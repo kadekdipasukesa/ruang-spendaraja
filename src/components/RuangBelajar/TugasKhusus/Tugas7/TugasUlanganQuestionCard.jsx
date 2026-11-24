@@ -11,6 +11,7 @@ export default function TugasUlanganQuestionCard({
   isRagu = false,
   onToggleRagu,
   isBlocked = false,
+  isTimeUp = false,
   cheatCount = 0,
   onReloadSoal,
 }) {
@@ -103,7 +104,12 @@ export default function TugasUlanganQuestionCard({
             src={soal.gambar}
             alt={`Diagram Soal ${soal.nomor}`}
             className="w-full max-h-72 object-contain rounded-lg"
-            loading="lazy"
+            loading="eager"
+            onError={(e) => {
+              if (soal.gambar_fallback && e.target.src !== soal.gambar_fallback) {
+                e.target.src = soal.gambar_fallback;
+              }
+            }}
           />
           <span className="text-[10px] text-slate-500 font-medium mt-2">
             Perhatikan diagram di atas untuk menjawab pertanyaan.
@@ -117,13 +123,15 @@ export default function TugasUlanganQuestionCard({
           soal.opsi.map((opt, idx) => {
             const isSelected = selectedJawab === opt;
             const letter = abcdLetters[idx] || String.fromCharCode(65 + idx);
+            const isDisabled = isBlocked || isTimeUp;
 
             return (
               <button
                 key={idx}
                 type="button"
-                onClick={() => onPilih(soal.id, opt)}
-                className={`w-full p-3.5 sm:p-4 rounded-2xl border-2 text-left transition-all font-medium flex items-center gap-3.5 group cursor-pointer active:scale-99 ${
+                disabled={isDisabled}
+                onClick={() => !isDisabled && onPilih(soal.id, opt)}
+                className={`w-full p-3.5 sm:p-4 rounded-2xl border-2 text-left transition-all font-medium flex items-center gap-3.5 group cursor-pointer active:scale-99 disabled:opacity-50 disabled:cursor-not-allowed ${
                   isSelected
                     ? 'bg-blue-600/20 border-blue-500 text-white shadow-md shadow-blue-500/10'
                     : 'bg-slate-800/50 border-slate-700/60 hover:bg-slate-800 hover:border-slate-600 text-slate-300'

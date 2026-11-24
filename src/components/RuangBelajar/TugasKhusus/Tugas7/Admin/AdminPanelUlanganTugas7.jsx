@@ -478,6 +478,43 @@ export default function AdminPanelUlanganTugas7({
     }
   };
 
+  // UPDATE PENGATURAN KONTROL & ATURAN ROOM (CONFIG_UJIAN JSONB)
+  const handleUpdateConfigRoom = async (newConfig) => {
+    if (!currentSesi?.id) return;
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('ujian_sesi')
+        .update({ config_ujian: newConfig })
+        .eq('id', currentSesi.id)
+        .select()
+        .maybeSingle();
+
+      if (error && (error.code === 'PGRST204' || error.message?.includes('config_ujian'))) {
+        alert(
+          'Kolom config_ujian belum ada di tabel ujian_sesi Supabase.\n' +
+          'Silakan jalankan perintah SQL berikut di Supabase SQL Editor:\n\n' +
+          'ALTER TABLE public.ujian_sesi ADD COLUMN IF NOT EXISTS config_ujian jsonb DEFAULT \'{}\'::jsonb;'
+        );
+        return;
+      }
+
+      if (error) throw error;
+
+      if (data) {
+        setCurrentSesi(data);
+        if (onRefreshSesi) onRefreshSesi(data);
+      }
+      showNotif('Pengaturan aturan room berhasil disimpan!', 'success');
+      fetchAllRooms(currentSesi.id);
+    } catch (err) {
+      console.error('Gagal update config room:', err);
+      showNotif('Gagal simpan konfigurasi: ' + err.message, 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // HAPUS PERMANEN ROOM BESERTA SELURUH DATA PESERTA & JAWABAN
   const handleConfirmDeleteRoom = async () => {
     if (!currentSesi?.id) return;
@@ -642,6 +679,7 @@ export default function AdminPanelUlanganTugas7({
           onOpenDeleteModal={() => setShowDeleteModal(true)}
           onApplyToFront={handleApplyRoomToExamPage}
           onUpdateJudulRoom={handleUpdateJudulRoom}
+          onUpdateConfigRoom={handleUpdateConfigRoom}
           actionLoading={actionLoading}
           copiedPin={copiedPin}
           onCopyPin={handleCopyPin}

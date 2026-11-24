@@ -18,6 +18,19 @@ import imgSoal27 from './assets/soal_27_hierarki_folder.svg';
 import imgSoal29 from './assets/soal_29_ribbon_word.svg';
 import imgSoal36 from './assets/soal_36_compose_email.png';
 
+// URL Cloudinary CDN Permanen (Mencegah kendala 404 saat redeploy/rebuild Vite di Vercel)
+export const CLOUDINARY_DIAGRAM_MAP = {
+  imgSoal02: 'https://res.cloudinary.com/cjt4xpst/image/upload/v1795504386/Tugas/7/assets/soal_02_robot_grid.png',
+  imgSoal14: 'https://res.cloudinary.com/cjt4xpst/raw/upload/v1795504387/Tugas/7/assets/soal_14_arsitektur_komputer.svg',
+  imgSoal15: 'https://res.cloudinary.com/cjt4xpst/image/upload/v1795504387/Tugas/7/assets/soal_15_komponen_hardware.png',
+  imgSoal17: 'https://res.cloudinary.com/cjt4xpst/raw/upload/v1795504388/Tugas/7/assets/soal_17_hubungan_komponen.svg',
+  imgSoal18: 'https://res.cloudinary.com/cjt4xpst/image/upload/v1795504389/Tugas/7/assets/soal_18_ikon_software.png',
+  imgSoal21: 'https://res.cloudinary.com/cjt4xpst/image/upload/v1795504390/Tugas/7/assets/soal_21_alur_ascii_cpu.png',
+  imgSoal27: 'https://res.cloudinary.com/cjt4xpst/raw/upload/v1795504390/Tugas/7/assets/soal_27_hierarki_folder.svg',
+  imgSoal29: 'https://res.cloudinary.com/cjt4xpst/raw/upload/v1795504391/Tugas/7/assets/soal_29_ribbon_word.svg',
+  imgSoal36: 'https://res.cloudinary.com/cjt4xpst/image/upload/v1795504392/Tugas/7/assets/soal_36_compose_email.png',
+};
+
 export const SOAL_POOL_PG = [
   // 1
   {
@@ -41,7 +54,8 @@ export const SOAL_POOL_PG = [
     nomor: 2,
     kategori: "Berpikir Komputasional",
     teks: "Perhatikan gambar papan permainan Robot Manual 5x5 berikut! Robot berada di petak A1 menghadap ke Atas (↑). Agar robot dapat mengambil buah Jeruk (C2), menghindari rintangan Batu (A3 dan C1), lalu berhenti di petak FINIS (C4), urutan perintah yang tepat adalah ....",
-    gambar: imgSoal02,
+    gambar: CLOUDINARY_DIAGRAM_MAP.imgSoal02 || imgSoal02,
+    gambar_fallback: imgSoal02,
     opsi: [
       "Maju 2 langkah → Putar 90° kanan → Maju 2 langkah → Putar 90° kiri → Maju 1 langkah",
       "Maju 1 langkah → Putar 90° kanan → Maju 2 langkah → Putar 90° kiri → Maju 2 langkah",
@@ -268,7 +282,8 @@ export const SOAL_POOL_PG = [
     nomor: 14,
     kategori: "Sistem Komputer",
     teks: "Perhatikan diagram arsitektur dasar Sistem Komputer berikut! Komponen perangkat keras yang tepat untuk mengisi bagian [ P ] dan bagian [ Q ] secara berturut-turut adalah ....",
-    gambar: imgSoal14,
+    gambar: CLOUDINARY_DIAGRAM_MAP.imgSoal14 || imgSoal14,
+    gambar_fallback: imgSoal14,
     opsi: [
       "[P] Monitor & Printer, sedangkan [Q] Keyboard & Mouse",
       "[P] Keyboard & Scanner, sedangkan [Q] Monitor & Speaker",
@@ -289,7 +304,8 @@ export const SOAL_POOL_PG = [
     nomor: 15,
     kategori: "Sistem Komputer",
     teks: "Perhatikan gambar 4 komponen perangkat keras (hardware) komputer berikut! Pasangan komponen yang berfungsi untuk memproses tampilan grafis/visual pada layar dan komponen yang berfungsi menyimpan berkas secara permanen menggunakan teknologi flash memory berkecepatan tinggi ditunjukkan oleh nomor ....",
-    gambar: imgSoal15,
+    gambar: CLOUDINARY_DIAGRAM_MAP.imgSoal15 || imgSoal15,
+    gambar_fallback: imgSoal15,
     opsi: [
       "Nomor [ 1 ] dan Nomor [ 2 ]",
       "Nomor [ 1 ] dan Nomor [ 4 ]",
@@ -326,7 +342,8 @@ export const SOAL_POOL_PG = [
     nomor: 17,
     kategori: "Sistem Komputer",
     teks: "Perhatikan diagram hubungan antara perangkat keras, perangkat lunak, dan pengguna berikut! Perangkat lunak siap pakai yang menempati posisi [ Y ] dan digunakan langsung oleh pengguna untuk menyelesaikan tugas tertentu (seperti mengetik surat) adalah ....",
-    gambar: imgSoal17,
+    gambar: CLOUDINARY_DIAGRAM_MAP.imgSoal17 || imgSoal17,
+    gambar_fallback: imgSoal17,
     opsi: [
       "Perangkat Lunak Aplikasi (Application Software)",
       "Memori Penyimpanan Sekunder (Harddisk)",
@@ -347,7 +364,8 @@ export const SOAL_POOL_PG = [
     nomor: 18,
     kategori: "Perangkat Lunak",
     teks: "Perhatikan daftar ikon perangkat lunak pada gambar berikut! Kelompok perangkat lunak yang ketiganya merupakan Program Aplikasi (Application Software) dan bukan Sistem Operasi ditunjukkan oleh nomor ....",
-    gambar: imgSoal18,
+    gambar: CLOUDINARY_DIAGRAM_MAP.imgSoal18 || imgSoal18,
+    gambar_fallback: imgSoal18,
     opsi: [
       "Nomor [1], Nomor [2], dan Nomor [3]",
       "Nomor [1], Nomor [3], dan Nomor [5]",
@@ -410,7 +428,8 @@ export const SOAL_POOL_PG = [
     nomor: 21,
     kategori: "Sistem Bilangan & ASCII",
     teks: "Perhatikan ilustrasi pemrosesan karakter dari papan ketik (keyboard) ke layar monitor berikut! Mengapa deretan kode biner 01000010 yang telah diolah di dalam CPU harus dikonversi kembali sebelum ditampilkan ke layar monitor LCD?",
-    gambar: imgSoal21,
+    gambar: CLOUDINARY_DIAGRAM_MAP.imgSoal21 || imgSoal21,
+    gambar_fallback: imgSoal21,
     opsi: [
       "Agar pengguna manusia dapat membaca karakter huruf 'B' dengan mudah di layar monitor, bukan deretan angka 0 dan 1",
       "Karena layar monitor LCD tidak membutuhkan aliran daya listrik sama sekali saat menampilkan huruf abjad",
@@ -531,7 +550,8 @@ export const SOAL_POOL_PG = [
     nomor: 27,
     kategori: "Manajemen File",
     teks: "Perhatikan struktur hierarki folder pada tampilan File Explorer berikut! Jika folder utama Arsip_Siswa tersimpan di drive C:\\, penulisan jalur lokasi (path) yang tepat untuk membuka file Daftar_Hadir.xlsx adalah ....",
-    gambar: imgSoal27,
+    gambar: CLOUDINARY_DIAGRAM_MAP.imgSoal27 || imgSoal27,
+    gambar_fallback: imgSoal27,
     opsi: [
       "C:\\Arsip_Siswa\\Semester_2\\Administrasi\\Daftar_Hadir.xlsx",
       "C:\\Arsip_Siswa\\Semester_1\\Tugas_Harian\\Daftar_Hadir.xlsx",
@@ -573,7 +593,8 @@ export const SOAL_POOL_PG = [
     nomor: 29,
     kategori: "Pengolah Kata (Ms. Word)",
     teks: "Perhatikan gambar menu Ribbon pada aplikasi Microsoft Word berikut! Untuk membuat teks istilah asing menjadi cetak TEBAL sekaligus cetak MIRING, pasangan tombol pada Group Font yang harus diklik adalah ....",
-    gambar: imgSoal29,
+    gambar: CLOUDINARY_DIAGRAM_MAP.imgSoal29 || imgSoal29,
+    gambar_fallback: imgSoal29,
     opsi: [
       "Nomor [1] dan Nomor [2]",
       "Nomor [1] dan Nomor [3]",
@@ -594,7 +615,8 @@ export const SOAL_POOL_PG = [
     nomor: 30,
     kategori: "Pengolah Kata (Ms. Word)",
     teks: "Berdasarkan bagan menu Ribbon pada soal nomor 29 di atas, ikon untuk menempatkan teks Judul Laporan agar berada tepat di tengah-tengah halaman (Center) ditunjukkan oleh nomor ....",
-    gambar: imgSoal29,
+    gambar: CLOUDINARY_DIAGRAM_MAP.imgSoal29 || imgSoal29,
+    gambar_fallback: imgSoal29,
     opsi: [
       "Nomor [5]",
       "Nomor [6]",
@@ -710,7 +732,8 @@ export const SOAL_POOL_PG = [
     nomor: 36,
     kategori: "Komunikasi Digital & Surel",
     teks: "Perhatikan gambar jendela penulisan surat elektronik (Compose Email) berikut! Bagian yang harus diisi dengan ringkasan singkat topik atau judul pesan surel agar penerima langsung mengetahui maksud surat sebelum membukanya ditunjukkan oleh huruf ....",
-    gambar: imgSoal36,
+    gambar: CLOUDINARY_DIAGRAM_MAP.imgSoal36 || imgSoal36,
+    gambar_fallback: imgSoal36,
     opsi: ["Bagian [ P ]", "Bagian [ Q ]", "Bagian [ R ]", "Bagian [ S ]"],
     kunci: "Bagian [ R ]",
     kunci_huruf: "C",

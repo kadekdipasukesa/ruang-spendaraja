@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ecoImg from '../../assets/BEE/eco.png';
 import faceImg from '../../assets/BEE/face_recognition.png';
 import fluppyImg from '../../assets/BEE/fluppy.png';
+import neonBlockImg from '../../assets/BEE/neon_block_breaker.png';
 
 const ternakImg = "https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=400";
 const typingImg = "https://images.unsplash.com/photo-1587829741301-dc798b83add3?q=80&w=400";
@@ -82,6 +83,16 @@ export const useBEE = () => {
         description: "Game arcade teka-teki legendaris GameHouse. Kendalikan Katak Penjaga mistis, bidik kelereng warna-warni, ciptakan kombo beruntun berantai, dan cegah bola jatuh ke mulut tengkorak!",
         image_url: "https://images.sftcdn.net/images/t_app-cover-s,f_auto/p/41c50b9c-96d2-11e6-938d-00163ed833e7/2720894789/zuma-screenshot.jpg",
         link: "/models/zuma-deluxe.html" // File berada di folder public/models dan dist/models
+      },
+
+      {
+        id: 107,
+        title: "Neon Block Breaker",
+        creator_name: "GEDE ANANDA PRATAMA ARDIANA",
+        category: "Game",
+        description: "Game arcade pemecah balok berangka bergaya neon futuristik. Tembakkan bola pantul, bidik sudut pantulan yang tepat, kumpulkan bola ekstra, dan hancurkan balok angka sebelum menyentuh batas bawah!",
+        image_url: neonBlockImg,
+        link: "/neon_block_breaker_berangka.html"
       },
 
       {
